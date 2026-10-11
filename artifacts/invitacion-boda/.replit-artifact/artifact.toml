@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/invitacion-boda/"
+title = "Invitación Angela y Robert"
+description = "Invitación web móvil inspirada fielmente en el diseño de Canva para la boda de Angela Palmerston y Robert Wilson. Presenta fecha, sede, itinerario, vestimenta y confirmación RSVP."
+version = "1.0.0"
+id = "artifacts/invitacion-boda"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/invitacion-boda/" ]
+localPort = 21765
+
+[services.development]
+run = "pnpm --filter @workspace/invitacion-boda run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/invitacion-boda", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/invitacion-boda/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21765"
+BASE_PATH = "/invitacion-boda/"

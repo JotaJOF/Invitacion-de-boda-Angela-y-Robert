@@ -1,6 +1,6 @@
-# [Project name]
+# Invitación de boda Angela y Robert
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Invitación web móvil para la boda de Angela Palmerston y Robert Wilson, recreada a partir del diseño original de Canva.
 
 ## Run & Operate
 
@@ -22,19 +22,21 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/invitacion-boda/` — página web y recursos visuales de la invitación.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Invitación estática; el RSVP se presenta como vista previa y no envía ni almacena confirmaciones.
+- El video se conserva como imagen fija hasta que se proporcione el archivo de video.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Invitación de una sola página con información del evento, ubicación, vestimenta, itinerario, preguntas frecuentes y vista previa del RSVP.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Priorizar la réplica móvil del PDF: fondo rosa palo con secciones verde oliva y sin el espacio vacío al final.
+- La fecha de portada, 13 de junio de 2026, es la fecha oficial; todas las fechas posteriores deben ajustarse a ella.
 
 ## Gotchas
 
