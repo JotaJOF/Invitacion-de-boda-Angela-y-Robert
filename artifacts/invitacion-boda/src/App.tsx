@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   CalendarDays,
   ChevronDown,
@@ -8,37 +8,49 @@ import {
   Upload,
 } from 'lucide-react';
 
-const asset = (filename: string) => `${import.meta.env.BASE_URL}assets/${filename}`;
+const asset = (filename: string) => `${import.meta.env.BASE_URL}assets/${filename}`;  
+  
+// ===== FECHA DE LA BODA — cambia SOLO aquí y se actualiza todo =====  
+const WEDDING = { year: 2027, month: 3, day: 13, hour: 19 }; // month: 3 = Marzo, hour: 19 = 7 PM  
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];  
+const dos = (n: number) => String(n).padStart(2, '0');  
+const WEDDING_DATE = new Date(WEDDING.year, WEDDING.month - 1, WEDDING.day, WEDDING.hour);  
+const mesNombre = MESES[WEDDING.month - 1];                              // "Marzo"  
+const fechaPunteada = `${dos(WEDDING.day)}.${dos(WEDDING.month)}.${WEDDING.year}`; // "13.03.2027"
 
 const mapUrl =
   'https://www.google.com/maps/search/?api=1&query=Quinta+El+Ed%C3%A9n%2C+Paseo+de+las+Gardenias+602%2C+Nueva+Castilla%2C+Escobedo%2C+Nuevo+Le%C3%B3n';
 
-function downloadCalendar() {
-  const calendar = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Angela y Robert//Invitacion de boda//ES',
-    'CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT',
-    'UID:angela-robert-20260613@invitacion.local',
-    'DTSTAMP:20260523T120000Z',
-    'DTSTART;TZID=America/Monterrey:20260613T190000',
-    'DTEND;TZID=America/Monterrey:20260613T230000',
-    'SUMMARY:Boda de Angela Palmerston y Robert Wilson',
-    'LOCATION:Quinta El Edén\\, P.º de las Gardenias 602\\, Nueva Castilla\\, Cd. Gral. Escobedo\\, N.L.',
-    'DESCRIPTION:Ceremonia y recepción. Invitación para María y Pablo.',
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].join('\r\n');
-  const blob = new Blob([calendar], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'angela-y-robert-13-junio-2026.ics';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+function downloadCalendar() {  
+  const pad = (n: number) => String(n).padStart(2, '0');  
+  const fechaICS = `${WEDDING.year}${pad(WEDDING.month)}${pad(WEDDING.day)}`;  
+  const inicio = `${fechaICS}T${pad(WEDDING.hour)}0000`;  
+  const fin = `${fechaICS}T${pad(WEDDING.hour + 4)}0000`;  
+  const calendar = [  
+    'BEGIN:VCALENDAR',  
+    'VERSION:2.0',  
+    'PRODID:-//Angela y Robert//Invitacion de boda//ES',  
+    'CALSCALE:GREGORIAN',  
+    'BEGIN:VEVENT',  
+    `UID:angela-robert-${fechaICS}@invitacion.local`,  
+    `DTSTAMP:${fechaICS}T120000Z`,  
+    `DTSTART;TZID=America/Monterrey:${inicio}`,  
+    `DTEND;TZID=America/Monterrey:${fin}`,  
+    'SUMMARY:Boda de Angela Palmerston y Robert Wilson',  
+    'LOCATION:Quinta El Edén\\, P.º de las Gardenias 602\\, Nueva Castilla\\, Cd. Gral. Escobedo\\, N.L.',  
+    'DESCRIPTION:Ceremonia y recepción. Invitación para María y Pablo.',  
+    'END:VEVENT',  
+    'END:VCALENDAR',  
+  ].join('\r\n');  
+  const blob = new Blob([calendar], { type: 'text/calendar;charset=utf-8' });  
+  const url = URL.createObjectURL(blob);  
+  const link = document.createElement('a');  
+  link.href = url;  
+  link.download = `angela-y-robert-${WEDDING.day}-${mesNombre.toLowerCase()}-${WEDDING.year}.ics`;  
+  document.body.appendChild(link);  
+  link.click();  
+  link.remove();  
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);  
 }
 
 const faqs = [
@@ -54,12 +66,36 @@ const faqs = [
   },
 ];
 
+function getTimeLeft(target: number) {  
+  const diff = Math.max(0, target - Date.now());  
+  const days = Math.floor(diff / 86400000);  
+  const hours = Math.floor((diff % 86400000) / 3600000);  
+  const minutes = Math.floor((diff % 3600000) / 60000);  
+  const seconds = Math.floor((diff % 60000) / 1000);  
+  return [  
+    [String(days).padStart(2, '0'), 'DÍAS'],  
+    [String(hours).padStart(2, '0'), 'HORAS'],  
+    [String(minutes).padStart(2, '0'), 'MINUTOS'],  
+    [String(seconds).padStart(2, '0'), 'SEGUNDOS'],  
+  ] as const;  
+}  
+  
 function App() {
   const [envelopeOpen, setEnvelopeOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [preview, setPreview] = useState('');
   const [albumFile, setAlbumFile] = useState('');
-  const albumInput = useRef<HTMLInputElement>(null);
+  const albumInput = useRef<HTMLInputElement>(null);  
+  
+  const targetDate = new Date('2027-03-13T00:00:00-04:00').getTime();  
+  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));  
+  
+  useEffect(() => {  
+    const timer = window.setInterval(() => {  
+      setTimeLeft(getTimeLeft(targetDate));  
+    }, 1000);  
+    return () => window.clearInterval(timer);  
+  }, [targetDate]);
 
   const openInvitation = () => {
     setEnvelopeOpen(true);
@@ -108,7 +144,7 @@ function App() {
         <div className="ornament-rule cover-separator" aria-hidden="true">
           <span>✤</span>
         </div>
-        <p className="cover-date serif">MONTERREY, NL | 13.06.2026</p>
+        <p className="cover-date serif">MONTERREY, NL | {fechaPunteada}</p>
 
         <button
           className={`envelope-button${envelopeOpen ? ' is-open' : ''}`}
@@ -158,42 +194,101 @@ function App() {
         <p className="section-copy">
           QUEREMOS COMPARTIR CONTIGO LA ALEGRÍA DE CELEBRAR NUESTRA BODA
         </p>
-        <div className="save-date" data-testid="status-save-the-date">
-          <span className="save-date-label">Reserva</span>
-          <span className="save-date-label">ESTA FECHA</span>
-          <span className="save-date-day serif">13</span>
-          <span className="save-date-month">Junio</span>
-          <span className="save-date-year">2026</span>
-        </div>
-        <button
-          className="outline-button"
-          type="button"
-          onClick={downloadCalendar}
-          data-testid="button-add-calendar"
-        >
-          <CalendarDays size={15} /> AGENDAR EN CALENDARIO
-        </button>
+        <div  
+          style={{  
+            position: 'relative',  
+            width: 'min(100%, 340px)',  
+            margin: '18px auto 22px',  
+          }}  
+        >  
+          <img  
+            src={asset('sobre.png')}  
+            alt="Sobre de Angela y Robert"  
+            style={{ width: '100%', height: 'auto', display: 'block' }}  
+          />  
+  
+          {/* Texto dentro de la tarjeta blanca (lado derecho), debajo del sello */}  
+          <div  
+            style={{  
+              position: 'absolute',  
+              top: '75%',  
+              left: '79%',  
+              transform: 'translate(-50%, -50%)',  
+              width: '26%',  
+              display: 'flex',  
+              flexDirection: 'column',  
+              alignItems: 'center',  
+              justifyContent: 'center',  
+              textAlign: 'center',  
+              color: '#5d6e43',  
+            }}  
+          >  
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>Reserva</span>  
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>ESTA FECHA</span>  
+            <span className="serif" style={{ fontSize: 38, lineHeight: 0.9 }}>{WEDDING.day}</span>  
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15 }}>{mesNombre}</span>  
+            <span style={{ fontSize: 12, letterSpacing: '.1em' }}>{WEDDING.year}</span>  
+          </div>  
+  
+          {/* Botón sobre el lado izquierdo (debajo del sobre), a la altura de la tarjeta */}  
+          <button  
+            className="outline-button"  
+            type="button"  
+            onClick={downloadCalendar}  
+            data-testid="button-add-calendar"  
+            style={{ position: 'absolute', left: '0%', bottom: '4%', fontSize: 10, padding: '6px 9px' }}  
+          >  
+            <CalendarDays size={14} /> AGENDAR EN CALENDARIO  
+          </button>  
+        </div>  
       </section>
-
-      <section className="countdown" aria-label="Cuenta regresiva">
-        <h2 className="countdown-heading">SOLO FALTAN</h2>
-        <p className="countdown-label">13 · JUNIO · 2026</p>
-        <div className="countdown-grid" data-testid="status-countdown-completed">
-          {[
-            ['00', 'DÍAS'],
-            ['00', 'HORAS'],
-            ['00', 'MINUTOS'],
-            ['00', 'SEGUNDOS'],
-          ].map(([value, label]) => (
-            <div className="count-cell" key={label}>
-              <strong>{value}</strong>
-              <span>{label}</span>
-            </div>
-          ))}
-        </div>
-        <p className="countdown-label" style={{ margin: '17px 0 0' }}>
-          LA CUENTA REGRESIVA HA TERMINADO
-        </p>
+  
+      <section  
+        className="countdown"  
+        aria-label="Cuenta regresiva"  
+        style={{ position: 'relative', overflow: 'hidden', padding: '48px 24px', textAlign: 'center' }}  
+      >  
+        <img  
+          src={asset('roses-countdown.webp')}  
+          alt=""  
+          aria-hidden="true"  
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}  
+        />  
+        <div style={{ position: 'relative', zIndex: 1 }}>  
+          <h2 className="countdown-heading" style={{ color: '#4a3f2f' }}>SOLO FALTAN</h2>  
+          <p className="countdown-label" style={{ color: '#6b5d4a' }}>  
+            {WEDDING.day} · {mesNombre.toUpperCase()} · {WEDDING.year}  
+          </p>  
+          <div  
+            className="countdown-grid"  
+            data-testid="status-countdown-live"  
+            style={{ display: 'flex', justifyContent: 'center', gap: 9, flexWrap: 'wrap' }}  
+          >  
+            {timeLeft.map(([value, label]) => (  
+              <div  
+                key={label}  
+                style={{  
+                  minWidth: 69,  
+                  padding: '11px 8px 8px',  
+                  background: 'rgba(255,255,255,0.85)',  
+                  borderRadius: 8,  
+                  color: '#4a3f2f',  
+                }}  
+              >  
+                <strong style={{ display: 'block', fontSize: 31, fontWeight: 600, lineHeight: 1 }}>{value}</strong>  
+                <span style={{ display: 'block', marginTop: 6, fontSize: 9, letterSpacing: '.1em' }}>{label}</span>  
+              </div>  
+            ))}  
+          </div>  
+        </div>  
+      </section>  
+  
+      <section className="closing-photo-section" style={{ width: '100%' }}>  
+        <img  
+          src={asset('couple-veil.webp')}  
+          alt="Angela y Robert"  
+          style={{ width: '100%', height: 'auto', display: 'block' }}  
+        />  
       </section>
 
       <section className="paper-section venue-section">
@@ -382,7 +477,7 @@ function App() {
           <p className="script">Angela y Robert</p>
         </div>
       </section>
-      <footer className="footer-note">CON CARIÑO, ANGELA &amp; ROBERT · 13.06.2026</footer>
+      <footer className="footer-note">CON CARIÑO, ANGELA &amp; ROBERT · {fechaPunteada}</footer>
     </main>
   );
 }
