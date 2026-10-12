@@ -1,0 +1,1 @@
+- [Cloudflare CMS constraints](cloudflare-cms.md) — preserve the current workspace; verify bcrypt in Supabase to stay within Cloudflare Free CPU limits.
