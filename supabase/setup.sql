@@ -58,7 +58,7 @@ insert into public.site_content (key, type, value)
 values
   ('couple_names', 'text', 'Angela y Robert'),
   ('invitation_note', 'text', 'Tenemos la alegría de invitarte a celebrar el comienzo de nuestra vida juntos.'),
-  ('wedding_date', 'text', '13 de junio de 2026'),
+  ('wedding_date', 'text', '13 de marzo de 2027'),
   ('welcome_text', 'text', 'Nos hace mucha ilusión compartir contigo este día tan especial. Esperamos celebrar, reír y crear recuerdos que nos acompañen siempre.'),
   ('ceremony_location', 'text', 'Quinta El Edén'),
   ('ceremony_time', 'text', '7:00 PM'),
@@ -72,7 +72,21 @@ values
   ('footer_note', 'text', 'CON CARIÑO · ANGELA & ROBERT · 13.06.2026'),
   ('hero_image', 'image', '/assets/hero-couple.png'),
   ('venue_image', 'image', '/assets/venue-garden.jpg'),
-  ('closing_image', 'image', '/assets/closing-photo.jpg')
+  ('closing_image', 'image', '/assets/closing-photo.jpg'),
+  ('invitation_heading_line_1', 'text', 'QUEREMOS COMPARTIR CONTIGO LA'),
+  ('invitation_heading_line_2', 'text', 'ALEGRÍA DE CELEBRAR'),
+  ('invitation_heading_line_3', 'text', 'NUESTRA BODA'),
+  ('calendar_cta', 'text', 'AGENDAR EN CALENDARIO'),
+  ('countdown_title_script', 'text', 'Solo'),
+  ('countdown_title_word', 'text', 'FALTAN'),
+  ('countdown_days_label', 'text', 'DÍAS'),
+  ('countdown_hours_label', 'text', 'HORAS'),
+  ('countdown_minutes_label', 'text', 'MINUTOS'),
+  ('countdown_seconds_label', 'text', 'SEGUNDOS'),
+  ('envelope_image', 'image', '/assets/envelope-couple.webp'),
+  ('date_card_image', 'image', '/assets/save-the-date.webp'),
+  ('countdown_background', 'image', '/assets/roses-countdown.webp'),
+  ('closing_photo', 'image', '/assets/couple-veil.webp')
 on conflict (key) do nothing;
 
 -- Reemplaza username y password antes de ejecutar.

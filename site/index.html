@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Acompáñanos a celebrar la boda de Angela y Robert."
+      content="Reserva la fecha y acompáñanos a celebrar la boda de Angela y Robert."
     />
-    <meta name="theme-color" content="#f5efeb" />
-    <title>Angela &amp; Robert — Nuestra boda</title>
+    <meta name="theme-color" content="#596d37" />
+    <title>Angela &amp; Robert — Reserva la fecha</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,97 +19,80 @@
     <script src="/js/main.js" defer></script>
   </head>
   <body>
-    <header class="hero">
-      <p class="eyebrow">CON LA BENDICIÓN DE DIOS</p>
-      <h1 data-key="couple_names">Angela <span>y</span> Robert</h1>
-      <p class="hero-note" data-key="invitation_note">
-        Tenemos la alegría de invitarte a celebrar el comienzo de nuestra vida juntos.
-      </p>
-      <img
-        class="hero-photo"
-        data-key="hero_image"
-        src="/assets/hero-couple.png"
-        alt="Angela y Robert juntos"
-      />
-      <p class="date-script" data-key="wedding_date">13 de junio de 2026</p>
-      <a class="button button-olive" href="#celebracion">VER DETALLES</a>
-      <span class="hero-flourish" aria-hidden="true">✤</span>
+    <header class="invitation-banner">
+      <h1>
+        <span data-key="invitation_heading_line_1">QUEREMOS COMPARTIR CONTIGO LA</span>
+        <span data-key="invitation_heading_line_2">ALEGRÍA DE CELEBRAR</span>
+        <span data-key="invitation_heading_line_3">NUESTRA BODA</span>
+      </h1>
     </header>
 
-    <main>
-      <section class="welcome section-paper">
-        <p class="eyebrow">UN DÍA PARA RECORDAR</p>
-        <h2>Nos casamos</h2>
-        <p data-key="welcome_text">
-          Nos hace mucha ilusión compartir contigo este día tan especial.
-          Esperamos celebrar, reír y crear recuerdos que nos acompañen siempre.
-        </p>
-      </section>
-
-      <section class="venue section-olive" id="celebracion">
-        <p class="eyebrow">CEREMONIA Y RECEPCIÓN</p>
-        <h2 data-key="ceremony_location">Quinta El Edén</h2>
-        <img
-          class="venue-photo"
-          data-key="venue_image"
-          src="/assets/venue-garden.jpg"
-          alt="Jardines de Quinta El Edén"
-        />
-        <p class="venue-time" data-key="ceremony_time">7:00 PM</p>
-        <p class="venue-address" data-key="venue_address">
-          P.º de las Gardenias 602, Nueva Castilla, Escobedo, Nuevo León
-        </p>
+    <main class="invitation-page">
+      <section class="save-date" aria-label="Reserva la fecha de nuestra boda">
+        <div class="save-date-art">
+          <img
+            class="envelope-art"
+            data-key="envelope_image"
+            src="/assets/envelope-couple.webp"
+            alt="Sobre verde con una fotografía de Angela y Robert"
+            fetchpriority="high"
+          />
+          <img
+            class="date-card-art"
+            data-key="date_card_image"
+            src="/assets/save-the-date.webp"
+            alt="Reserva esta fecha: 13 de marzo de 2027"
+          />
+        </div>
         <a
-          class="button button-paper"
-          href="https://www.google.com/maps/search/?api=1&query=Quinta+El+Ed%C3%A9n+Escobedo+Nuevo+Le%C3%B3n"
+          class="calendar-button"
+          href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Angela%20y%20Robert%20%E2%80%94%20Nuestra%20boda&amp;dates=20270313%2F20270314"
           target="_blank"
           rel="noreferrer"
-        >CÓMO LLEGAR</a>
+        ><span data-key="calendar_cta">AGENDAR EN CALENDARIO</span></a>
       </section>
 
-      <section class="details section-paper">
-        <p class="eyebrow">CELEBREMOS JUNTOS</p>
-        <h2>Una tarde especial</h2>
-        <div class="detail-grid">
-          <article>
-            <span class="detail-mark" aria-hidden="true">01</span>
-            <h3>La fecha</h3>
-            <p data-key="event_date_short">Sábado · 13 de junio</p>
-          </article>
-          <article>
-            <span class="detail-mark" aria-hidden="true">02</span>
-            <h3>Vestimenta</h3>
-            <p data-key="dress_code">Formal · elegante vaquero</p>
-          </article>
-          <article>
-            <span class="detail-mark" aria-hidden="true">03</span>
-            <h3>Itinerario</h3>
-            <p data-key="schedule">7:00 PM · ceremonia<br />8:00 PM · recepción</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="closing">
+      <section
+        class="countdown"
+        id="countdown"
+        data-target-date="2027-03-13T00:00:00-04:00"
+        aria-label="Cuenta regresiva para la boda"
+      >
         <img
-          data-key="closing_image"
-          src="/assets/closing-photo.jpg"
-          alt="Un recuerdo de Angela y Robert"
+          class="countdown-background"
+          data-key="countdown_background"
+          src="/assets/roses-countdown.webp"
+          alt=""
+          aria-hidden="true"
         />
-        <div class="closing-copy">
-          <p class="eyebrow">CON TODO NUESTRO CARIÑO</p>
-          <h2 data-key="closing_text">
-            Gracias por acompañarnos en un día que llevaremos siempre en el corazón.
+        <div class="countdown-content">
+          <h2 class="countdown-heading">
+            <span class="countdown-script" data-key="countdown_title_script">Solo</span>
+            <span class="countdown-word" data-key="countdown_title_word">FALTAN</span>
           </h2>
-          <p class="date-script" data-key="closing_names">Angela y Robert</p>
+          <div class="countdown-grid" aria-live="off">
+            <div class="countdown-unit"><strong id="countdown-days">000</strong><span data-key="countdown_days_label">DÍAS</span></div>
+            <div class="countdown-unit"><strong id="countdown-hours">00</strong><span data-key="countdown_hours_label">HORAS</span></div>
+            <div class="countdown-unit"><strong id="countdown-minutes">00</strong><span data-key="countdown_minutes_label">MINUTOS</span></div>
+            <div class="countdown-unit"><strong id="countdown-seconds">00</strong><span data-key="countdown_seconds_label">SEGUNDOS</span></div>
+          </div>
         </div>
+      </section>
+
+      <section class="closing-photo-section" aria-label="Una fotografía de los novios">
+        <img
+          class="closing-photo"
+          data-key="closing_photo"
+          src="/assets/couple-veil.webp"
+          alt="Angela y Robert bajo el velo de la novia"
+          loading="lazy"
+        />
       </section>
     </main>
 
-    <footer>
-      <span data-key="footer_note">CON CARIÑO · ANGELA &amp; ROBERT · 13.06.2026</span>
+    <footer class="site-footer">
+      <button class="admin-open" id="admin-open" type="button">ADMINISTRAR SITIO</button>
     </footer>
-
-    <button class="admin-open" id="admin-open" type="button">ADMINISTRAR</button>
 
     <dialog class="login-dialog" id="login-dialog" aria-labelledby="login-title">
       <form class="login-card" id="login-form">

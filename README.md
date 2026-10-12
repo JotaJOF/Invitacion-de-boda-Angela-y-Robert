@@ -25,6 +25,9 @@ iniciales y crea el bucket público `media`. Las tablas tienen RLS activado y no
 permiten lectura o escritura anónima; el Worker accede con la clave de servicio.
 El bucket permite que las imágenes subidas se puedan mostrar públicamente, pero
 las subidas se hacen únicamente desde el Worker después del login de admin.
+Si ya ejecutaste una versión anterior de este archivo, vuelve a ejecutarlo para
+agregar las claves de la nueva composición; `ON CONFLICT DO NOTHING` conserva
+los valores que ya hayas editado.
 
 Para crear otro admin o generar de nuevo su contraseña bcrypt, ejecuta
 `pnpm run admin:sql -- nombre-de-usuario` en una terminal. Escribe la contraseña
@@ -97,7 +100,7 @@ por el Worker.
 
 ## 4. Editar textos e imágenes
 
-1. Abre la invitación y pulsa **ADMINISTRAR**.
+1. Abre la invitación y pulsa **ADMINISTRAR SITIO** al pie de la página.
 2. Inicia sesión con el usuario y la contraseña creados en Supabase.
 3. En **GUARDAR**, elige el lápiz junto a un texto para editarlo en la página.
    Para una imagen, el lápiz abre el selector de archivos.
@@ -116,8 +119,9 @@ el tipo `image`, y el resto de claves con el tipo `text`.
 
 ## Seguridad y límites
 
-- El login comprueba contraseñas bcrypt en el Worker y las sesiones usan una
-  cookie `HttpOnly`, `Secure` y `SameSite=Lax`.
+- Supabase comprueba el hash bcrypt mediante `verify_admin_login`, una función
+  disponible solo para `service_role`. La sesión usa una cookie `HttpOnly`,
+  `Secure` y `SameSite=Lax`.
 - Las rutas de escritura y subida requieren sesión; `GET /api/content` es
   público para visitantes.
 - Las imágenes permitidas son JPG, PNG, WebP, GIF y AVIF, de hasta 8 MB.

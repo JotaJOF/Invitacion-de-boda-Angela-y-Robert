@@ -8,6 +8,14 @@ const adminToolbar = document.querySelector("#admin-toolbar");
 const toolbarMessage = document.querySelector("#toolbar-message");
 const imagePicker = document.querySelector("#image-picker");
 const toast = document.querySelector("#toast");
+const countdown = document.querySelector("#countdown");
+const countdownTarget = Date.parse(countdown.dataset.targetDate);
+const countdownFields = {
+  days: document.querySelector("#countdown-days"),
+  hours: document.querySelector("#countdown-hours"),
+  minutes: document.querySelector("#countdown-minutes"),
+  seconds: document.querySelector("#countdown-seconds"),
+};
 
 let authenticated = false;
 let editing = false;
@@ -68,6 +76,22 @@ async function loadContent() {
     showToast("El contenido guardado no está disponible; se muestran los ejemplos.");
   }
 }
+
+function updateCountdown() {
+  const remaining = Math.max(0, countdownTarget - Date.now());
+  const days = Math.floor(remaining / 86_400_000);
+  const hours = Math.floor((remaining % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((remaining % 3_600_000) / 60_000);
+  const seconds = Math.floor((remaining % 60_000) / 1_000);
+
+  countdownFields.days.textContent = String(days);
+  countdownFields.hours.textContent = String(hours).padStart(2, "0");
+  countdownFields.minutes.textContent = String(minutes).padStart(2, "0");
+  countdownFields.seconds.textContent = String(seconds).padStart(2, "0");
+}
+
+updateCountdown();
+window.setInterval(updateCountdown, 1000);
 
 function pencilMarkup() {
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';
