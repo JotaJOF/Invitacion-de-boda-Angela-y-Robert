@@ -171,12 +171,12 @@ function App() {
       </section>
       {envelopeOpen && (<>
   
-      <section className="video-still" aria-label="Recuerdo de Angela y Robert">  
+      <section className="video-still" id="invitation-start" aria-label="Recuerdo de Angela y Robert">  
         <img src={asset('pdfimg-000.png')} data-key="video_still_img" alt="Angela y Robert sostienen un ramo de flores" />  
         <div className="video-play" aria-hidden="true"><span><Play size={31} fill="currentColor" strokeWidth={0} /></span></div>  
       </section>  
   
-      <section className="olive-section blessing" id="invitation-start">  
+      <section className="olive-section blessing">  
         <p className="eyebrow" data-key="blessing_eyebrow">CON LA BENDICIÓN DE DIOS Y EL CARIÑO DE<br />NUESTROS PADRES</p>  
         <div className="parents-block">  
           <h3 data-key="bride_parents_title">PADRES DE LA NOVIA</h3>  
