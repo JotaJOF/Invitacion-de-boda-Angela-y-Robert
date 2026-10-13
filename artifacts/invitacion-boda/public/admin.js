@@ -160,7 +160,8 @@ imagePicker.addEventListener("change", async () => {
   toolbarMessage.textContent = "Subiendo imagen…";  
   try {  
     const form = new FormData();  
-    form.set("file", file);  
+    form.set("file", file);
+    form.set("key", activeImage.dataset.key);
     const { url } = await api("/api/upload", { method: "POST", body: form });  
     activeImage.src = url;  
     pendingChanges.set(activeImage.dataset.key, {  
