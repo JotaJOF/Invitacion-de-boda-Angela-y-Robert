@@ -286,7 +286,6 @@ loadContent();
 api("/api/me", { method: "GET" })  
   .then((session) => {  
     authenticated = session.authenticated === true;  
-    if (authenticated) setEditingMode(true);  
   })  
   .catch(() => {  
     authenticated = false;  
