@@ -95,7 +95,10 @@ function App() {
       setTimeLeft(getTimeLeft(targetDate));  
     }, 1000);  
     return () => window.clearInterval(timer);  
-  }, [targetDate]);  
+  }, [targetDate]); 
+  useEffect(() => {  
+    document.body.classList.toggle('invite-open', envelopeOpen);  
+  }, [envelopeOpen]);
   
   const openInvitation = () => {  
     setEnvelopeOpen(true);  
