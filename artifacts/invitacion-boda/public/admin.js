@@ -280,19 +280,25 @@ loginForm.addEventListener("submit", async (event) => {
 window.addEventListener("scroll", positionPencils, { passive: true });  
 window.addEventListener("resize", positionPencils);  
   
-for (const element of contentNodes) recordBaseline(element);  
+const inviteRoot = document.querySelector("#root");  
   
-function init() {  
-  contentNodes = [...document.querySelectorAll("[data-key]")];  
-  if (contentNodes.length === 0) {  
-    window.setTimeout(init, 250);  
-    return;  
-  }  
+function refreshNodes() {  
+  const nodes = [...document.querySelectorAll("[data-key]")];  
+  if (nodes.length === contentNodes.length) return;  
+  contentNodes = nodes;  
   loadContent();  
+  if (editing) setEditingMode(true);  
 }  
-init();  
   
-api("/api/me", { method: "GET" })
+if (inviteRoot) {  
+  new MutationObserver(refreshNodes).observe(inviteRoot, {  
+    childList: true,  
+    subtree: true,  
+  });  
+}  
+refreshNodes();  
+  
+api("/api/me", { method: "GET" })  
   .then((session) => {  
     authenticated = session.authenticated === true;  
   })  
