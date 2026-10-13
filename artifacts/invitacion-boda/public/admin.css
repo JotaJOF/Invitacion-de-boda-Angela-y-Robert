@@ -1,0 +1,152 @@
+:root {  
+  --olive: #586d37;  
+  --olive-dark: #40532a;  
+  --ink: #302a24;  
+  --serif: "Cormorant Garamond", Georgia, serif;  
+  --sans: "Montserrat", Arial, sans-serif;  
+}  
+  
+.site-footer {  
+  display: flex;  
+  min-height: 34px;  
+  padding: 6px 12px;  
+  justify-content: center;  
+  background: #fff;  
+}  
+.admin-open {  
+  padding: 5px 9px;  
+  border: 0;  
+  border-radius: 2px;  
+  background: transparent;  
+  color: #8c857d;  
+  font-size: 9px;  
+  letter-spacing: .09em;  
+  cursor: pointer;  
+}  
+.admin-open:hover { color: var(--olive-dark); text-decoration: underline; }  
+  
+.login-dialog {  
+  width: min(calc(100% - 32px), 390px);  
+  padding: 0;  
+  border: 0;  
+  background: transparent;  
+}  
+.login-dialog::backdrop { background: #28251fcc; backdrop-filter: blur(5px); }  
+.login-card {  
+  position: relative;  
+  display: flex;  
+  padding: 34px;  
+  flex-direction: column;  
+  background: #fffdfa;  
+  box-shadow: 0 24px 80px #241b1b45;  
+}  
+.login-card .eyebrow {  
+  margin: 0;  
+  color: var(--olive);  
+  font-size: 10px;  
+  font-weight: 600;  
+  letter-spacing: .2em;  
+  line-height: 1.7;  
+}  
+.login-card h2 { margin: 6px 0 23px; font-family: var(--serif); font-size: 34px; }  
+.login-card label { margin: 0 0 7px; font-size: 11px; font-weight: 600; }  
+.login-card input {  
+  min-height: 44px;  
+  margin-bottom: 17px;  
+  padding: 10px;  
+  border: 1px solid #d9cec4;  
+  border-radius: 0;  
+  background: white;  
+  color: var(--ink);  
+}  
+.login-card input:focus { outline: 2px solid #68764a66; outline-offset: 1px; }  
+.dialog-close {  
+  position: absolute;  
+  top: 10px;  
+  right: 13px;  
+  border: 0;  
+  background: transparent;  
+  color: #82766a;  
+  font-size: 24px;  
+  cursor: pointer;  
+}  
+.button {  
+  display: inline-flex;  
+  min-height: 43px;  
+  padding: 0 22px;  
+  align-items: center;  
+  justify-content: center;  
+  border: 1px solid transparent;  
+  border-radius: 2px;  
+  background: var(--olive);  
+  color: #fff;  
+  font-size: 10px;  
+  font-weight: 600;  
+  letter-spacing: .12em;  
+  cursor: pointer;  
+}  
+.button:hover { background: var(--olive-dark); }  
+.login-submit { width: 100%; }  
+.form-message { min-height: 18px; margin: -7px 0 10px; color: #a13e33; font-size: 11px; }  
+  
+.admin-toolbar {  
+  position: fixed;  
+  z-index: 20;  
+  right: 12px;  
+  bottom: max(12px, env(safe-area-inset-bottom));  
+  left: 12px;  
+  display: flex;  
+  width: min(calc(100% - 24px), 620px);  
+  min-height: 55px;  
+  margin: 0 auto;  
+  padding: 8px 11px 8px 15px;  
+  align-items: center;  
+  justify-content: space-between;  
+  gap: 10px;  
+  border: 1px solid #e4dbd0;  
+  background: #fffdfa;  
+  box-shadow: 0 6px 30px #2118102b;  
+}  
+.admin-toolbar[hidden] { display: none; }  
+.toolbar-label { overflow: hidden; color: var(--olive-dark); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }  
+.toolbar-save { min-height: 37px; padding-inline: 15px; }  
+.toolbar-text { border: 0; background: transparent; color: #82766a; font-size: 11px; cursor: pointer; }  
+.editable-target { outline: 1px dashed #c4a775; outline-offset: 4px; }  
+.editable-target.is-editing { outline: 2px solid var(--olive); background: #fffdf2b8; }  
+.edit-pencil {  
+  position: fixed;  
+  z-index: 30;  
+  display: grid;  
+  width: 30px;  
+  height: 30px;  
+  padding: 0;  
+  place-items: center;  
+  border: 2px solid white;  
+  border-radius: 50%;  
+  background: var(--olive);  
+  color: white;  
+  box-shadow: 0 2px 8px #0004;  
+  cursor: pointer;  
+}  
+.edit-pencil:hover { background: var(--olive-dark); transform: scale(1.07); }  
+.edit-pencil svg { width: 14px; height: 14px; }  
+.toast {  
+  position: fixed;  
+  z-index: 40;  
+  right: 16px;  
+  bottom: 82px;  
+  left: 16px;  
+  width: fit-content;  
+  max-width: min(440px, calc(100% - 32px));  
+  margin: auto;  
+  padding: 11px 15px;  
+  border-radius: 2px;  
+  background: #393a32;  
+  color: white;  
+  font-size: 12px;  
+  opacity: 0;  
+  pointer-events: none;  
+  transform: translateY(8px);  
+  transition: opacity .18s ease, transform .18s ease;  
+}  
+.toast.is-visible { opacity: 1; transform: translateY(0); }
