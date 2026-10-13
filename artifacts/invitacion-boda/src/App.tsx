@@ -154,7 +154,6 @@ function App() {
           data-testid="button-open-invitation"  
         >  
           <img className="envelope-base" data-key="envelope_base_img" src={asset('pdfimg-022.jpg')} alt="" />  
-          <span className="envelope-open" aria-hidden="true" />  
           <img className="envelope-flower top" data-key="envelope_flower_top" src={asset('florals-sprig.png')} alt="" />  
           <img className="envelope-flower bottom" data-key="envelope_flower_bottom" src={asset('florals-bouquet.png')} alt="" />  
         </button>  
@@ -166,7 +165,8 @@ function App() {
         <p className="guest-reserved" data-key="guest_reserved">HEMOS RESERVADO</p>  
         <p className="guest-count" data-key="guest_count">2</p>  
         <p className="guest-caption" data-key="guest_caption">LUGARES A TU NOMBRE</p>  
-      </section>  
+      </section>
+      {envelopeOpen && (<>
   
       <section className="video-still" aria-label="Recuerdo de Angela y Robert">  
         <img src={asset('pdfimg-000.png')} data-key="video_still_img" alt="Angela y Robert sostienen un ramo de flores" />  
@@ -479,7 +479,8 @@ function App() {
         </div>  
       </section>  
       <footer className="footer-note" data-key="footer_note">CON CARIÑO, ANGELA &amp; ROBERT · {fechaPunteada}</footer>  
-    </main>  
+        </>)}
+      </main>  
   );  
 }  
   
