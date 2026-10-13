@@ -564,8 +564,8 @@ button, a, input, textarea, select {
   display: inline-block;  
   padding: 4px 8px;  
   border-radius: 5px;  
-  background: #69784b;  
-  color: #fffaf5;  
+  background: transparent;  
+  color: #62724a;  
   font-family: 'Cormorant Garamond', serif;  
   font-size: clamp(11px, 3.1vw, 15px);  
   letter-spacing: .06em;  
