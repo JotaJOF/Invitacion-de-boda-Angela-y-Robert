@@ -7,12 +7,13 @@
 }  
   
 .site-footer {  
-  display: flex;  
+  display: none;  
   min-height: 34px;  
   padding: 6px 12px;  
   justify-content: center;  
-  background: #fff;  
+  background: #f7f0ec;  
 }  
+body.invite-open .site-footer { display: flex; }
 .admin-open {  
   padding: 5px 9px;  
   border: 0;  
