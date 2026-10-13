@@ -16,6 +16,41 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <footer class="site-footer">
+      <button class="admin-open" id="admin-open" type="button">ADMINISTRAR SITIO</button>
+    </footer>
+
+    <dialog class="login-dialog" id="login-dialog" aria-labelledby="login-title">
+      <form class="login-card" id="login-form">
+        <button class="dialog-close" id="login-close" type="button" aria-label="Cerrar">×</button>
+        <p class="eyebrow">ACCESO PRIVADO</p>
+        <h2 id="login-title">Administrar sitio</h2>
+        <label for="admin-username">Usuario</label>
+        <input id="admin-username" name="username" autocomplete="username" required />
+        <label for="admin-password">Contraseña</label>
+        <input
+          id="admin-password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <p class="form-message" id="login-message" role="status"></p>
+        <button class="button button-olive login-submit" type="submit">ENTRAR</button>
+      </form>
+    </dialog>
+
+    <aside class="admin-toolbar" id="admin-toolbar" aria-label="Herramientas de edición" hidden>
+      <span class="toolbar-label" id="toolbar-message">Edición activada</span>
+      <button class="button button-olive toolbar-save" id="save-content" type="button">
+        GUARDAR
+      </button>
+      <button class="toolbar-text" id="cancel-edit" type="button">Salir</button>
+    </aside>
+    <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" hidden />  
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>  
+    <script type="module" src="/src/main.tsx"></script>  
+    <link rel="stylesheet" href="/admin.css" />  
+    <script src="/admin.js" defer></script>  
+  </body>  
 </html>
