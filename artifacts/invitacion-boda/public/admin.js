@@ -1,5 +1,5 @@
 const pendingChanges = new Map();  
-const contentNodes = [...document.querySelectorAll("[data-key]")];  
+let contentNodes = [];  
 const loginDialog = document.querySelector("#login-dialog");  
 const loginForm = document.querySelector("#login-form");  
 const loginMessage = document.querySelector("#login-message");  
@@ -282,8 +282,17 @@ window.addEventListener("resize", positionPencils);
   
 for (const element of contentNodes) recordBaseline(element);  
   
-loadContent();  
-api("/api/me", { method: "GET" })  
+function init() {  
+  contentNodes = [...document.querySelectorAll("[data-key]")];  
+  if (contentNodes.length === 0) {  
+    window.setTimeout(init, 250);  
+    return;  
+  }  
+  loadContent();  
+}  
+init();  
+  
+api("/api/me", { method: "GET" })
   .then((session) => {  
     authenticated = session.authenticated === true;  
   })  
