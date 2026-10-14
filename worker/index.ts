@@ -28,6 +28,7 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "image/webp": "webp",  
   "video/mp4": "mp4",  
   "video/webm": "webm",  
+  "video/quicktime": "mov",  
 };
 
 function json(data: unknown, status = 200, headers: HeadersInit = {}): Response {
