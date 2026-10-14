@@ -151,3 +151,6 @@ body.invite-open .site-footer { display: flex; }
   transition: opacity .18s ease, transform .18s ease;  
 }  
 .toast.is-visible { opacity: 1; transform: translateY(0); }
+html.is-loading-content [data-key] {  
+  visibility: hidden;  
+}
