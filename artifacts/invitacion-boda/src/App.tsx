@@ -4,7 +4,6 @@ import {
   ChevronDown,  
   ChevronUp,  
   MapPin,  
-  Play,  
   Upload,  
 } from 'lucide-react';  
   
@@ -79,7 +78,71 @@ function getTimeLeft(target: number) {
     [String(seconds).padStart(2, '0'), 'SEGUNDOS'],  
   ] as const;  
 }  
+type Slide = { file: string; key: string };  
   
+const isVideoFile = (f: string) => /\.(mp4|webm|mov)$/i.test(f);  
+  
+function PhotoCarousel({ slides }: { slides: Slide[] }) {  
+  const track = useRef<HTMLDivElement>(null);  
+  const pauseUntil = useRef(0);  
+  
+  useEffect(() => {  
+    if (slides.length < 2) return; // una sola imagen o video => no rota  
+    const timer = window.setInterval(() => {  
+      const el = track.current;  
+      if (!el || Date.now() < pauseUntil.current) return;  
+      const w = el.clientWidth;  
+      const next = Math.round(el.scrollLeft / w) + 1;  
+      el.scrollTo({ left: next >= slides.length ? 0 : next * w, behavior: 'smooth' });  
+    }, 3000);  
+    return () => window.clearInterval(timer);  
+  }, [slides.length]);  
+  
+  const holdForSwipe = () => { pauseUntil.current = Date.now() + 4000; };  
+  
+  return (  
+    <section style={{ width: '100%' }}>  
+      <div  
+        ref={track}  
+        onTouchStart={holdForSwipe}  
+        onScroll={holdForSwipe}  
+        style={{  
+          display: 'flex',  
+          overflowX: 'auto',  
+          scrollSnapType: 'x mandatory',  
+          scrollbarWidth: 'none',  
+          msOverflowStyle: 'none',  
+          WebkitOverflowScrolling: 'touch',  
+        }}  
+      >  
+        {slides.map((s) =>  
+          isVideoFile(s.file) ? (  
+            <video  
+              key={s.key}  
+              data-key={s.key}  
+              src={asset(s.file)}  
+              autoPlay  
+              loop  
+              muted  
+              playsInline  
+              preload="auto"  
+              style={{ minWidth: '100%', width: '100%', height: 'auto', display: 'block', scrollSnapAlign: 'start' }}  
+            />  
+          ) : (  
+            <img  
+              key={s.key}  
+              data-key={s.key}  
+              src={asset(s.file)}  
+              alt="Angela y Robert"  
+              style={{ minWidth: '100%', width: '100%', height: 'auto', display: 'block', scrollSnapAlign: 'start' }}  
+            />  
+          ),  
+        )}  
+      </div>  
+      <style>{`.invite-shell section div::-webkit-scrollbar{display:none}`}</style>  
+    </section>  
+  );  
+}  
 function App() {  
   const [envelopeOpen, setEnvelopeOpen] = useState(false);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
@@ -172,8 +235,16 @@ function App() {
       {envelopeOpen && (<>
   
       <section className="video-still" id="invitation-start" aria-label="Recuerdo de Angela y Robert">  
-        <img src={asset('pdfimg-000.png')} data-key="video_still_img" alt="Angela y Robert sostienen un ramo de flores" />  
-        <div className="video-play" aria-hidden="true"><span><Play size={31} fill="currentColor" strokeWidth={0} /></span></div>  
+        <video  
+          data-key="video_still_img"  
+          src={asset('pdfimg-000.png')}  
+          autoPlay  
+          loop  
+          muted  
+          playsInline  
+          preload="auto"  
+          style={{ width: '100%', height: 'auto', display: 'block' }}  
+        />  
       </section>  
   
       <section className="olive-section blessing">  
@@ -286,14 +357,13 @@ function App() {
         </div>  
       </section>  
   
-      <section className="closing-photo-section" style={{ width: '100%' }}>  
-        <img  
-          src={asset('couple-veil.webp')}  
-          data-key="veil_photo_img"  
-          alt="Angela y Robert"  
-          style={{ width: '100%', height: 'auto', display: 'block' }}  
-        />  
-      </section>  
+      <PhotoCarousel  
+        slides={[  
+          { file: 'couple-veil.webp', key: 'carousel_faltan_1' },  
+          { file: 'pdfimg-010.jpg', key: 'carousel_faltan_2' },  
+          { file: 'pdfimg-002.jpg', key: 'carousel_faltan_3' },  
+        ]}  
+      />  
   
       <section className="paper-section venue-section">  
         <h2 className="script-title" data-key="venue_title">Ceremonia <span className="serif">&</span> Recepción</h2>  
@@ -307,7 +377,14 @@ function App() {
         <a className="olive-button" href={mapUrl} target="_blank" rel="noreferrer" data-testid="link-venue-map">  
           <MapPin size={14} /> <span data-key="venue_button_text">VER UBICACIÓN</span>  
         </a>  
-      </section>  
+      </section>
+        <PhotoCarousel  
+        slides={[  
+          { file: 'couple-veil.webp', key: 'carousel_ubicacion_1' },  
+          { file: 'pdfimg-011.jpg', key: 'carousel_ubicacion_2' },  
+          { file: 'pdfimg-003.jpg', key: 'carousel_ubicacion_3' },  
+        ]}  
+      />
   
       <section className="dress-section">  
         <h2 className="dress-title"><span data-key="dress_title_1">CÓDIGO DE</span><strong data-key="dress_title_2">Vestimenta</strong></h2>  
@@ -387,7 +464,14 @@ function App() {
             </p>  
           )}  
         </div>  
-      </section>  
+      </section>
+        <PhotoCarousel  
+        slides={[  
+          { file: 'couple-veil.webp', key: 'carousel_regalo_1' },  
+          { file: 'pdfimg-010.jpg', key: 'carousel_regalo_2' },  
+          { file: 'pdfimg-002.jpg', key: 'carousel_regalo_3' },  
+        ]}  
+      />
   
       <section className="faq-section">  
         <h2 className="script-title" data-key="faq_title">Recomendaciones <span className="serif">& FAQ</span></h2>  
