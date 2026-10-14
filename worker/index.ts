@@ -300,14 +300,14 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
           /^[a-z0-9_]{1,120}$/.test(requestedKey)  
             ? requestedKey  
             : crypto.randomUUID();  
-        const path = `${baseName}.${extension}`;  
+        const path = `${baseName}-${crypto.randomUUID()}.${extension}`;  
         const { error } = await client.storage.from("media").upload(  
           path,  
           new Blob([await file.arrayBuffer()], { type: file.type }),  
           {  
             cacheControl: "60",  
             contentType: file.type,  
-            upsert: true,  
+            upsert: false,  
           },  
         );
         if (error) return json({ error: "No se pudo subir la imagen." }, 502);

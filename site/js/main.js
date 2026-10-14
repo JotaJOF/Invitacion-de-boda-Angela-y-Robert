@@ -45,10 +45,45 @@ async function api(path, options = {}) {
   return result;
 }
 
-function setElementValue(element, type, value) {
+function cacheBustedImageUrl(value) {
+  const url = new URL(value, window.location.href);
+  url.searchParams.set("v", String(Date.now()));
+  return url.href;
+}
+
+async function preloadImage(value) {
+  const image = new Image();
+  image.decoding = "async";
+  image.src = value;
+
+  if (typeof image.decode === "function") {
+    await image.decode();
+  } else if (!image.complete) {
+    await new Promise((resolve, reject) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", () => reject(new Error("No se pudo cargar la imagen.")), { once: true });
+    });
+  }
+
+  if (image.naturalWidth === 0) throw new Error("No se pudo cargar la imagen.");
+  return image.src;
+}
+
+async function setElementValue(element, type, value, isCurrent = () => true) {
   if (type === "image" && element instanceof HTMLImageElement) {
-    element.src = value;
-  } else if (type === "text") {
+    element.style.visibility = "hidden";
+    try {
+      const nextSrc = cacheBustedImageUrl(value);
+      const loadedSrc = await preloadImage(nextSrc);
+      if (!isCurrent()) return;
+      element.src = loadedSrc;
+      element.style.removeProperty("visibility");
+    } catch (error) {
+      element.removeAttribute("src");
+      element.style.visibility = "hidden";
+      throw error;
+    }
+  } else if (type === "text" && isCurrent()) {
     element.textContent = value;
   }
 }
@@ -64,16 +99,39 @@ function recordBaseline(element) {
 async function loadContent() {
   try {
     const { content = {} } = await api("/api/content", { method: "GET" });
+    let failedImages = false;
+    const imageLoads = [];
     for (const element of contentNodes) {
       const key = element.dataset.key;
       const saved = key ? content[key] : null;
-      if (saved && (saved.type === "text" || saved.type === "image")) {
+      if (saved && saved.type === "image" && element instanceof HTMLImageElement) {
+        imageLoads.push(
+          setElementValue(element, saved.type, saved.value,
+          ).catch(() => {
+            failedImages = true;
+            element.removeAttribute("src");
+            element.style.visibility = "hidden";
+          }),
+        );
+      } else if (saved && (saved.type === "text" || saved.type === "image")) {
         setElementValue(element, saved.type, saved.value);
       }
-      recordBaseline(element);
+    }
+    await Promise.all(imageLoads);
+    for (const element of contentNodes) recordBaseline(element);
+    if (failedImages) {
+      showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");
     }
   } catch {
-    showToast("El contenido guardado no está disponible; se muestran los ejemplos.");
+    for (const element of contentNodes) {
+      if (element instanceof HTMLImageElement) {
+        element.removeAttribute("src");
+        element.style.visibility = "hidden";
+      }
+    }
+    showToast("No se pudo cargar el contenido guardado; se ocultaron las imágenes anteriores.");
+  } finally {
+    document.documentElement.classList.remove("is-loading-content");
   }
 }
 
@@ -186,7 +244,7 @@ imagePicker.addEventListener("change", async () => {
     const form = new FormData();
     form.set("file", file);
     const { url } = await api("/api/upload", { method: "POST", body: form });
-    activeImage.src = url;
+    await setElementValue(activeImage, "image", url);
     pendingChanges.set(activeImage.dataset.key, {
       element: activeImage,
       type: "image",
@@ -215,15 +273,15 @@ document.querySelector("#save-content").addEventListener("click", async () => {
       });
       savedKeys.push(key);
     }
-    savedKeys.forEach((key) => {
+    for (const key of savedKeys) {
       const change = pendingChanges.get(key);
       if (change) {
-        setElementValue(change.element, change.type, change.value);
+        if (change.type === "text") setElementValue(change.element, change.type, change.value);
         stopInlineEditing(change.element);
         recordBaseline(change.element);
         pendingChanges.delete(key);
       }
-    });
+    }
     showToast("Cambios guardados.");
     toolbarMessage.textContent = "Edición activada";
   } catch (error) {
@@ -248,7 +306,13 @@ document.querySelector("#cancel-edit").addEventListener("click", async () => {
   pendingChanges.forEach(({ element }) => {
     const key = element.dataset.key;
     if (element instanceof HTMLImageElement) {
-      element.src = element.dataset.originalSrc;
+      if (element.dataset.originalSrc) {
+        element.src = element.dataset.originalSrc;
+        element.style.removeProperty("visibility");
+      } else {
+        element.removeAttribute("src");
+        element.style.visibility = "hidden";
+      }
     } else {
       element.textContent = element.dataset.originalText ?? "";
     }
