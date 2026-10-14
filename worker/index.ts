@@ -265,6 +265,89 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       );
       return json({ content });
     }
+    // ===== RSVP: guardar / modificar confirmación (público) =====  
+    if (path === "/api/rsvp" && method === "POST") {  
+      const body = (await request.json()) as Record<string, unknown>;  
+      const name = typeof body.name === "string" ? body.name.trim() : "";  
+      const phone = typeof body.phone === "string" ? body.phone.trim() : "";  
+      const attendance = body.attendance === "yes" || body.attendance === "no"  
+        ? body.attendance : "";  
+      const passes = Math.max(0, Math.min(20, Number(body.passes) || 0));  
+      const message = typeof body.message === "string"  
+        ? body.message.slice(0, 1000) : "";  
+      const source = body.source === "whatsapp" ? "whatsapp" : "form";  
+      const edit = body.edit === true; // true solo si el invitado aceptó modificar  
+  
+      if (!name || name.length > 200) {  
+        return json({ error: "El nombre es obligatorio." }, 400);  
+      }  
+  
+      const client = supabase(env);  
+      const { data: existing } = await client  
+        .from("guests")  
+        .select("id")  
+        .eq("name", name)  
+        .maybeSingle();  
+  
+      if (existing && !edit) {  
+        // Ya confirmó: el frontend debe mostrar la ventanita de modificación  
+        return json({ alreadyConfirmed: true });  
+      }  
+  
+      if (existing) {  
+        const { error } = await client  
+          .from("guests")  
+          .update({  
+            phone, attendance, passes, message, source,  
+            modified: true,  
+            modified_at: new Date().toISOString(),  
+          })  
+          .eq("id", existing.id);  
+        if (error) return json({ error: "No se pudo actualizar." }, 502);  
+        return json({ saved: true, modified: true });  
+      }  
+  
+      const { error } = await client.from("guests").insert({  
+        name, phone, attendance, passes, message, source,  
+      });  
+      if (error) return json({ error: "No se pudo guardar." }, 502);  
+      return json({ saved: true, modified: false });  
+    }  
+  
+    // ===== Lista de invitados (solo admin) =====  
+    if (path === "/api/guests" && method === "GET") {  
+      const session = await getSession(request, env);  
+      if (!session) return json({ error: "Inicia sesión." }, 401);  
+  
+      const { data, error } = await supabase(env)  
+        .from("guests")  
+        .select("id,name,phone,attendance,passes,message,source,created_at,modified,modified_at")  
+        .order("created_at");  
+      if (error) return json({ error: "No se pudo cargar la lista." }, 502);  
+      return json({ guests: data });  
+    }  
+  
+    // ===== Editar invitado manualmente (solo admin) =====  
+    if (/^\/api\/guests\/[0-9a-f-]{36}$/iu.test(path) && method === "PUT") {  
+      const session = await getSession(request, env);  
+      if (!session) return json({ error: "Inicia sesión." }, 401);  
+  
+      const id = path.slice("/api/guests/".length);  
+      const body = (await request.json()) as Record<string, unknown>;  
+      const attendance = body.attendance === "yes" || body.attendance === "no"  
+        ? body.attendance : "";  
+      const passes = Math.max(0, Math.min(20, Number(body.passes) || 0));  
+      const name = typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";  
+      const phone = typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : "";  
+      const message = typeof body.message === "string" ? body.message.slice(0, 1000) : "";  
+  
+      const { error } = await supabase(env)  
+        .from("guests")  
+        .update({ attendance, passes, name, phone, message })  
+        .eq("id", id);  
+      if (error) return json({ error: "No se pudo actualizar." }, 502);  
+      return json({ saved: true });  
+    }
 
     if (
       (path === "/api/content" && method === "POST") ||
