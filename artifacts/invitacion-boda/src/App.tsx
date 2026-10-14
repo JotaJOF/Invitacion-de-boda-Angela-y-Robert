@@ -148,9 +148,25 @@ function App() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
   const [preview, setPreview] = useState('');  
   const [albumFile, setAlbumFile] = useState('');  
-  const albumInput = useRef<HTMLInputElement>(null);  
+  const albumInput = useRef<HTMLInputElement>(null);
+  const [cfg, setCfg] = useState<Record<string, string>>({});  
+  const [confirmOpen, setConfirmOpen] = useState(false);  
+  const [modifyOpen, setModifyOpen] = useState(false);  
+  const [thanks, setThanks] = useState<null | 'yes' | 'no'>(null);  
+  const [rsvpDone, setRsvpDone] = useState(false);  
+  const pendingForm = useRef<FormData | null>(null);  
   
-  const targetDate = new Date('2027-03-13T00:00:00-04:00').getTime();  
+  useEffect(() => {  
+    fetch('/api/content').then((r) => r.json()).then(({ content = {} }) => {  
+      const flat: Record<string, string> = {};  
+      for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
+      setCfg(flat);  
+    }).catch(() => {});  
+    fetch(`/api/rsvp/${encodeURIComponent('María y Pablo')}`).then((r) => r.json())  
+      .then(({ rsvp }) => { if (rsvp) setRsvpDone(true); }).catch(() => {});  
+  }, []);
+  
+  const targetDate = new Date(cfg.cfg_date || '2027-03-13T19:00').getTime();  
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));  
   
   useEffect(() => {  
@@ -173,18 +189,39 @@ function App() {
     }, 360);  
   };  
   
+ const sendRsvp = async (form: FormData) => {  
+    await fetch('/api/rsvp', {  
+      method: 'POST',  
+      headers: { 'content-type': 'application/json' },  
+      body: JSON.stringify({  
+        guest_name: String(form.get('guestName') || '').trim(),  
+        attending: String(form.get('attendance') || 'yes') === 'yes',  
+        passes: Number(form.get('people')) || 0,  
+        message: String(form.get('message') || '').trim(),  
+        source: 'form',  
+      }),  
+    });  
+  };  
+  
+  const doConfirm = async () => {  
+    if (!pendingForm.current) return;  
+    const attendance = String(pendingForm.current.get('attendance') || 'yes');  
+    try {  
+      await sendRsvp(pendingForm.current);  
+      setConfirmOpen(false);  
+      setThanks(attendance === 'yes' ? 'yes' : 'no');  
+      setRsvpDone(true);  
+    } catch {  
+      setConfirmOpen(false);  
+      setPreview('No se pudo enviar. Intenta de nuevo.');  
+    }  
+  };  
+  
   const previewRsvp = (event: FormEvent<HTMLFormElement>) => {  
     event.preventDefault();  
-    const form = new FormData(event.currentTarget);  
-    const guestName = String(form.get('guestName') || 'María y Pablo').trim();  
-    const attendance = String(form.get('attendance') || 'yes');  
-    const people = String(form.get('people') || '2');  
-    const message = String(form.get('message') || '').trim();  
-    setPreview(  
-      attendance === 'yes'  
-        ? `Vista previa: ${guestName} confirmarían su asistencia para ${people} ${people === '1' ? 'persona' : 'personas'}.${message ? ` Mensaje: “${message}”` : ''}`  
-        : `Vista previa: ${guestName} indicarían que no podrán acompañarnos.`,  
-    );  
+    if (rsvpDone) { setModifyOpen(true); return; }  
+    pendingForm.current = new FormData(event.currentTarget);  
+    setConfirmOpen(true);  
   };  
   
   return (  
@@ -374,7 +411,7 @@ function App() {
           P.º de las Gardenias 602, Nueva Castilla,<br />  
           66052 Cd. Gral. Escobedo, N.L.  
         </p>  
-        <a className="olive-button" href={mapUrl} target="_blank" rel="noreferrer" data-testid="link-venue-map">  
+        <a className="olive-button" href={cfg.cfg_location_url || mapUrl} target="_blank" rel="noreferrer" data-testid="link-venue-map">  
           <MapPin size={14} /> <span data-key="venue_button_text">VER UBICACIÓN</span>  
         </a>  
       </section>
@@ -511,7 +548,7 @@ function App() {
           <form className="rsvp-form" onSubmit={previewRsvp}>  
             <div className="rsvp-field">  
               <label htmlFor="guest-name" data-key="rsvp_label_name">NOMBRE DEL INVITADO</label>  
-              <input id="guest-name" name="guestName" defaultValue="María y Pablo" data-testid="input-rsvp-name" />  
+              <input id="guest-name" name="guestName" defaultValue="María y Pablo" readOnly data-testid="input-rsvp-name" />  
             </div>  
             <p className="rsvp-note" data-key="rsvp_note">ESTA INVITACIÓN CUENTA CON 2 PASES.<br />UNA SOLA PERSONA DEBE CONFIRMAR LA ASISTENCIA.</p>  
             <div className="rsvp-field">  
@@ -533,7 +570,7 @@ function App() {
               <textarea id="message" name="message" data-testid="input-rsvp-message" />  
             </div>  
             <button className="olive-button light" type="submit" data-testid="button-rsvp-preview">  
-              <span data-key="rsvp_button_text">VER CONFIRMACIÓN</span>  
+              <span data-key="rsvp_button_text">CONFIRMAR</span>  
             </button>  
             {preview && <p className="preview-message" role="status" data-testid="status-rsvp-preview">{preview}</p>}  
             <p className="preview-caption" data-key="rsvp_preview_caption">Vista previa únicamente. Esta invitación no envía ni guarda confirmaciones.</p>  
@@ -541,18 +578,27 @@ function App() {
           <div style={{ marginTop: 22 }}>  
             <p className="eyebrow" data-key="whatsapp_eyebrow">RSVP POR WHATSAPP</p>  
             <p className="preview-caption" data-key="whatsapp_caption">TAMBIÉN PUEDES CONFIRMAR TU ASISTENCIA A TRAVÉS DEL SIGUIENTE ENLACE DE WHATSAPP</p>  
-            <a  
+            <button  
               className="olive-button light"  
-              href="#rsvp"  
-              onClick={(event) => {  
-                event.preventDefault();  
-                setPreview('No hay un enlace de WhatsApp configurado. Esta es solo una vista previa; no se enviará ninguna confirmación.');  
+              type="button"  
+              onClick={async () => {  
+                const num = window.prompt('Escribe tu número de WhatsApp (con código de país):');  
+                if (!num) return;  
+                const name = (document.getElementById('guest-name') as HTMLInputElement)?.value || 'Invitado';  
+                try {  
+                  await fetch('/api/rsvp', {  
+                    method: 'POST',  
+                    headers: { 'content-type': 'application/json' },  
+                    body: JSON.stringify({ guest_name: `${name} (${num})`, whatsapp: num, source: 'whatsapp', attending: null, passes: null, message: '' }),  
+                  });  
+                } catch { /* seguir a WhatsApp igual */ }  
+                const dest = (cfg.cfg_whatsapp || '').replace(/\D/g, '');  
+                window.open(`https://wa.me/${dest}?text=${encodeURIComponent(`Hola, soy ${name}. Confirmo mi asistencia.`)}`, '_blank');  
               }}  
-              data-testid="link-whatsapp-preview"  
               style={{ marginTop: 13 }}  
             >  
               <span data-key="whatsapp_button_text">CONFIRMAR ASISTENCIA</span>  
-            </a>  
+            </button>  
             <p className="preview-caption" data-key="whatsapp_note">Enlace de WhatsApp no configurado; la acción solo muestra esta nota.</p>  
           </div>  
         </div>  
@@ -564,7 +610,41 @@ function App() {
           <p data-key="closing_text">AGRADECEMOS PROFUNDAMENTE SU PRESENCIA Y SUS MUESTRAS DE CARIÑO EN NUESTRO DÍA ESPECIAL.</p>  
           <p className="script" data-key="closing_names">Angela y Robert</p>  
         </div>  
-      </section>  
+      </section>
+      {confirmOpen && (  
+        <div className="rsvp-modal" role="dialog">  
+          <div className="rsvp-modal-card">  
+            <p className="script-title">¿Está seguro de la información que enviará?</p>  
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>  
+              <button className="olive-button light" type="button" onClick={doConfirm}>SÍ</button>  
+              <button className="outline-button" type="button" onClick={() => setConfirmOpen(false)}>NO</button>  
+            </div>  
+          </div>  
+        </div>  
+      )}  
+      {modifyOpen && (  
+        <div className="rsvp-modal" role="dialog">  
+          <div className="rsvp-modal-card">  
+            <p className="script" style={{ fontSize: 40, margin: 0 }}>☺</p>  
+            <p className="script-title">¿Desea modificar su respuesta?</p>  
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>  
+              <button className="olive-button light" type="button" onClick={() => { setRsvpDone(false); setModifyOpen(false); }}>SÍ</button>  
+              <button className="outline-button" type="button" onClick={() => setModifyOpen(false)}>NO</button>  
+            </div>  
+          </div>  
+        </div>  
+      )}  
+      {thanks && (  
+        <div className="rsvp-modal" role="dialog">  
+          <div className="rsvp-modal-card">  
+            <img data-key={thanks === 'yes' ? 'confirm_image_yes' : 'confirm_image_no'} src={asset(thanks === 'yes' ? 'pdfimg-010.jpg' : 'pdfimg-002.jpg')} alt="" style={{ width: '100%', borderRadius: 8 }} />  
+            <p className="script-title" data-key={thanks === 'yes' ? 'confirm_thanks_yes' : 'confirm_thanks_no'}>  
+              {thanks === 'yes' ? '¡GRACIAS POR CONFIRMAR TU ASISTENCIA!' : '¡GRACIAS POR AVISARNOS!'}  
+            </p>  
+            <button className="olive-button light" type="button" onClick={() => setThanks(null)}>CERRAR</button>  
+          </div>  
+        </div>  
+      )}
       <footer className="footer-note" data-key="footer_note">CON CARIÑO, ANGELA &amp; ROBERT · {fechaPunteada}</footer>  
         </>)}
       </main>  
