@@ -103,10 +103,9 @@ async function loadContent() {
         imageLoads.push(
           setElementValue(element, saved.type, saved.value,
             () => loadVersion === contentLoadVersion,
-          ).catch(() => {
-            failedImages = true;
-            element.removeAttribute("src");
-            element.style.visibility = "hidden";
+          ).catch(() => {  
+            if (element.dataset.originalSrc) element.src = element.dataset.originalSrc;  
+            element.style.removeProperty("visibility");  
           }),
         );
       } else if (saved && (saved.type === "text" || saved.type === "image")) {
@@ -118,20 +117,14 @@ async function loadContent() {
     if (failedImages) {
       showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");
     }
-  } catch {
-    if (loadVersion === contentLoadVersion) {
-      for (const element of contentNodes) {
-        if (element instanceof HTMLImageElement) {
-          element.removeAttribute("src");
-          element.style.visibility = "hidden";
-        }
-      }
-      showToast("No se pudo cargar el contenido guardado; se ocultaron las imágenes anteriores.");
-    }
-  } finally {
-    if (loadVersion === contentLoadVersion) {
-      document.documentElement.classList.remove("is-loading-content");
-    }
+  } catch {  
+    if (loadVersion === contentLoadVersion) {  
+      showToast("No se pudo cargar el contenido guardado; se muestran las imágenes locales.");  
+    }  
+  } finally {  
+    if (loadVersion === contentLoadVersion) {  
+      document.documentElement.classList.remove("is-loading-content");  
+    }  
   }
 }
 
@@ -360,7 +353,6 @@ function refreshNodes() {
   if (nodes.length === contentNodes.length && nodes.every((node, index) => node === contentNodes[index])) return;
   contentNodes = nodes;
   if (!contentNodes.length) return;
-  document.documentElement.classList.add("is-loading-content");
   loadContent();
   if (editing) setEditingMode(true);
 }
@@ -371,7 +363,6 @@ if (inviteRoot) {
     subtree: true,  
   });  
 }  
-document.documentElement.classList.add("is-loading-content");  
 refreshNodes();  
   
 api("/api/me", { method: "GET" })  
