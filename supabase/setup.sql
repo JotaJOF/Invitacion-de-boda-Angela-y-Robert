@@ -41,6 +41,23 @@ grant execute on function public.verify_admin_login(text, text) to service_role;
 alter table public.site_content enable row level security;
 alter table public.admin_users enable row level security;
 
+-- Tabla de invitados / confirmaciones (RSVP)  
+create table if not exists public.guests (  
+  id uuid primary key default gen_random_uuid(),  
+  name text not null,                          -- nombre del invitado (NUNCA editable)  
+  phone text default '',                       -- numero de WhatsApp asociado  
+  attendance text not null default ''          -- 'yes' = confirma, 'no' = no puede, '' = pendiente  
+    check (attendance in ('', 'yes', 'no')),  
+  passes int not null default 0,               -- numero de pases/personas  
+  message text default '',                     -- mensaje del invitado  
+  source text not null default 'form',         -- 'form' o 'whatsapp'  
+  created_at timestamptz not null default now(), -- fecha y hora de envio  
+  modified boolean not null default false,     -- señal: si se modifico  
+  modified_at timestamptz                      -- fecha de la ultima modificacion  
+);  
+  
+alter table public.guests enable row level security;
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)  
 values (  
   'media',  
@@ -89,7 +106,13 @@ values
   ('envelope_image', 'image', '/assets/envelope-couple.webp'),
   ('date_card_image', 'image', '/assets/save-the-date.webp'),
   ('countdown_background', 'image', '/assets/roses-countdown.webp'),
-  ('closing_photo', 'image', '/assets/couple-veil.webp')
+  ('closing_photo', 'image', '/assets/couple-veil.webp'),
+  ('rsvp_confirm_yes_image', 'image', '/assets/closing-photo.jpg'),  
+  ('rsvp_confirm_no_image', 'image', '/assets/envelope-couple.webp'),  
+  ('rsvp_thanks_title', 'text', 'GRACIAS POR SU RESPUESTA'),  
+  ('rsvp_thanks_text', 'text', 'Hemos recibido su confirmación.'),  
+  ('rsvp_modify_prompt', 'text', '¿Desea modificar su respuesta?'),  
+  ('rsvp_confirm_prompt', 'text', '¿Está seguro de la información que enviará?')
 on conflict (key) do nothing;
 
 -- Reemplaza username y password antes de ejecutar.
