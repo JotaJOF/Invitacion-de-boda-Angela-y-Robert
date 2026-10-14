@@ -66,6 +66,8 @@ async function loadContent() {
     }  
   } catch {  
     showToast("El contenido guardado no está disponible; se muestran los ejemplos.");  
+  } finally {  
+    document.documentElement.classList.remove("is-loading-content");  
   }  
 }  
   
@@ -297,6 +299,7 @@ if (inviteRoot) {
     subtree: true,  
   });  
 }  
+document.documentElement.classList.add("is-loading-content");  
 refreshNodes();  
   
 api("/api/me", { method: "GET" })  
