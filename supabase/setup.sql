@@ -41,17 +41,20 @@ grant execute on function public.verify_admin_login(text, text) to service_role;
 alter table public.site_content enable row level security;
 alter table public.admin_users enable row level security;
 
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values (
-  'media',
-  'media',
-  true,
-  8388608,
-  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
-)
-on conflict (id) do update set
-  public = excluded.public,
-  file_size_limit = excluded.file_size_limit,
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)  
+values (  
+  'media',  
+  'media',  
+  true,  
+  52428800,  
+  array[  
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',  
+    'video/mp4', 'video/webm', 'video/quicktime'  
+  ]  
+)  
+on conflict (id) do update set  
+  public = excluded.public,  
+  file_size_limit = excluded.file_size_limit,  
   allowed_mime_types = excluded.allowed_mime_types;
 
 insert into public.site_content (key, type, value)
