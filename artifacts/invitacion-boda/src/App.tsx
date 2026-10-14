@@ -126,7 +126,7 @@ function PhotoCarousel({ slides }: { slides: Slide[] }) {
               muted  
               playsInline  
               preload="auto"  
-              style={{ minWidth: '100%', width: '100%', height: 'auto', display: 'block', scrollSnapAlign: 'start' }}  
+              style={{ minWidth: '100%', width: '100%', aspectRatio: '1.17', height: 'auto', objectFit: 'cover', display: 'block', scrollSnapAlign: 'start' }}  
             />  
           ) : (  
             <img  
@@ -134,7 +134,7 @@ function PhotoCarousel({ slides }: { slides: Slide[] }) {
               data-key={s.key}  
               src={asset(s.file)}  
               alt="Angela y Robert"  
-              style={{ minWidth: '100%', width: '100%', height: 'auto', display: 'block', scrollSnapAlign: 'start' }}  
+              style={{ minWidth: '100%', width: '100%', aspectRatio: '1.17', height: 'auto', objectFit: 'cover', display: 'block', scrollSnapAlign: 'start' }}  
             />  
           ),  
         )}  
