@@ -19,13 +19,15 @@ interface SessionPayload {
 
 const COOKIE_NAME = "__Host-admin_session";
 const SESSION_SECONDS = 60 * 60 * 12;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const MIME_EXTENSIONS: Record<string, string> = {
-  "image/avif": "avif",
-  "image/gif": "gif",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
+const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
+const MIME_EXTENSIONS: Record<string, string> = {  
+  "image/avif": "avif",  
+  "image/gif": "gif",  
+  "image/jpeg": "jpg",  
+  "image/png": "png",  
+  "image/webp": "webp",  
+  "video/mp4": "mp4",  
+  "video/webm": "webm",  
 };
 
 function json(data: unknown, status = 200, headers: HeadersInit = {}): Response {
@@ -275,7 +277,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       if (path === "/api/upload") {
         const contentLength = Number(request.headers.get("content-length") ?? 0);
         if (contentLength > MAX_IMAGE_BYTES + 128 * 1024) {
-          return json({ error: "La imagen supera el límite de 8 MB." }, 413);
+          return json({ error: "La imagen supera el límite de 50 MB." }, 413);
         }
 
         const form = await request.formData();
@@ -284,7 +286,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
           return json({ error: "Selecciona una imagen." }, 400);
         }
         if (file.size > MAX_IMAGE_BYTES) {
-          return json({ error: "La imagen supera el límite de 8 MB." }, 413);
+          return json({ error: "La imagen supera el límite de 50 MB." }, 413);
         }
         const extension = MIME_EXTENSIONS[file.type];
         if (!extension) {
