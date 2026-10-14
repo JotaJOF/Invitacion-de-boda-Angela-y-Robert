@@ -39,7 +39,7 @@ async function api(path, options = {}) {
   
 function setElementValue(element, type, value) {  
   if (type === "image" && element instanceof HTMLImageElement) {  
-    element.src = value;  
+    element.src = value + (value.includes("?") ? "&" : "?") + "v=" + Date.now();  
   } else if (type === "text") {  
     element.textContent = value;  
   }  
