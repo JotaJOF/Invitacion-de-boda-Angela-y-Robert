@@ -156,7 +156,7 @@ function App() {
           aria-label="Abrir invitación"  
           data-testid="button-open-invitation"  
         >  
-          <img className="envelope-base" data-key="envelope_base_img" src={asset('envelope-base.png')} alt="" />  
+          <img className="envelope-base" data-key="envelope_base_img" src={asset('envelope-base.webp')} alt="" />  
           <img className="envelope-flower top" data-key="envelope_flower_top" src={asset('florals-sprig.png')} alt="" />  
           <img className="envelope-flower bottom" data-key="envelope_flower_bottom" src={asset('florals-bouquet.png')} alt="" />  
         </button>  
