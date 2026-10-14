@@ -12,7 +12,7 @@ const toast = document.querySelector("#toast");
 let authenticated = false;  
 let editing = false;  
 let activeImage = null;  
-let toastTimeout;
+let toastTimeout;  
 let contentLoadVersion = 0;  
   
 function showToast(message) {  
@@ -38,85 +38,106 @@ async function api(path, options = {}) {
   return result;  
 }  
   
-function cacheBustedImageUrl(value) {
-  const url = new URL(value, window.location.href);
-  url.searchParams.set("v", String(Date.now()));
-  return url.href;
-}
-
-async function preloadImage(value) {
-  const image = new Image();
-  image.decoding = "async";
-  image.src = value;
-
-  if (typeof image.decode === "function") {
-    await image.decode();
-  } else if (!image.complete) {
-    await new Promise((resolve, reject) => {
-      image.addEventListener("load", resolve, { once: true });
-      image.addEventListener("error", () => reject(new Error("No se pudo cargar la imagen.")), { once: true });
-    });
-  }
-
-  if (image.naturalWidth === 0) throw new Error("No se pudo cargar la imagen.");
-  return image.src;
-}
-
-async function setElementValue(element, type, value, isCurrent = () => true) {
-  if (type === "image" && element instanceof HTMLImageElement) {
-    element.style.visibility = "hidden";
-    try {
-      const nextSrc = value;
-      const loadedSrc = await preloadImage(nextSrc);
-      if (!isCurrent()) return;
-      element.src = loadedSrc;
-      element.style.removeProperty("visibility");
-    } catch (error) {
-      element.removeAttribute("src");
-      element.style.visibility = "hidden";
-      throw error;
-    }
-  } else if (type === "text" && isCurrent()) {
-    element.textContent = value;
-  }
-}
-
+function isMediaElement(element) {  
+  return element instanceof HTMLImageElement || element instanceof HTMLVideoElement;  
+}  
+  
+async function preloadImage(value) {  
+  const image = new Image();  
+  image.decoding = "async";  
+  image.src = value;  
+  
+  if (typeof image.decode === "function") {  
+    await image.decode();  
+  } else if (!image.complete) {  
+    await new Promise((resolve, reject) => {  
+      image.addEventListener("load", resolve, { once: true });  
+      image.addEventListener("error", () => reject(new Error("No se pudo cargar la imagen.")), { once: true });  
+    });  
+  }  
+  
+  if (image.naturalWidth === 0) throw new Error("No se pudo cargar la imagen.");  
+  return image.src;  
+}  
+  
+async function preloadVideo(value) {  
+  const video = document.createElement("video");  
+  video.preload = "auto";  
+  video.muted = true;  
+  video.src = value;  
+  await new Promise((resolve, reject) => {  
+    video.addEventListener("loadeddata", resolve, { once: true });  
+    video.addEventListener("error", () => reject(new Error("No se pudo cargar el video.")), { once: true });  
+  });  
+  return value;  
+}  
+  
+async function setElementValue(element, type, value, isCurrent = () => true) {  
+  if (type === "image" && element instanceof HTMLImageElement) {  
+    element.style.visibility = "hidden";  
+    try {  
+      const loadedSrc = await preloadImage(value);  
+      if (!isCurrent()) return;  
+      element.src = loadedSrc;  
+      element.style.removeProperty("visibility");  
+    } catch (error) {  
+      element.removeAttribute("src");  
+      element.style.visibility = "hidden";  
+      throw error;  
+    }  
+  } else if (type === "image" && element instanceof HTMLVideoElement) {  
+    element.style.visibility = "hidden";  
+    try {  
+      const loadedSrc = await preloadVideo(value);  
+      if (!isCurrent()) return;  
+      element.src = loadedSrc;  
+      element.style.removeProperty("visibility");  
+    } catch (error) {  
+      element.removeAttribute("src");  
+      element.style.visibility = "hidden";  
+      throw error;  
+    }  
+  } else if (type === "text" && isCurrent()) {  
+    element.textContent = value;  
+  }  
+}  
+  
 function recordBaseline(element) {  
-  if (element instanceof HTMLImageElement) {  
+  if (isMediaElement(element)) {  
     element.dataset.originalSrc = element.getAttribute("src") ?? "";  
   } else {  
     element.dataset.originalText = element.textContent ?? "";  
   }  
 }  
   
-async function loadContent() {
-  const loadVersion = ++contentLoadVersion;
-  try {
-    const { content = {} } = await api("/api/content", { method: "GET" });
-    if (loadVersion !== contentLoadVersion) return;
-    let failedImages = false;
-    const imageLoads = [];
-    for (const element of contentNodes) {
-      const key = element.dataset.key;
-      const saved = key ? content[key] : null;
-      if (saved && saved.type === "image" && element instanceof HTMLImageElement) {
-        imageLoads.push(
-          setElementValue(element, saved.type, saved.value,
-            () => loadVersion === contentLoadVersion,
+async function loadContent() {  
+  const loadVersion = ++contentLoadVersion;  
+  try {  
+    const { content = {} } = await api("/api/content", { method: "GET" });  
+    if (loadVersion !== contentLoadVersion) return;  
+    let failedImages = false;  
+    const imageLoads = [];  
+    for (const element of contentNodes) {  
+      const key = element.dataset.key;  
+      const saved = key ? content[key] : null;  
+      if (saved && saved.type === "image" && isMediaElement(element)) {  
+        imageLoads.push(  
+          setElementValue(element, saved.type, saved.value,  
+            () => loadVersion === contentLoadVersion,  
           ).catch(() => {  
             if (element.dataset.originalSrc) element.src = element.dataset.originalSrc;  
             element.style.removeProperty("visibility");  
-          }),
-        );
-      } else if (saved && (saved.type === "text" || saved.type === "image")) {
-        setElementValue(element, saved.type, saved.value, () => loadVersion === contentLoadVersion);
-      }
-    }
-    await Promise.all(imageLoads);
-    for (const element of contentNodes) recordBaseline(element);
-    if (failedImages) {
-      showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");
-    }
+          }),  
+        );  
+      } else if (saved && (saved.type === "text" || saved.type === "image")) {  
+        setElementValue(element, saved.type, saved.value, () => loadVersion === contentLoadVersion);  
+      }  
+    }  
+    await Promise.all(imageLoads);  
+    for (const element of contentNodes) recordBaseline(element);  
+    if (failedImages) {  
+      showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");  
+    }  
   } catch {  
     if (loadVersion === contentLoadVersion) {  
       showToast("No se pudo cargar el contenido guardado; se muestran las imágenes locales.");  
@@ -125,9 +146,9 @@ async function loadContent() {
     if (loadVersion === contentLoadVersion) {  
       document.documentElement.classList.remove("is-loading-content");  
     }  
-  }
-}
-
+  }  
+}  
+  
 function pencilMarkup() {  
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';  
 }  
@@ -175,7 +196,7 @@ function addPencils() {
     button.setAttribute("aria-label", `Editar ${element.dataset.key}`);  
     button.innerHTML = pencilMarkup();  
     button.addEventListener("click", () => {  
-      if (element instanceof HTMLImageElement) {  
+      if (isMediaElement(element)) {  
         activeImage = element;  
         imagePicker.value = "";  
         imagePicker.click();  
@@ -216,11 +237,11 @@ document.addEventListener("input", (event) => {
 imagePicker.addEventListener("change", async () => {  
   const file = imagePicker.files?.[0];  
   if (!file || !activeImage) return;  
-  toolbarMessage.textContent = "Subiendo imagen…";  
+  toolbarMessage.textContent = "Subiendo archivo…";  
   try {  
     const form = new FormData();  
-    form.set("file", file);
-    form.set("key", activeImage.dataset.key);
+    form.set("file", file);  
+    form.set("key", activeImage.dataset.key);  
     const { url } = await api("/api/upload", { method: "POST", body: form });  
     await setElementValue(activeImage, "image", url);  
     pendingChanges.set(activeImage.dataset.key, {  
@@ -231,7 +252,7 @@ imagePicker.addEventListener("change", async () => {
     toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
   } catch (error) {  
     showToast(error.message);  
-    toolbarMessage.textContent = "No se pudo subir la imagen.";  
+    toolbarMessage.textContent = "No se pudo subir el archivo.";  
   }  
 });  
   
@@ -251,14 +272,14 @@ document.querySelector("#save-content").addEventListener("click", async () => {
       });  
       savedKeys.push(key);  
     }  
-    for (const key of savedKeys) {
-      const change = pendingChanges.get(key);
-      if (change) {
-        if (change.type === "text") setElementValue(change.element, change.type, change.value);
-        stopInlineEditing(change.element);
-        recordBaseline(change.element);
-        pendingChanges.delete(key);
-      }
+    for (const key of savedKeys) {  
+      const change = pendingChanges.get(key);  
+      if (change) {  
+        if (change.type === "text") setElementValue(change.element, change.type, change.value);  
+        stopInlineEditing(change.element);  
+        recordBaseline(change.element);  
+        pendingChanges.delete(key);  
+      }  
     }  
     showToast("Cambios guardados.");  
     toolbarMessage.textContent = "Edición activada";  
@@ -283,13 +304,13 @@ document.querySelector("#cancel-edit").addEventListener("click", async () => {
   }  
   pendingChanges.forEach(({ element }) => {  
     const key = element.dataset.key;  
-    if (element instanceof HTMLImageElement) {  
-      if (element.dataset.originalSrc) {
-        element.src = element.dataset.originalSrc;
-        element.style.removeProperty("visibility");
-      } else {
-        element.removeAttribute("src");
-        element.style.visibility = "hidden";
+    if (isMediaElement(element)) {  
+      if (element.dataset.originalSrc) {  
+        element.src = element.dataset.originalSrc;  
+        element.style.removeProperty("visibility");  
+      } else {  
+        element.removeAttribute("src");  
+        element.style.visibility = "hidden";  
       }  
     } else {  
       element.textContent = element.dataset.originalText ?? "";  
@@ -348,15 +369,15 @@ window.addEventListener("resize", positionPencils);
   
 const inviteRoot = document.querySelector("#root");  
   
-function refreshNodes() {
-  const nodes = [...document.querySelectorAll("[data-key]")];
-  if (nodes.length === contentNodes.length && nodes.every((node, index) => node === contentNodes[index])) return;
-  contentNodes = nodes;
-  if (!contentNodes.length) return;
-  loadContent();
-  if (editing) setEditingMode(true);
-}
-
+function refreshNodes() {  
+  const nodes = [...document.querySelectorAll("[data-key]")];  
+  if (nodes.length === contentNodes.length && nodes.every((node, index) => node === contentNodes[index])) return;  
+  contentNodes = nodes;  
+  if (!contentNodes.length) return;  
+  loadContent();  
+  if (editing) setEditingMode(true);  
+}  
+  
 if (inviteRoot) {  
   new MutationObserver(refreshNodes).observe(inviteRoot, {  
     childList: true,  
