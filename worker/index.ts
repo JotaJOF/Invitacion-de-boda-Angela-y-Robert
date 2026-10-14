@@ -307,7 +307,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
             upsert: false,  
           },  
         );
-        if (error) return json({ error: "No se pudo subir la imagen." }, 502);
+        if (error) return json({ error: `No se pudo subir el archivo: ${error.message}` }, 502);
 
         const { data } = client.storage.from("media").getPublicUrl(path);
         return json({ url: data.publicUrl, path }, 201);
