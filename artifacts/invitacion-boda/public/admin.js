@@ -317,7 +317,10 @@ document.querySelector("#cancel-edit").addEventListener("click", async () => {
     }  
     stopInlineEditing(element);  
     pendingChanges.delete(key);  
-  });  
+  });
+  adminFloatBar.hidden = true;  
+  adminPanel.hidden = true;
+  
   await api("/api/logout", { method: "POST", body: "{}" }).catch(() => {});  
   authenticated = false;  
   setEditingMode(false);  
@@ -326,7 +329,7 @@ document.querySelector("#cancel-edit").addEventListener("click", async () => {
   
 adminOpen.addEventListener("click", async () => {  
   if (authenticated) {  
-    setEditingMode(true);  
+    showAdminPanel();  
     return;  
   }  
   loginMessage.textContent = "";  
@@ -355,8 +358,8 @@ loginForm.addEventListener("submit", async (event) => {
     authenticated = true;  
     loginDialog.close();  
     loginForm.reset();  
-    setEditingMode(true);  
-    showToast("Sesión iniciada. Pulsa los lápices para editar.");  
+    showAdminPanel();  
+    showToast("Sesión iniciada.");  
   } catch (error) {  
     loginMessage.textContent = error.message;  
   } finally {  
@@ -393,3 +396,62 @@ api("/api/me", { method: "GET" })
   .catch(() => {  
     authenticated = false;  
   });
+const adminPanel = document.querySelector("#admin-panel");  
+const panelMessage = document.querySelector("#panel-message");  
+const adminFloatBar = document.querySelector("#admin-float-bar");  
+const PANEL_KEYS = {  
+  cfg_location_url: "#cfg-location",  
+  cfg_whatsapp: "#cfg-whatsapp",  
+  cfg_date: "#cfg-date",  
+  cfg_drive_url: "#cfg-drive",  
+};  
+  
+async function loadPanel() {  
+  try {  
+    const { content = {} } = await api("/api/content", { method: "GET" });  
+    for (const [key, sel] of Object.entries(PANEL_KEYS)) {  
+      const input = document.querySelector(sel);  
+      if (input && content[key]) input.value = content[key].value;  
+    }  
+  } catch { /* sin datos previos */ }  
+}  
+  
+function showAdminPanel() {  
+  adminPanel.hidden = false;  
+  adminFloatBar.hidden = true;  
+  adminToolbar.hidden = true;  
+  loadPanel();  
+}  
+  
+document.querySelector("#panel-save").addEventListener("click", async () => {  
+  panelMessage.textContent = "";  
+  try {  
+    for (const [key, sel] of Object.entries(PANEL_KEYS)) {  
+      const value = document.querySelector(sel).value.trim();  
+      if (!value) continue;  
+      await api(`/api/content/${key}`, {  
+        method: "PUT",  
+        body: JSON.stringify({ type: "text", value }),  
+      });  
+    }  
+    showToast("Datos guardados.");  
+  } catch (error) {  
+    panelMessage.textContent = error.message;  
+  }  
+});  
+  
+document.querySelector("#panel-edit").addEventListener("click", () => {  
+  adminPanel.hidden = true;  
+  adminFloatBar.hidden = false;  
+  setEditingMode(true);  
+});  
+  
+document.querySelector("#float-back").addEventListener("click", () => {  
+  setEditingMode(false);  
+  adminFloatBar.hidden = true;  
+  showAdminPanel();  
+});  
+  
+document.querySelector("#float-save").addEventListener("click", () => {  
+  document.querySelector("#save-content").click();  
+});
