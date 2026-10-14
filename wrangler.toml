@@ -11,3 +11,5 @@ run_worker_first = ["/api/*"]
   
 [observability]  
 enabled = true
+
+[previews]

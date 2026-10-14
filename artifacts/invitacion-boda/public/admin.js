@@ -13,8 +13,22 @@ let authenticated = false;
 let editing = false;  
 let activeImage = null;  
 let toastTimeout;
-let contentLoadVersion = 0;  
+let contentLoadVersion = 0;
+let savingChanges = false;
+const imageUploads = new Set();
+const imageUploadVersions = new Map();
+const previewObjectUrls = new Map();
+const previewObjectUrlHistory = new Map();  
   
+function updateImageUploadControls() {
+  const locked = savingChanges || imageUploads.size > 0;
+  document.querySelector("#save-content").disabled = locked;
+  document.querySelector("#cancel-edit").disabled = locked;
+  document.querySelectorAll(".edit-pencil").forEach((button) => {
+    button.disabled = savingChanges;
+  });
+}
+
 function showToast(message) {  
   toast.textContent = message;  
   toast.classList.add("is-visible");  
@@ -38,12 +52,6 @@ async function api(path, options = {}) {
   return result;  
 }  
   
-function cacheBustedImageUrl(value) {
-  const url = new URL(value, window.location.href);
-  url.searchParams.set("v", String(Date.now()));
-  return url.href;
-}
-
 async function preloadImage(value) {
   const image = new Image();
   image.decoding = "async";
@@ -64,30 +72,54 @@ async function preloadImage(value) {
 
 async function setElementValue(element, type, value, isCurrent = () => true) {
   if (type === "image" && element instanceof HTMLImageElement) {
-    element.style.visibility = "hidden";
+    const nextSrc = new URL(value, window.location.href).href;
+    const currentSrc = element.currentSrc || element.src;
+    if (currentSrc === nextSrc) return;
+
     try {
-      const nextSrc = cacheBustedImageUrl(value);
       const loadedSrc = await preloadImage(nextSrc);
       if (!isCurrent()) return;
       element.src = loadedSrc;
-      element.style.removeProperty("visibility");
     } catch (error) {
-      element.removeAttribute("src");
-      element.style.visibility = "hidden";
-      throw error;
+      // Keep the currently visible image if the replacement fails.
+      if (isCurrent()) throw error;
     }
   } else if (type === "text" && isCurrent()) {
     element.textContent = value;
   }
 }
 
-function recordBaseline(element) {  
-  if (element instanceof HTMLImageElement) {  
-    element.dataset.originalSrc = element.getAttribute("src") ?? "";  
-  } else {  
-    element.dataset.originalText = element.textContent ?? "";  
-  }  
-}  
+function keepPreviewUrls(key, keep) {
+  const urls = previewObjectUrlHistory.get(key);
+  if (!urls) return;
+  for (const url of urls) {
+    if (!keep.has(url)) {
+      URL.revokeObjectURL(url);
+      urls.delete(url);
+    }
+  }
+  if (urls.size === 0) {
+    previewObjectUrlHistory.delete(key);
+    previewObjectUrls.delete(key);
+  }
+}
+
+function recordBaseline(element) {
+  if (element instanceof HTMLImageElement) {
+    const key = element.dataset.key;
+    const currentSrc = element.getAttribute("src") ?? "";
+    element.dataset.originalSrc = currentSrc;
+    if (currentSrc.startsWith("blob:")) {
+      previewObjectUrls.set(key, currentSrc);
+      keepPreviewUrls(key, new Set([currentSrc]));
+    } else {
+      previewObjectUrls.delete(key);
+      keepPreviewUrls(key, new Set());
+    }
+  } else {
+    element.dataset.originalText = element.textContent ?? "";
+  }
+}
   
 async function loadContent() {
   const loadVersion = ++contentLoadVersion;
@@ -104,9 +136,7 @@ async function loadContent() {
           setElementValue(element, saved.type, saved.value,
             () => loadVersion === contentLoadVersion,
           ).catch(() => {
-            failedImages = true;
-            element.removeAttribute("src");
-            element.style.visibility = "hidden";
+            if (loadVersion === contentLoadVersion) failedImages = true;
           }),
         );
       } else if (saved && (saved.type === "text" || saved.type === "image")) {
@@ -116,21 +146,11 @@ async function loadContent() {
     await Promise.all(imageLoads);
     for (const element of contentNodes) recordBaseline(element);
     if (failedImages) {
-      showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");
+      showToast("No se pudo cargar una imagen; se conserva la imagen anterior.");
     }
   } catch {
     if (loadVersion === contentLoadVersion) {
-      for (const element of contentNodes) {
-        if (element instanceof HTMLImageElement) {
-          element.removeAttribute("src");
-          element.style.visibility = "hidden";
-        }
-      }
-      showToast("No se pudo cargar el contenido guardado; se ocultaron las imágenes anteriores.");
-    }
-  } finally {
-    if (loadVersion === contentLoadVersion) {
-      document.documentElement.classList.remove("is-loading-content");
+      showToast("No se pudo cargar el contenido guardado; se mantienen las imágenes disponibles.");
     }
   }
 }
@@ -220,34 +240,79 @@ document.addEventListener("input", (event) => {
   toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
 });  
   
-imagePicker.addEventListener("change", async () => {  
-  const file = imagePicker.files?.[0];  
-  if (!file || !activeImage) return;  
-  toolbarMessage.textContent = "Subiendo imagen…";  
-  try {  
-    const form = new FormData();  
+imagePicker.addEventListener("change", async () => {
+  if (savingChanges) {
+    imagePicker.value = "";
+    showToast("Espera a que termine el guardado antes de cambiar una imagen.");
+    return;
+  }
+  const file = imagePicker.files?.[0];
+  const element = activeImage;
+  if (!file || !element) return;
+
+  const key = element.dataset.key;
+  const uploadVersion = (imageUploadVersions.get(key) ?? 0) + 1;
+  imageUploadVersions.set(key, uploadVersion);
+  const previousSrc = element.getAttribute("src") ?? "";
+  const previousPending = pendingChanges.get(key);
+  const previousPreviewUrl = previewObjectUrls.get(key) ??
+    (previousSrc.startsWith("blob:") ? previousSrc : null);
+  const previewUrl = URL.createObjectURL(file);
+
+  imagePicker.value = "";
+  element.src = previewUrl;
+  const previewUrls = previewObjectUrlHistory.get(key) ?? new Set();
+  previewUrls.add(previewUrl);
+  previewObjectUrlHistory.set(key, previewUrls);
+  previewObjectUrls.set(key, previewUrl);
+  imageUploads.add(key);
+  updateImageUploadControls();
+  toolbarMessage.textContent = "Vista previa visible; subiendo imagen en segundo plano…";
+
+  try {
+    const form = new FormData();
     form.set("file", file);
-    form.set("key", activeImage.dataset.key);
-    const { url } = await api("/api/upload", { method: "POST", body: form });  
-    await setElementValue(activeImage, "image", url);  
-    pendingChanges.set(activeImage.dataset.key, {  
-      element: activeImage,  
-      type: "image",  
-      value: url,  
-    });  
-    toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
-  } catch (error) {  
-    showToast(error.message);  
-    toolbarMessage.textContent = "No se pudo subir la imagen.";  
-  }  
-});  
+    form.set("key", key);
+    const { url } = await api("/api/upload", { method: "POST", body: form });
+    if (imageUploadVersions.get(key) !== uploadVersion) return;
+
+    pendingChanges.set(key, { element, type: "image", value: url, previewUrl });
+  } catch (error) {
+    if (imageUploadVersions.get(key) === uploadVersion) {
+      if (previousSrc) element.setAttribute("src", previousSrc);
+      else element.removeAttribute("src");
+      if (previousPreviewUrl) previewObjectUrls.set(key, previousPreviewUrl);
+      else previewObjectUrls.delete(key);
+      if (previousPending) pendingChanges.set(key, previousPending);
+      else pendingChanges.delete(key);
+      keepPreviewUrls(key, previousPreviewUrl?.startsWith("blob:")
+        ? new Set([previousPreviewUrl])
+        : new Set());
+      showToast(error.message + " Se conservó la imagen anterior.");
+    }
+  } finally {
+    if (imageUploadVersions.get(key) === uploadVersion) {
+      imageUploads.delete(key);
+      updateImageUploadControls();
+      toolbarMessage.textContent = imageUploads.size
+        ? "Vista previa visible; queda otra imagen subiendo…"
+        : pendingChanges.size + " cambio" + (pendingChanges.size === 1 ? "" : "s") + " sin guardar";
+    }
+  }
+});
   
 document.querySelector("#save-content").addEventListener("click", async () => {  
+  if (imageUploads.size > 0 || savingChanges) {
+    showToast("Espera a que termine la subida antes de guardar.");
+    return;
+  }
   if (pendingChanges.size === 0) {  
     showToast("No hay cambios pendientes.");  
     return;  
   }  
   const button = document.querySelector("#save-content");  
+  savingChanges = true;
+  updateImageUploadControls();
   button.disabled = true;  
   const savedKeys = [];  
   try {  
@@ -280,24 +345,31 @@ document.querySelector("#save-content").addEventListener("click", async () => {
     showToast(error.message);  
     toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} pendiente${pendingChanges.size === 1 ? "" : "s"}`;  
   } finally {  
-    button.disabled = false;  
+    savingChanges = false;
+    updateImageUploadControls();  
   }  
 });  
   
 document.querySelector("#cancel-edit").addEventListener("click", async () => {  
+  if (imageUploads.size > 0 || savingChanges) {
+    showToast("Espera a que termine la subida antes de salir.");
+    return;
+  }
   if (pendingChanges.size && !window.confirm("¿Descartar los cambios que aún no guardaste?")) {  
     return;  
   }  
   pendingChanges.forEach(({ element }) => {  
     const key = element.dataset.key;  
     if (element instanceof HTMLImageElement) {  
-      if (element.dataset.originalSrc) {
-        element.src = element.dataset.originalSrc;
-        element.style.removeProperty("visibility");
-      } else {
-        element.removeAttribute("src");
-        element.style.visibility = "hidden";
-      }  
+      const originalSrc = element.dataset.originalSrc ?? "";
+      const currentSrc = element.getAttribute("src") ?? "";
+      if (originalSrc) element.setAttribute("src", originalSrc);
+      else element.removeAttribute("src");
+      if (originalSrc.startsWith("blob:")) previewObjectUrls.set(key, originalSrc);
+      else previewObjectUrls.delete(key);
+      keepPreviewUrls(key, originalSrc.startsWith("blob:")
+        ? new Set([originalSrc])
+        : new Set());  
     } else {  
       element.textContent = element.dataset.originalText ?? "";  
     }  
@@ -360,7 +432,6 @@ function refreshNodes() {
   if (nodes.length === contentNodes.length && nodes.every((node, index) => node === contentNodes[index])) return;
   contentNodes = nodes;
   if (!contentNodes.length) return;
-  document.documentElement.classList.add("is-loading-content");
   loadContent();
   if (editing) setEditingMode(true);
 }
@@ -371,7 +442,6 @@ if (inviteRoot) {
     subtree: true,  
   });  
 }  
-document.documentElement.classList.add("is-loading-content");  
 refreshNodes();  
   
 api("/api/me", { method: "GET" })  
