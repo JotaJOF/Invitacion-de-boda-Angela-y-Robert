@@ -51,7 +51,7 @@ function downloadCalendar() {
   link.click();  
   link.remove();  
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);  
-}  
+}
   
 const faqs = [  
   {  
