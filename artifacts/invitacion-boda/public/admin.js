@@ -66,7 +66,7 @@ async function setElementValue(element, type, value, isCurrent = () => true) {
   if (type === "image" && element instanceof HTMLImageElement) {
     element.style.visibility = "hidden";
     try {
-      const nextSrc = cacheBustedImageUrl(value);
+      const nextSrc = value;
       const loadedSrc = await preloadImage(nextSrc);
       if (!isCurrent()) return;
       element.src = loadedSrc;
