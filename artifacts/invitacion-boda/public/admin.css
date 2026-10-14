@@ -154,3 +154,64 @@ body.invite-open .site-footer { display: flex; }
 html.is-loading-content img[data-key] {
   visibility: hidden;
 }
+.admin-panel {  
+  position: fixed;  
+  z-index: 35;  
+  inset: 0;  
+  display: flex;  
+  align-items: flex-start;  
+  justify-content: center;  
+  padding: 40px 16px;  
+  overflow-y: auto;  
+  background: #f7f0ec;  
+}  
+.admin-panel[hidden] { display: none; }  
+.admin-panel-card {  
+  width: min(100%, 560px);  
+  padding: 28px 26px 34px;  
+  background: #fffdfa;  
+  border: 1px solid #e4dbd0;  
+  box-shadow: 0 24px 80px #241b1b30;  
+}  
+.admin-panel-card .eyebrow {  
+  margin: 0;  
+  color: var(--olive);  
+  font-size: 10px;  
+  font-weight: 600;  
+  letter-spacing: .2em;  
+}  
+.admin-panel-card h2 { margin: 6px 0 20px; font-family: var(--serif); font-size: 30px; }  
+.admin-panel-card label { display: block; margin: 0 0 6px; font-size: 11px; font-weight: 600; }  
+.admin-panel-card input {  
+  width: 100%;  
+  min-height: 44px;  
+  margin-bottom: 16px;  
+  padding: 10px;  
+  border: 1px solid #d9cec4;  
+  background: white;  
+  color: var(--ink);  
+  font-family: var(--sans);  
+}  
+.admin-panel-card input:focus { outline: 2px solid #68764a66; }  
+.admin-panel-actions { display: flex; gap: 12px; flex-wrap: wrap; }  
+.admin-panel-actions .button { flex: 1; }  
+.panel-note { margin: 14px 0 0; color: #82766a; font-size: 11px; line-height: 1.5; }  
+.admin-float-bar {  
+  position: fixed;  
+  z-index: 36;  
+  right: 12px;  
+  bottom: max(12px, env(safe-area-inset-bottom));  
+  left: 12px;  
+  display: flex;  
+  width: min(calc(100% - 24px), 620px);  
+  margin: 0 auto;  
+  padding: 8px 11px;  
+  align-items: center;  
+  justify-content: space-between;  
+  gap: 10px;  
+  border: 1px solid #e4dbd0;  
+  background: #fffdfa;  
+  box-shadow: 0 6px 30px #2118102b;  
+}  
+.admin-float-bar[hidden] { display: none; }  
+.float-back { border: 0; background: transparent; color: var(--olive-dark); font-size: 11px; font-weight: 600; letter-spacing: .1em; cursor: pointer; }
