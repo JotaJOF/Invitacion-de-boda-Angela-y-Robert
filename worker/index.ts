@@ -349,20 +349,8 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       return json({ saved: true });  
     }
 
-    if (
-      (path === "/api/content" && method === "POST") ||
-      // ===== Lista de invitados (solo admin) =====  
-    if (path === "/api/guests" && method === "GET") {  
-      const session = await getSession(request, env);  
-      if (!session) return json({ error: "Inicia sesión." }, 401);  
-  
-      const { data, error } = await supabase(env)  
-        .from("guests")  
-        .select("*")  
-        .order("created_at");  
-      if (error) return json({ error: "No se pudo cargar la lista." }, 502);  
-      return json({ guests: data });  
-    }  
+    if (  
+      (path === "/api/content" && method === "POST") ||  
   
     // ===== Confirmación pública (formulario / whatsapp) =====  
     if (path === "/api/guests" && method === "POST") {  
