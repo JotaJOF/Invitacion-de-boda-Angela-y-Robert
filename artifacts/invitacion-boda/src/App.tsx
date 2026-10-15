@@ -162,11 +162,17 @@ function App() {
       for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
       setCfg(flat);  
     }).catch(() => {});  
-    fetch(`/api/rsvp/${encodeURIComponent('María y Pablo')}`).then((r) => r.json())  
-      .then(({ rsvp }) => { if (rsvp) setRsvpDone(true); }).catch(() => {});  
-  }, []);
+    fetch(`/api/guests/check/${encodeURIComponent('María y Pablo')}`).then((r) => r.json())  
+      .then(({ guest }) => { if (guest) setRsvpDone(true); }).catch(() => {});  
+  }, []);  
   
-  const targetDate = new Date(cfg.cfg_date || '2027-03-13T19:00').getTime();  
+  const eventDate = cfg.cfg_date ? new Date(cfg.cfg_date) : WEDDING_DATE;  
+  const eDay = eventDate.getDate();  
+  const eMes = MESES[eventDate.getMonth()];  
+  const eYear = eventDate.getFullYear();  
+  const eFechaPunteada = `${dos(eDay)}.${dos(eventDate.getMonth() + 1)}.${eYear}`;  
+  
+  const targetDate = eventDate.getTime();  
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));  
   
   useEffect(() => {  
@@ -190,17 +196,18 @@ function App() {
   };  
   
  const sendRsvp = async (form: FormData) => {  
-    await fetch('/api/rsvp', {  
+    const res = await fetch('/api/guests', {  
       method: 'POST',  
       headers: { 'content-type': 'application/json' },  
       body: JSON.stringify({  
-        guest_name: String(form.get('guestName') || '').trim(),  
-        attending: String(form.get('attendance') || 'yes') === 'yes',  
+        name: 'María y Pablo',  
+        attendance: String(form.get('attendance') || 'yes'),  
         passes: Number(form.get('people')) || 0,  
         message: String(form.get('message') || '').trim(),  
         source: 'form',  
       }),  
     });  
+    if (!res.ok) throw new Error('No se pudo enviar.');  
   };  
   
   const doConfirm = async () => {  
@@ -247,7 +254,7 @@ function App() {
         <div className="ornament-rule cover-separator" aria-hidden="true">  
           <span>✤</span>  
         </div>  
-        <p className="cover-date serif" data-key="cover_date_line">MONTERREY, NL | {fechaPunteada}</p>  
+        <p className="cover-date serif">MONTERREY, NL | {eFechaPunteada}</p>  
   
         <button  
           className={`envelope-button${envelopeOpen ? ' is-open' : ''}`}  
@@ -336,9 +343,9 @@ function App() {
           >  
             <span data-key="save_date_label_1" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>Reserva</span>  
             <span data-key="save_date_label_2" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>ESTA FECHA</span>  
-            <span className="serif" style={{ fontSize: 38, lineHeight: 0.9 }}>{WEDDING.day}</span>  
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15 }}>{mesNombre}</span>  
-            <span style={{ fontSize: 12, letterSpacing: '.1em' }}>{WEDDING.year}</span>  
+            <span className="serif" style={{ fontSize: 38, lineHeight: 0.9 }}>{eDay}</span>  
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15 }}>{eMes}</span>  
+            <span style={{ fontSize: 12, letterSpacing: '.1em' }}>{eYear}</span>  
           </div>  
   
           <button  
@@ -368,7 +375,7 @@ function App() {
         <div style={{ position: 'relative', zIndex: 1 }}>  
           <h2 className="countdown-heading" data-key="countdown_heading" style={{ color: '#4a3f2f' }}>SOLO FALTAN</h2>  
           <p className="countdown-label" style={{ color: '#6b5d4a' }}>  
-            {WEDDING.day} · {mesNombre.toUpperCase()} · {WEDDING.year}  
+            {eDay} · {eMes.toUpperCase()} · {eYear}  
           </p>  
           <div  
             className="countdown-grid"  
@@ -573,7 +580,7 @@ function App() {
               <span data-key="rsvp_button_text">CONFIRMAR</span>  
             </button>  
             {preview && <p className="preview-message" role="status" data-testid="status-rsvp-preview">{preview}</p>}  
-            <p className="preview-caption" data-key="rsvp_preview_caption">Vista previa únicamente. Esta invitación no envía ni guarda confirmaciones.</p>  
+            <p className="preview-caption" data-key="rsvp_preview_caption">TU CONFIRMACIÓN SERÁ ENVIADA A LOS NOVIOS.</p>  
           </form>  
           <div style={{ marginTop: 22 }}>  
             <p className="eyebrow" data-key="whatsapp_eyebrow">RSVP POR WHATSAPP</p>  
@@ -586,10 +593,10 @@ function App() {
                 if (!num) return;  
                 const name = (document.getElementById('guest-name') as HTMLInputElement)?.value || 'Invitado';  
                 try {  
-                  await fetch('/api/rsvp', {  
+                  await fetch('/api/guests', {  
                     method: 'POST',  
                     headers: { 'content-type': 'application/json' },  
-                    body: JSON.stringify({ guest_name: `${name} (${num})`, whatsapp: num, source: 'whatsapp', attending: null, passes: null, message: '' }),  
+                    body: JSON.stringify({ name: `${name} (${num})`, phone: num, source: 'whatsapp', attendance: '', passes: 0, message: '' }),  
                   });  
                 } catch { /* seguir a WhatsApp igual */ }  
                 const dest = (cfg.cfg_whatsapp || '').replace(/\D/g, '');  
