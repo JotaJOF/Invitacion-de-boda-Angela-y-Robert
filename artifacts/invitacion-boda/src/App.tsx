@@ -147,7 +147,7 @@ function App() {
   const [envelopeOpen, setEnvelopeOpen] = useState(false);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
   const [preview, setPreview] = useState('');  
-  const [albumQueue, setAlbumQueue] = useState<{ f: File; status: string }[]>([]);  
+  const [albumQueue, setAlbumQueue] = useState<{ f: File; status: 'pendiente' | 'subiendo' | 'listo' | 'error'; progress: number }[]>([]);  
   const [uploading, setUploading] = useState(false);  
   const albumInput = useRef<HTMLInputElement>(null);
   const [cfg, setCfg] = useState<Record<string, string>>({});  
@@ -230,7 +230,8 @@ const uploadToDrive = async () => {
     setUploading(true);  
     for (let i = 0; i < albumQueue.length; i++) {  
       const item = albumQueue[i];  
-      setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'subiendo' } : p)));  
+      if (item.status === 'listo') continue; // no re-subir lo ya subido  
+      setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'subiendo', progress: 0 } : p)));  
       try {  
         const base64 = await new Promise<string>((resolve, reject) => {  
           const r = new FileReader();  
@@ -238,18 +239,29 @@ const uploadToDrive = async () => {
           r.onerror = () => reject(new Error('No se pudo leer.'));  
           r.readAsDataURL(item.f);  
         });  
-        await fetch(url, {  
-          method: 'POST',  
-          mode: 'no-cors',  
-          headers: { 'content-type': 'text/plain;charset=utf-8' },  
-          body: JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }),  
+        await new Promise<void>((resolve, reject) => {  
+          const xhr = new XMLHttpRequest();  
+          xhr.open('POST', url);  
+          xhr.setRequestHeader('content-type', 'text/plain;charset=utf-8');  
+          xhr.upload.onprogress = (e) => {  
+            if (e.lengthComputable) {  
+              const pct = Math.round((e.loaded / e.total) * 100);  
+              setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, progress: pct } : p)));  
+            }  
+          };  
+          xhr.onload = () => resolve();  
+          xhr.onerror = () => reject(new Error('Fallo'));  
+          xhr.send(JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }));  
         });  
-        setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'listo' } : p)));  
+        setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'listo', progress: 100 } : p)));  
       } catch {  
         setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'error' } : p)));  
       }  
     }  
     setUploading(false);  
+    window.setTimeout(() => {  
+      setAlbumQueue((prev) => prev.filter((p) => p.status !== 'listo'));  
+    }, 1500);  
   };  
     
   const previewRsvp = (event: FormEvent<HTMLFormElement>) => {  
@@ -527,10 +539,10 @@ const uploadToDrive = async () => {
             aria-label="Elegir una foto para el álbum"  
             data-testid="input-photo-upload"  
             onChange={(event) => {  
-              const files = Array.from(event.target.files ?? []);  
-              setAlbumQueue((prev) => [...prev, ...files.map((f) => ({ f, status: 'pendiente' }))]);  
-              event.target.value = '';  
-            }}  
+                const files = Array.from(event.target.files ?? []);  
+                setAlbumQueue((prev) => [...prev, ...files.map((f) => ({ f, status: 'pendiente', progress: 0 }))]);  
+                event.target.value = '';  
+              }}  
           />  
           <button className="olive-button light" type="button" onClick={() => albumInput.current?.click()} data-testid="button-photo-upload">  
             <Upload size={14} /> <span data-key="album_button_text">CARGAR</span>  
@@ -539,9 +551,21 @@ const uploadToDrive = async () => {
             <>  
               <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0', fontSize: 12, textAlign: 'left' }}>  
                 {albumQueue.map((q, i) => (  
-                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '4px 0' }}>  
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.f.name}</span>  
-                    <span>{q.status === 'listo' ? '✓ listo' : q.status === 'error' ? '✗ error' : q.status === 'subiendo' ? 'subiendo…' : 'pendiente'}</span>  
+                  <li key={i} style={{ padding: '4px 0' }}>  
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>  
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.f.name}</span>  
+                      <span>  
+                        {q.status === 'listo' ? '✓ listo'  
+                          : q.status === 'error' ? '✗ error'  
+                          : q.status === 'subiendo' ? `subiendo ${q.progress}%`  
+                          : 'pendiente'}  
+                      </span>  
+                    </div>  
+                    {q.status === 'subiendo' && (  
+                      <div style={{ height: 4, background: '#e4ded2', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>  
+                        <div style={{ width: `${q.progress}%`, height: '100%', background: '#8a7d5a', transition: 'width 0.2s' }} />  
+                      </div>  
+                    )}  
                   </li>  
                 ))}  
               </ul>  
