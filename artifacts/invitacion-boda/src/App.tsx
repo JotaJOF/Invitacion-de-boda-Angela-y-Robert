@@ -147,14 +147,17 @@ function App() {
   const [envelopeOpen, setEnvelopeOpen] = useState(false);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
   const [preview, setPreview] = useState('');  
-  const [albumFile, setAlbumFile] = useState('');  
+  const [albumQueue, setAlbumQueue] = useState<{ f: File; progress: number; status: 'pendiente' | 'subiendo' | 'listo' | 'error' }[]>([]);  
+  const [uploading, setUploading] = useState(false);  
   const albumInput = useRef<HTMLInputElement>(null);
   const [cfg, setCfg] = useState<Record<string, string>>({});  
   const [confirmOpen, setConfirmOpen] = useState(false);  
   const [modifyOpen, setModifyOpen] = useState(false);  
   const [thanks, setThanks] = useState<null | 'yes' | 'no'>(null);  
   const [rsvpDone, setRsvpDone] = useState(false);  
-  const pendingForm = useRef<FormData | null>(null);  
+  const pendingForm = useRef<FormData | null>(null);
+  const [albumQueue, setAlbumQueue] = useState<{ f: File; status: string }[]>([]);  
+  const [uploading, setUploading] = useState(false);
   
   useEffect(() => {  
     fetch('/api/content').then((r) => r.json()).then(({ content = {} }) => {  
@@ -223,6 +226,35 @@ function App() {
       setPreview('No se pudo enviar. Intenta de nuevo.');  
     }  
   };  
+const uploadToDrive = async () => {  
+    const url = cfg.cfg_drive_url;  
+    if (!url) { setPreview('Configura la URL de subida en administración.'); return; }  
+    setUploading(true);  
+    for (let i = 0; i < albumQueue.length; i++) {  
+      const item = albumQueue[i];  
+      setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'subiendo' } : p)));  
+      try {  
+        const base64 = await new Promise<string>((resolve, reject) => {  
+          const r = new FileReader();  
+          r.onload = () => resolve(String(r.result).split(',')[1]);  
+          r.onerror = () => reject(new Error('No se pudo leer.'));  
+          r.readAsDataURL(item.f);  
+        });  
+        const res = await fetch(url, {  
+          method: 'POST',  
+          headers: { 'content-type': 'text/plain' },  
+          body: JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }),  
+        });  
+        if (!res.ok) throw new Error('Fallo');  
+        setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'listo' } : p)));  
+      } catch {  
+        setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'error' } : p)));  
+      }  
+    }  
+    setUploading(false);  
+  };  
+  
+  const previewRsvp = (event: FormEvent<HTMLFormElement>) => {
   
   const previewRsvp = (event: FormEvent<HTMLFormElement>) => {  
     event.preventDefault();  
@@ -491,21 +523,37 @@ function App() {
         <div className="photo-album">  
           <p data-key="album_copy">COMPARTE TUS FOTOS Y LOS MOMENTOS MÁS ESPECIALES USANDO NUESTRO ÁLBUM DE FOTOS</p>  
           <input  
+            <input  
             ref={albumInput}  
             type="file"  
-            accept="image/*"  
+            accept="image/*,video/*"  
+            multiple  
             hidden  
             aria-label="Elegir una foto para el álbum"  
             data-testid="input-photo-upload"  
-            onChange={(event) => setAlbumFile(event.target.files?.[0]?.name ?? '')}  
+            onChange={(event) => {  
+              const files = Array.from(event.target.files ?? []);  
+              setAlbumQueue((prev) => [...prev, ...files.map((f) => ({ f, status: 'pendiente' }))]);  
+              event.target.value = '';  
+            }}  
           />  
           <button className="olive-button light" type="button" onClick={() => albumInput.current?.click()} data-testid="button-photo-upload">  
-            <Upload size={14} /> <span data-key="album_button_text">SUBIR</span>  
+            <Upload size={14} /> <span data-key="album_button_text">CARGAR</span>  
           </button>  
-          {albumFile && (  
-            <p className="preview-caption" data-testid="status-photo-preview">  
-              {albumFile} · Vista previa local; la foto aún no se comparte en un álbum.  
-            </p>  
+          {albumQueue.length > 0 && (  
+            <>  
+              <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0', fontSize: 12, textAlign: 'left' }}>  
+                {albumQueue.map((q, i) => (  
+                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '4px 0' }}>  
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.f.name}</span>  
+                    <span>{q.status === 'listo' ? '✓ listo' : q.status === 'error' ? '✗ error' : q.status === 'subiendo' ? 'subiendo…' : 'pendiente'}</span>  
+                  </li>  
+                ))}  
+              </ul>  
+              <button className="olive-button" type="button" disabled={uploading} onClick={uploadToDrive}>  
+                {uploading ? 'SUBIENDO…' : 'SUBIR A DRIVE'}  
+              </button>  
+            </>  
           )}  
         </div>  
       </section>
