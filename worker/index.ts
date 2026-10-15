@@ -351,6 +351,62 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
     if (
       (path === "/api/content" && method === "POST") ||
+      // ===== Lista de invitados (solo admin) =====  
+    if (path === "/api/guests" && method === "GET") {  
+      const session = await getSession(request, env);  
+      if (!session) return json({ error: "Inicia sesión." }, 401);  
+  
+      const { data, error } = await supabase(env)  
+        .from("guests")  
+        .select("*")  
+        .order("created_at");  
+      if (error) return json({ error: "No se pudo cargar la lista." }, 502);  
+      return json({ guests: data });  
+    }  
+  
+    // ===== Confirmación pública (formulario / whatsapp) =====  
+    if (path === "/api/guests" && method === "POST") {  
+      const body = (await request.json()) as Record<string, unknown>;  
+      const name = typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";  
+      if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
+      const phone = typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : "";  
+      const attendance = body.attendance === "yes" || body.attendance === "no"  
+        ? body.attendance : "";  
+      const passes = Math.max(0, Math.min(20, Number(body.passes) || 0));  
+      const message = typeof body.message === "string" ? body.message.slice(0, 1000) : "";  
+      const source = body.source === "whatsapp" ? "whatsapp" : "form";  
+  
+      const client = supabase(env);  
+      const { data: existing } = await client  
+        .from("guests")  
+        .select("id")  
+        .eq("name", name)  
+        .maybeSingle();  
+  
+      const row = {  
+        name, phone, attendance, passes, message, source,  
+        modified: !!existing,  
+        ...(existing ? { modified_at: new Date().toISOString() } : {}),  
+      };  
+      const { error } = existing  
+        ? await client.from("guests").update(row).eq("id", existing.id)  
+        : await client.from("guests").insert(row);  
+      if (error) return json({ error: "No se pudo guardar la confirmación." }, 502);  
+      return json({ saved: true, modified: !!existing });  
+    }  
+  
+    // ===== Consultar si un nombre ya confirmó (público, para "modificar respuesta") =====  
+    if (path.startsWith("/api/guests/check/") && method === "GET") {  
+      const name = decodeURIComponent(  
+        path.slice("/api/guests/check/".length),  
+      ).slice(0, 200);  
+      const { data } = await supabase(env)  
+        .from("guests")  
+        .select("name,attendance,passes,message,phone")  
+        .eq("name", name)  
+        .maybeSingle();  
+      return json({ guest: data ?? null });  
+    }
       (/^\/api\/content\/[^/]+$/u.test(path) && method === "PUT") ||
       (path === "/api/upload" && method === "POST")
     ) {
