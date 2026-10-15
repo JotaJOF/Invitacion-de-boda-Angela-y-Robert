@@ -239,8 +239,23 @@ html.is-loading-content img[data-key] {
 .guests-totals div { border: 1px solid #d9cec4; padding: 10px 16px; font-size: 12px; }  
 .guests-totals strong { font-size: 20px; display: block; }  
 @media print {  
-  body * { visibility: hidden; }  
-  .guests-modal, .guests-modal * { visibility: visible; }  
-  .guests-modal { position: absolute; inset: 0; }  
-  #guests-print, #guests-close { display: none; }  
+  body * {  
+    visibility: hidden;  
+  }  
+  #guests-modal,  
+  #guests-modal * {  
+    visibility: visible;  
+  }  
+  #guests-modal {  
+    position: absolute;  
+    inset: 0;  
+    display: block !important;  
+    padding: 0;  
+    background: #fff;  
+    overflow: visible;  
+  }  
+  #guests-modal .dialog-close,  
+  #guests-print {  
+    display: none !important;  
+  }  
 }
