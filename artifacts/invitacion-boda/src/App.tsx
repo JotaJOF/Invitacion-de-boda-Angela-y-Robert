@@ -519,7 +519,6 @@ const uploadToDrive = async () => {
         <div className="photo-album">  
           <p data-key="album_copy">COMPARTE TUS FOTOS Y LOS MOMENTOS MÁS ESPECIALES USANDO NUESTRO ÁLBUM DE FOTOS</p>  
           <input  
-            <input  
             ref={albumInput}  
             type="file"  
             accept="image/*,video/*"  
