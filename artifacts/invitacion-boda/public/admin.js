@@ -463,17 +463,17 @@ document.querySelector("#guests-list").addEventListener("click", async () => {
   guestsModal.hidden = false;  
   guestsBody.innerHTML = "<tr><td colspan='8'>Cargando…</td></tr>";  
   try {  
-    const { rsvps = [] } = await api("/api/rsvp", { method: "GET" });  
-    let yes = 0, no = 0, pases = 0;  
-    guestsBody.innerHTML = rsvps.map((r, i) => {  
-      if (r.attending === true) { yes++; pases += r.passes || 0; }  
-      else if (r.attending === false) no++;  
-      const fecha = new Date(r.created_at).toLocaleString("es-MX");  
-      const mod = r.modified ? `Sí · ${new Date(r.modified_at).toLocaleString("es-MX")}` : "No";  
-      const conf = r.attending === true ? "CONFIRMADO" : r.attending === false ? "NO ASISTE" : "PENDIENTE";  
-      const via = r.source === "whatsapp" ? `WhatsApp ${r.whatsapp || ""}` : "Formulario";  
-      return `<tr><td>${i + 1}</td><td>${r.guest_name}</td><td>${conf}</td><td>${r.passes ?? "—"}</td><td>${r.message || ""}</td><td>${fecha}</td><td>${mod}</td><td>${via}</td></tr>`;  
-    }).join("") || "<tr><td colspan='8'>Sin confirmaciones todavía.</td></tr>";  
+    const { guests = [] } = await api("/api/guests", { method: "GET" });  
+let yes = 0, no = 0, pases = 0;  
+guestsBody.innerHTML = guests.map((r, i) => {  
+  if (r.attendance === 'yes') { yes++; pases += r.passes || 0; }  
+  else if (r.attendance === 'no') no++;  
+  const fecha = new Date(r.created_at).toLocaleString("es-MX");  
+  const mod = r.modified ? `Sí · ${new Date(r.modified_at).toLocaleString("es-MX")}` : "No";  
+  const conf = r.attendance === 'yes' ? "CONFIRMADO" : r.attendance === 'no' ? "NO ASISTE" : "PENDIENTE";  
+  const via = r.source === "whatsapp" ? `WhatsApp ${r.phone || ""}` : "Formulario";  
+  return `<tr><td>${i + 1}</td><td>${r.name}</td><td>${conf}</td><td>${r.passes || "—"}</td><td>${r.message || ""}</td><td>${fecha}</td><td>${mod}</td><td>${via}</td></tr>`;  
+}).join("") || "<tr><td colspan='8'>Sin confirmaciones todavía.</td></tr>";  
     guestsTotals.innerHTML = `<div><strong>${yes}</strong> CONFIRMADOS</div><div><strong>${no}</strong> NO PODRÁN ASISTIR</div><div><strong>${pases}</strong> PASES CONFIRMADOS</div>`;  
   } catch (e) { guestsBody.innerHTML = `<tr><td colspan='8'>${e.message}</td></tr>`; }  
 });  
