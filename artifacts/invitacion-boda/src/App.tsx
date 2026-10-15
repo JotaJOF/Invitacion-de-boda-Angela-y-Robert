@@ -254,8 +254,7 @@ const uploadToDrive = async () => {
       }  
     }  
     setUploading(false);  
-    setTimeout(() => setAlbumQueue((prev) => prev.filter((p) => p.status !== 'listo')), 2000);  
-  };  
+    };  
     
   const previewRsvp = (event: FormEvent<HTMLFormElement>) => {  
     event.preventDefault();  
@@ -534,7 +533,7 @@ const uploadToDrive = async () => {
             onChange={(event) => {  
                 const files = Array.from(event.target.files || []);  
                 if (!files.length) return;  
-                setAlbumQueue((prev) => [...prev, ...files.map((f) => ({ f, id: `${Date.now()}-${f.name}-${Math.random().toString(36).slice(2)}`, progress: 0, status: 'pendiente' }))]);  
+                setAlbumQueue(files.map((f) => ({ f, id: `${Date.now()}-${f.name}`, progress: 0, status: 'pendiente' })));  
                 event.target.value = '';  
               }}  
           />  
