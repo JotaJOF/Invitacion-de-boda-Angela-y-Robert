@@ -238,12 +238,12 @@ const uploadToDrive = async () => {
           r.onerror = () => reject(new Error('No se pudo leer.'));  
           r.readAsDataURL(item.f);  
         });  
-        const res = await fetch(url, {  
+        await fetch(url, {  
           method: 'POST',  
-          headers: { 'content-type': 'text/plain' },  
+          mode: 'no-cors',  
+          headers: { 'content-type': 'text/plain;charset=utf-8' },  
           body: JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }),  
         });  
-        if (!res.ok) throw new Error('Fallo');  
         setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'listo' } : p)));  
       } catch {  
         setAlbumQueue((prev) => prev.map((p, j) => (j === i ? { ...p, status: 'error' } : p)));  
