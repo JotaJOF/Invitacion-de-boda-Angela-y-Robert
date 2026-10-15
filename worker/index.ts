@@ -350,9 +350,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     }
 
     if (  
-      (path === "/api/content" && method === "POST") ||  
-  
-    // ===== Confirmación pública (formulario / whatsapp) =====  
+      // ===== Confirmación pública (formulario / whatsapp) =====  
     if (path === "/api/guests" && method === "POST") {  
       const body = (await request.json()) as Record<string, unknown>;  
       const name = typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";  
@@ -383,7 +381,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       return json({ saved: true, modified: !!existing });  
     }  
   
-    // ===== Consultar si un nombre ya confirmó (público, para "modificar respuesta") =====  
+    // ===== Consultar si un nombre ya confirmó (público) =====  
     if (path.startsWith("/api/guests/check/") && method === "GET") {  
       const name = decodeURIComponent(  
         path.slice("/api/guests/check/".length),  
@@ -394,9 +392,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         .eq("name", name)  
         .maybeSingle();  
       return json({ guest: data ?? null });  
-    }
-      (/^\/api\/content\/[^/]+$/u.test(path) && method === "PUT") ||
-      (path === "/api/upload" && method === "POST")
+    }  
+  
+    if (  
+      (path === "/api/content" && method === "POST") ||  
+      (/^\/api\/content\/[^/]+$/u.test(path) && method === "PUT") ||  
+      (path === "/api/upload" && method === "POST")  
     ) {
       const session = await getSession(request, env);
       if (!session) return json({ error: "Inicia sesión como administrador." }, 401);
