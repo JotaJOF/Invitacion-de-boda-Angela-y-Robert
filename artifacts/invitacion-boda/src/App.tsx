@@ -226,53 +226,34 @@ function App() {
   };  
 const uploadToDrive = async () => {  
     const url = cfg.cfg_drive_url;  
-    if (!url) { setPreview('Configura la carpeta de Drive en el panel.'); return; }  
+    if (!url) { setPreview('Configura la carpeta de Drive desde el panel de administración.'); return; }  
+    if (!albumQueue.length) return;  
     setUploading(true);  
+    const fileToBase64 = (file: File) => new Promise<string>((resolve, reject) => {  
+      const r = new FileReader();  
+      r.onload = () => resolve(String(r.result).split(',')[1]);  
+      r.onerror = reject;  
+      r.readAsDataURL(file);  
+    });  
+    const patch = (id: string, p: Partial<{ progress: number; status: string }>) =>  
+      setAlbumQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...p } : it)));  
     for (const item of albumQueue) {  
-      if (item.status === 'listo') continue; // los ya subidos NO se repiten  
-  
-      // leer el archivo como base64  
-      const base64: string = await new Promise((resolve, reject) => {  
-        const reader = new FileReader();  
-        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');  
-        reader.onerror = () => reject(new Error('read'));  
-        reader.readAsDataURL(item.f);  
-      });  
-  
-      // marcar que empieza  
-      setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'subiendo', progress: 0 } : p)));  
-  
-      await new Promise<void>((resolve) => {  
-        const xhr = new XMLHttpRequest();  
-        xhr.open('POST', url);  
-        xhr.setRequestHeader('content-type', 'text/plain');  
-  
-        // barra de progreso REAL mientras se envía  
-        xhr.upload.onprogress = (e) => {  
-          if (e.lengthComputable) {  
-            const pct = Math.round((e.loaded / e.total) * 100);  
-            setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'subiendo', progress: pct } : p)));  
-          }  
-        };  
-        // cuando TERMINA de enviarse el archivo = éxito (la respuesta la bloquea CORS, no se lee)  
-        xhr.upload.onload = () => {  
-          setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'listo', progress: 100 } : p)));  
-          resolve();  
-        };  
-        // error REAL de red durante el envío  
-        xhr.upload.onerror = () => {  
-          setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'error' } : p)));  
-          resolve();  
-        };  
-        // IMPORTANTE: ignorar el error de la RESPUESTA (eso es el CORS, no un fallo real)  
-        xhr.onerror = () => resolve();  
-        xhr.onload = () => resolve();  
-  
-        xhr.send(JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }));  
-      });  
+      if (item.status === 'listo') continue;  
+      patch(item.id, { status: 'subiendo' });  
+      try {  
+        const base64 = await fileToBase64(item.f);  
+        await fetch(url, {  
+          method: 'POST',  
+          mode: 'no-cors',  
+          headers: { 'content-type': 'text/plain' },  
+          body: JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }),  
+        });  
+        patch(item.id, { status: 'listo' });  
+      } catch {  
+        patch(item.id, { status: 'error' });  
+      }  
     }  
     setUploading(false);  
-    // limpiar del historial los que ya subieron (para que la próxima CARGAR no los arrastre)  
     setTimeout(() => setAlbumQueue((prev) => prev.filter((p) => p.status !== 'listo')), 2000);  
   };  
     
@@ -551,35 +532,33 @@ const uploadToDrive = async () => {
             aria-label="Elegir una foto para el álbum"  
             data-testid="input-photo-upload"  
             onChange={(event) => {  
-              const files = Array.from(event.target.files ?? []);  
-              setAlbumQueue((prev) => [...prev, ...files.map((f) => ({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, f, status: 'pendiente' as const, progress: 0 }))]);  
-              event.target.value = '';  
-            }}  
+                const files = Array.from(event.target.files || []);  
+                if (!files.length) return;  
+                setAlbumQueue((prev) => [...prev, ...files.map((f) => ({ f, id: `${Date.now()}-${f.name}-${Math.random().toString(36).slice(2)}`, progress: 0, status: 'pendiente' }))]);  
+                event.target.value = '';  
+              }}  
           />  
           <button className="olive-button light" type="button" onClick={() => albumInput.current?.click()} data-testid="button-photo-upload">  
             <Upload size={14} /> <span data-key="album_button_text">CARGAR</span>  
           </button>  
           {albumQueue.length > 0 && (  
             <>  
-              <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0', fontSize: 12, textAlign: 'left' }}>  
+              <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0' }}>  
                 {albumQueue.map((q) => (  
-                  <li key={q.id} style={{ padding: '6px 0', display: 'flex', alignItems: 'center', gap: 10 }}>  
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.f.name}</span>  
-                    {q.status === 'subiendo' ? (  
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>  
-                        <div style={{ width: 60, height: 6, background: '#e4ded2', borderRadius: 3, overflow: 'hidden' }}>  
-                          <div style={{ width: `${q.progress}%`, height: '100%', background: '#8a7d5a', transition: 'width 0.2s' }} />  
-                        </div>  
-                        <span style={{ width: 34, textAlign: 'right' }}>{q.progress}%</span>  
+                  <li key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>  
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', gap: 10 }}>  
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.f.name}</span>  
+                      <span>{q.status === 'listo' ? '✓ listo' : q.status === 'error' ? '✗ error' : q.status === 'subiendo' ? 'subiendo…' : 'pendiente'}</span>  
+                    </div>  
+                    {q.status === 'subiendo' && (  
+                      <div style={{ height: 4, width: '100%', background: '#e4ded2', borderRadius: 2, overflow: 'hidden' }}>  
+                        <div style={{ height: '100%', width: '40%', background: '#8a7d5a', borderRadius: 2, animation: 'albumBar 1.2s ease-in-out infinite' }} />  
                       </div>  
-                    ) : (  
-                      <span style={{ flexShrink: 0 }}>  
-                        {q.status === 'listo' ? '✓ listo' : q.status === 'error' ? '✗ error' : 'pendiente'}  
-                      </span>  
                     )}  
                   </li>  
                 ))}  
               </ul>  
+              <style>{`@keyframes albumBar { from { margin-left: 0 } to { margin-left: 60% } }`}</style>  
               <button className="olive-button" type="button" disabled={uploading} onClick={uploadToDrive}>  
                 {uploading ? 'SUBIENDO…' : 'SUBIR A DRIVE'}  
               </button>  
