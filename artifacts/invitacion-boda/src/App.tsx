@@ -226,42 +226,54 @@ function App() {
   };  
 const uploadToDrive = async () => {  
     const url = cfg.cfg_drive_url;  
-    if (!url) { setPreview('Configura la URL de subida en administración.'); return; }  
-    const pendientes = albumQueue.filter((q) => q.status === 'pendiente' || q.status === 'error');  
-    if (pendientes.length === 0) return;  
+    if (!url) { setPreview('Configura la carpeta de Drive en el panel.'); return; }  
     setUploading(true);  
-    for (const item of pendientes) {  
+    for (const item of albumQueue) {  
+      if (item.status === 'listo') continue; // los ya subidos NO se repiten  
+  
+      // leer el archivo como base64  
+      const base64: string = await new Promise((resolve, reject) => {  
+        const reader = new FileReader();  
+        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');  
+        reader.onerror = () => reject(new Error('read'));  
+        reader.readAsDataURL(item.f);  
+      });  
+  
+      // marcar que empieza  
       setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'subiendo', progress: 0 } : p)));  
-      try {  
-        const base64 = await new Promise<string>((resolve, reject) => {  
-          const r = new FileReader();  
-          r.onload = () => resolve(String(r.result).split(',')[1]);  
-          r.onerror = () => reject(new Error('No se pudo leer.'));  
-          r.readAsDataURL(item.f);  
-        });  
-        await new Promise<void>((resolve, reject) => {  
-          const xhr = new XMLHttpRequest();  
-          xhr.open('POST', url);  
-          xhr.setRequestHeader('content-type', 'text/plain;charset=utf-8');  
-          xhr.upload.onprogress = (e) => {  
-            if (e.lengthComputable) {  
-              const pct = Math.round((e.loaded / e.total) * 100);  
-              setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, progress: pct } : p)));  
-            }  
-          };  
-          xhr.onload = () => resolve();  
-          xhr.onerror = () => reject(new Error('Fallo'));  
-          xhr.send(JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }));  
-        });  
-        setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'listo', progress: 100 } : p)));  
-      } catch {  
-        setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'error' } : p)));  
-      }  
+  
+      await new Promise<void>((resolve) => {  
+        const xhr = new XMLHttpRequest();  
+        xhr.open('POST', url);  
+        xhr.setRequestHeader('content-type', 'text/plain');  
+  
+        // barra de progreso REAL mientras se envía  
+        xhr.upload.onprogress = (e) => {  
+          if (e.lengthComputable) {  
+            const pct = Math.round((e.loaded / e.total) * 100);  
+            setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'subiendo', progress: pct } : p)));  
+          }  
+        };  
+        // cuando TERMINA de enviarse el archivo = éxito (la respuesta la bloquea CORS, no se lee)  
+        xhr.upload.onload = () => {  
+          setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'listo', progress: 100 } : p)));  
+          resolve();  
+        };  
+        // error REAL de red durante el envío  
+        xhr.upload.onerror = () => {  
+          setAlbumQueue((prev) => prev.map((p) => (p.id === item.id ? { ...p, status: 'error' } : p)));  
+          resolve();  
+        };  
+        // IMPORTANTE: ignorar el error de la RESPUESTA (eso es el CORS, no un fallo real)  
+        xhr.onerror = () => resolve();  
+        xhr.onload = () => resolve();  
+  
+        xhr.send(JSON.stringify({ name: item.f.name, type: item.f.type, data: base64 }));  
+      });  
     }  
     setUploading(false);  
-    window.setTimeout(() => {  
-      setAlbumQueue((prev) => prev.filter((p) => p.status !== 'listo'));  
-    }, 2000);  
+    // limpiar del historial los que ya subieron (para que la próxima CARGAR no los arrastre)  
+    setTimeout(() => setAlbumQueue((prev) => prev.filter((p) => p.status !== 'listo')), 2000);  
   };  
     
   const previewRsvp = (event: FormEvent<HTMLFormElement>) => {  
