@@ -147,7 +147,7 @@ function App() {
   const [envelopeOpen, setEnvelopeOpen] = useState(false);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
   const [preview, setPreview] = useState('');  
-  const [albumQueue, setAlbumQueue] = useState<{ f: File; progress: number; status: 'pendiente' | 'subiendo' | 'listo' | 'error' }[]>([]);  
+  const [albumQueue, setAlbumQueue] = useState<{ f: File; status: string }[]>([]);  
   const [uploading, setUploading] = useState(false);  
   const albumInput = useRef<HTMLInputElement>(null);
   const [cfg, setCfg] = useState<Record<string, string>>({});  
