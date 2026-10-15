@@ -156,9 +156,7 @@ function App() {
   const [thanks, setThanks] = useState<null | 'yes' | 'no'>(null);  
   const [rsvpDone, setRsvpDone] = useState(false);  
   const pendingForm = useRef<FormData | null>(null);
-  const [albumQueue, setAlbumQueue] = useState<{ f: File; status: string }[]>([]);  
-  const [uploading, setUploading] = useState(false);
-  
+   
   useEffect(() => {  
     fetch('/api/content').then((r) => r.json()).then(({ content = {} }) => {  
       const flat: Record<string, string> = {};  
@@ -253,9 +251,7 @@ const uploadToDrive = async () => {
     }  
     setUploading(false);  
   };  
-  
-  const previewRsvp = (event: FormEvent<HTMLFormElement>) => {
-  
+    
   const previewRsvp = (event: FormEvent<HTMLFormElement>) => {  
     event.preventDefault();  
     if (rsvpDone) { setModifyOpen(true); return; }  
