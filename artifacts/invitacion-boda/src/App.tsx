@@ -377,7 +377,7 @@ const uploadToDrive = async () => {
           >  
             <span data-key="save_date_label_1" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em', lineHeight: 1 }}>Reserva</span>  
             <span data-key="save_date_label_2" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em', lineHeight: 1 }}>ESTA FECHA</span>  
-            <span className="serif" style={{ width: '100%', fontSize: 38, lineHeight: 1 }}>{eDay}</span>  
+            <span className="serif" style={{ width: '100%', fontSize: 38, lineHeight: 1.2, marginTop: '-10px' }}>{eDay}</span>  
             <span style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 15, lineHeight: 1 }}>{eMes}</span>  
             <span style={{ width: '100%', fontSize: 12, letterSpacing: '.1em', lineHeight: 1 }}>{eYear}</span>  
           </div>  
