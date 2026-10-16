@@ -15,10 +15,11 @@ let activeImage = null;
 let toastTimeout;  
 let contentLoadVersion = 0;  
   
-// Lista de fuentes disponibles (agregar más aquí cuando se carguen nuevas)  
-const FONTS = [  
-  { label: "Cormorant Garamond", value: "'Cormorant Garamond', Georgia, serif" },  
-  { label: "Montserrat", value: "'Montserrat', Arial, sans-serif" },  
+// Lista de fuentes disponibles (agregar más aquí cuando se carguen nuevas)    
+const FONTS = [    
+  { label: "Great Vibes", value: "'Great Vibes', cursive" },    
+  { label: "Cormorant Garamond", value: "'Cormorant Garamond', Georgia, serif" },    
+  { label: "Montserrat", value: "'Montserrat', Arial, sans-serif" },    
 ];  
 let styleBar = null;  
 let styleBarFor = null;  
