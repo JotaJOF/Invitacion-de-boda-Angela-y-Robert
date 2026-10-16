@@ -251,72 +251,81 @@ html.is-loading-content img[data-key] {
 .style-menu { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; min-width: 96px; background: #fffdfa; border: 1px solid #d9cec4; border-radius: 4px; box-shadow: 0 4px 12px #0003; }  
 .style-menu-item { padding: 6px 10px; border: 0; background: none; text-align: left; font-size: 12px; cursor: pointer; }  
 .style-menu-item:hover { background: #f0e9e2; }
-@media print {  
-  #root,  
-  .site-footer,  
-  .admin-panel,  
-  .admin-toolbar,  
-  .admin-float-bar,  
-  .login-dialog,  
-  .edit-pencil,  
-  .style-bar {  
-    display: none !important;  
-  }  
+@media print {    
+  #root,    
+  .site-footer,    
+  .admin-panel,    
+  .admin-toolbar,    
+  .admin-float-bar,    
+  .login-dialog,    
+  .edit-pencil,    
+  .style-bar {    
+    display: none !important;    
+  }    
+    
+  html, body {    
+    height: auto !important;    
+    background: #fff;    
+  }    
+    
+  #guests-modal,    
+  #guests-modal * {    
+    visibility: visible;    
+  }    
+    
+  #guests-modal {    
+    position: static !important;    
+    display: block !important;    
+    inset: auto;    
+    padding: 0;    
+    background: #fff;    
+    overflow: visible;    
+    height: auto !important;    
+    max-height: none !important;    
+  }    
+}  
   
-  html, body {  
-    height: auto !important;  
-    background: #fff;  
-  }  
-  
-  #guests-modal,  
-  #guests-modal * {  
-    visibility: visible;  
-  }  
-  
-  #guests-modal {  
-    position: static !important;  
-    display: block !important;  
-    inset: auto;  
-    padding: 0;  
-    background: #fff;  
-    overflow: visible;  
-    height: auto !important;  
-    max-height: none !important;  
-  }  
- /* ===== Barra de botones del modal de links ===== */  
+/* ===== Modal de links: botones ===== */  
 /* Refrescar + cerrar: a la derecha y compactos */  
 .invites-topbar {  
   display: flex;  
   justify-content: flex-end;  
   gap: 8px;  
-  margin-bottom: 14px;  
+  margin-bottom: 12px;  
 }  
-.invites-topbar .button {  
-  width: 36px;  
-  min-width: 36px;  
-  min-height: 36px;  
+.invites-topbar .icon-btn {  
+  width: 34px;  
+  height: 34px;  
+  display: inline-flex;  
+  align-items: center;  
+  justify-content: center;  
   padding: 0;  
+  border: none;  
+  border-radius: 4px;  
+  background: var(--olive);  
+  color: #fff;  
   font-size: 16px;  
   line-height: 1;  
+  cursor: pointer;  
 }  
+.invites-topbar .icon-btn:hover { background: var(--olive-dark); }  
   
 /* Agregar / importar / exportar */  
 .invites-actions {  
   display: flex;  
-  flex-wrap: wrap;  
+  flex-direction: column;  
   gap: 10px;  
-  margin: 10px 0 42px;   /* 42px = triple del espacio hacia la tabla */  
+  margin: 10px 0 42px;   /* triple espacio hacia la tabla */  
 }  
 .invites-actions .button {  
-  min-height: 40px;  
-  padding: 0 16px;  
+  min-height: 38px;  
+  padding: 0 14px;  
   width: auto;  
 }  
-/* AGREGAR ocupa toda la fila; IMPORTAR y EXPORTAR comparten la fila de abajo */  
-.invites-actions #invites-add {  
-  flex: 1 1 100%;  
+.invites-actions-row {  
+  display: flex;  
+  gap: 10px;             /* separación entre IMPORTAR y EXPORTAR */  
 }  
-.invites-actions #invites-import,  
-.invites-actions #invites-export {  
-  flex: 1 1 0;  
+.invites-actions-row .button {  
+  flex: 1 1 0;           /* mitad y mitad, lado a lado en móvil */  
 }
