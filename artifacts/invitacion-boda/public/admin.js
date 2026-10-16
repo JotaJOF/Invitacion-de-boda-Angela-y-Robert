@@ -15,6 +15,14 @@ let activeImage = null;
 let toastTimeout;  
 let contentLoadVersion = 0;  
   
+// Lista de fuentes disponibles (agregar más aquí cuando se carguen nuevas)  
+const FONTS = [  
+  { label: "Cormorant Garamond", value: "'Cormorant Garamond', Georgia, serif" },  
+  { label: "Montserrat", value: "'Montserrat', Arial, sans-serif" },  
+];  
+let styleBar = null;  
+let styleBarFor = null;  
+  
 function showToast(message) {  
   toast.textContent = message;  
   toast.classList.add("is-visible");  
@@ -107,6 +115,8 @@ function recordBaseline(element) {
     element.dataset.originalSrc = element.getAttribute("src") ?? "";  
   } else {  
     element.dataset.originalText = element.textContent ?? "";  
+    element.dataset.originalFontFamily = element.style.fontFamily ?? "";  
+    element.dataset.originalFontSize = element.style.fontSize ?? "";  
   }  
 }  
   
@@ -131,6 +141,14 @@ async function loadContent() {
         );  
       } else if (saved && (saved.type === "text" || saved.type === "image")) {  
         setElementValue(element, saved.type, saved.value, () => loadVersion === contentLoadVersion);  
+      }  
+      const styleSaved = key ? content[`${key}__style`] : null;  
+      if (styleSaved && !isMediaElement(element)) {  
+        try {  
+          const style = JSON.parse(styleSaved.value);  
+          if (style.fontFamily) element.style.fontFamily = style.fontFamily;  
+          if (style.fontSize) element.style.fontSize = style.fontSize;  
+        } catch { /* estilo inválido, se ignora */ }  
       }  
     }  
     await Promise.all(imageLoads);  
@@ -162,11 +180,97 @@ function positionPencils() {
     button.style.top = `${Math.max(4, bounds.top - 12)}px`;  
     button.hidden = bounds.bottom < 0 || bounds.top > window.innerHeight;  
   });  
+  positionStyleBar();  
 }  
   
 function stopInlineEditing(element) {  
   element.contentEditable = "false";  
   element.classList.remove("is-editing");  
+  if (styleBarFor === element) hideStyleBar();  
+}  
+  
+function hideStyleBar() {  
+  if (styleBar) styleBar.remove();  
+  styleBar = null;  
+  styleBarFor = null;  
+}  
+  
+function currentFontLabel(element) {  
+  const family = getComputedStyle(element).fontFamily.toLowerCase();  
+  const match = FONTS.find((f) => family.includes(f.label.toLowerCase()));  
+  return match ? match.label : family.split(",")[0].replace(/["']/g, "").trim();  
+}  
+  
+function markStyleChange(element) {  
+  pendingChanges.set(`${element.dataset.key}__style`, {  
+    element,  
+    type: "style",  
+    value: JSON.stringify({  
+      fontFamily: element.style.fontFamily || "",  
+      fontSize: element.style.fontSize || "",  
+    }),  
+  });  
+  toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
+}  
+  
+function showStyleBar(element) {  
+  hideStyleBar();  
+  styleBarFor = element;  
+  styleBar = document.createElement("div");  
+  styleBar.className = "style-bar";  
+  
+  const fontBtn = document.createElement("button");  
+  fontBtn.type = "button";  
+  fontBtn.className = "style-btn style-btn-font";  
+  fontBtn.textContent = currentFontLabel(element);  
+  
+  const sizeBtn = document.createElement("button");  
+  sizeBtn.type = "button";  
+  sizeBtn.className = "style-btn style-btn-size";  
+  sizeBtn.textContent = `${Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0}`;  
+  
+  fontBtn.addEventListener("click", () => {  
+    styleBar.querySelectorAll(".style-menu").forEach((m) => m.remove());  
+    const menu = document.createElement("div");  
+    menu.className = "style-menu";  
+    FONTS.forEach((f) => {  
+      const opt = document.createElement("button");  
+      opt.type = "button";  
+      opt.className = "style-menu-item";  
+      opt.textContent = f.label;  
+      opt.style.fontFamily = f.value;  
+      opt.addEventListener("click", () => {  
+        element.style.fontFamily = f.value;  
+        fontBtn.textContent = f.label;  
+        markStyleChange(element);  
+        menu.remove();  
+      });  
+      menu.append(opt);  
+    });  
+    styleBar.append(menu);  
+  });  
+  
+  sizeBtn.addEventListener("click", () => {  
+    const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
+    const input = window.prompt("Tamaño de letra (solo el número):", String(actual));  
+    if (input === null) return;  
+    const n = Number(input);  
+    if (!Number.isFinite(n) || n <= 0) { showToast("Tamaño no válido."); return; }  
+    element.style.fontSize = `${n}px`;  
+    sizeBtn.textContent = `${n}`;  
+    markStyleChange(element);  
+  });  
+  
+  styleBar.append(fontBtn, sizeBtn);  
+  document.body.append(styleBar);  
+  positionStyleBar();  
+}  
+  
+function positionStyleBar() {  
+  if (!styleBar || !styleBarFor) return;  
+  const bounds = styleBarFor.getBoundingClientRect();  
+  styleBar.style.left = `${Math.max(4, bounds.left)}px`;  
+  styleBar.style.top = `${Math.max(4, bounds.top - 40)}px`;  
 }  
   
 function beginTextEdit(element) {  
@@ -182,6 +286,7 @@ function beginTextEdit(element) {
     selection.addRange(range);  
   }  
   toolbarMessage.textContent = `Editando: ${element.dataset.key}`;  
+  showStyleBar(element);  
 }  
   
 function addPencils() {  
@@ -268,7 +373,7 @@ document.querySelector("#save-content").addEventListener("click", async () => {
     for (const [key, change] of pendingChanges) {  
       await api(`/api/content/${encodeURIComponent(key)}`, {  
         method: "PUT",  
-        body: JSON.stringify({ type: change.type, value: change.value }),  
+        body: JSON.stringify({ type: change.type === "style" ? "text" : change.type, value: change.value }),  
       });  
       savedKeys.push(key);  
     }  
@@ -314,9 +419,12 @@ document.querySelector("#cancel-edit").addEventListener("click", async () => {
       }  
     } else {  
       element.textContent = element.dataset.originalText ?? "";  
+      element.style.fontFamily = element.dataset.originalFontFamily ?? "";  
+      element.style.fontSize = element.dataset.originalFontSize ?? "";  
     }  
     stopInlineEditing(element);  
     pendingChanges.delete(key);  
+    pendingChanges.delete(`${key}__style`);  
   });
   adminFloatBar.hidden = true;  
   adminPanel.hidden = true;
