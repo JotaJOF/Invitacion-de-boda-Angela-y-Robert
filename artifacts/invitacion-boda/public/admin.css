@@ -283,7 +283,25 @@ html.is-loading-content img[data-key] {
     height: auto !important;  
     max-height: none !important;  
   }  
-  
+  /* ===== Barra de botones del modal de links ===== */  
+.invites-topbar {  
+  display: flex;  
+  justify-content: flex-end;  
+  gap: 8px;  
+  margin-bottom: 10px;  
+}  
+.invites-topbar .button {  
+  min-width: 42px;  
+  padding: 6px 12px;  
+  font-size: 18px;  
+  line-height: 1;  
+}  
+.invites-actions {  
+  display: flex;  
+  flex-wrap: wrap;  
+  gap: 8px;  
+  margin: 10px 0;  
+}
   #guests-print,  
   #guests-modal .dialog-close {  
     display: none !important;  
