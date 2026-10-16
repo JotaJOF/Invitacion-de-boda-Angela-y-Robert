@@ -61,7 +61,8 @@
         <input id="cfg-date" type="datetime-local" />  
         <label for="cfg-drive">Carpeta de Google Drive para fotos/videos de invitados</label>  
         <input id="cfg-drive" type="url" placeholder="https://drive.google.com/drive/folders/..." />  
-        <button class="button" id="guests-list" type="button">VER LISTA DE INVITADOS</button>  
+        <button class="button" id="guests-list" type="button">VER LISTA DE INVITADOS</button> 
+        <button class="button" id="invites-open" type="button">GENERAR LINKS</button>
         <p class="form-message" id="panel-message" role="status"></p>  
         <div class="admin-panel-actions">  
           <button class="button" id="panel-edit" type="button">EDITAR TU INVITACIÓN</button>  
@@ -88,10 +89,27 @@
         <div class="guests-totals" id="guests-totals"></div>  
       </div>  
     </aside>
+    <aside class="guests-modal" id="invites-modal" hidden>  
+      <div class="guests-card">  
+        <button class="dialog-close" id="invites-close" type="button" aria-label="Cerrar">×</button>  
+        <h2>Generar links de invitados</h2>  
+        <p>Una línea por invitado: <code>Nombre, pases, teléfono (opcional)</code></p>  
+        <textarea id="invites-input" rows="5" style="width:100%" placeholder="Nicol y Josué, 2, 5218112345678&#10;Carlos y María, 5&#10;Juan, 1"></textarea>  
+        <button class="button button-olive" id="invites-add" type="button">AGREGAR Y GENERAR LINKS</button>  
+        <p class="form-message" id="invites-message"></p>  
+        <div class="guests-table-wrap">  
+          <table class="guests-table">  
+            <thead><tr><th>Nombre</th><th>Pases</th><th>Link</th><th>Abrió</th><th>Confirmó</th><th>WhatsApp</th></tr></thead>  
+            <tbody id="invites-body"></tbody>  
+          </table>  
+        </div>  
+      </div>  
+    </aside>  
+    <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden />
     <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>  
     <script type="module" src="/src/main.tsx"></script>  
-   <link rel="stylesheet" href="/admin.css?v=8" />    
-<script src="/admin.js?v=8" defer></script>  
+   <link rel="stylesheet" href="/admin.css?v=9" />      
+<script src="/admin.js?v=9" defer></script>  
   </body>  
 </html>
