@@ -799,8 +799,9 @@ button, a, input, textarea, select {
   text-align: center;  
 }  
 .itinerary-list { margin: 25px auto 0; max-width: 280px; text-align: left; }  
-.itinerary-row { position: relative; display: grid; grid-template-columns: 78px 1fr; gap: 15px; min-height: 58px; align-items: start; }  
-.itinerary-row::before { content: ''; position: absolute; left: 89px; top: 7px; bottom: -4px; width: 1px; background: #b5ae96; }  
+.itinerary-row { position: relative; display: grid; grid-template-columns: 58px 78px 1fr; gap: 15px; min-height: 58px; align-items: start; }  
+.itinerary-img { width: 58px; height: 58px; object-fit: cover; border-radius: 4px; }  
+.itinerary-row::before { content: ''; position: absolute; left: 162px; top: 7px; bottom: -4px; width: 1px; background: #b5ae96; }  
 .itinerary-row:last-child::before { display: none; }  
 .itinerary-time { color: #67774a; font-family: 'Cormorant Garamond', serif; font-size: 19px; }  
 .itinerary-event { position: relative; color: #6e655d; font-size: 10px; letter-spacing: .13em; padding-top: 5px; }  
@@ -835,6 +836,10 @@ button, a, input, textarea, select {
 .rsvp-field input:focus, .rsvp-field textarea:focus, .rsvp-field select:focus { box-shadow: 0 0 0 2px #d7b89b; }  
 .preview-message { margin-top: 14px; padding: 12px; border-radius: 4px; background: rgba(255,255,255,.13); font-size: 11px; line-height: 1.55; }  
 .preview-caption { margin: 12px 0 0; color: #e2d7c8; font-size: 9px; line-height: 1.6; }  
+.whatsapp-section { padding: 36px 24px 40px; background: #f7f0ec; text-align: center; color: #6e655d; }  
+.whatsapp-section .eyebrow { color: #67774a; }  
+.whatsapp-caption { margin: 12px auto 0; max-width: 320px; color: #6e655d; font-size: 10px; line-height: 1.6; letter-spacing: .06em; }  
+.whatsapp-note { margin: 12px 0 0; color: #8a8178; font-size: 9px; line-height: 1.6; }  
 .closing {  
   position: relative;  
   min-height: 250px;  
