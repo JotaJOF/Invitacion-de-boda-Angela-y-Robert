@@ -361,23 +361,25 @@ const uploadToDrive = async () => {
           <div  
             style={{  
               position: 'absolute',  
-              top: '75%',  
+              top: '60%',  
               left: '79%',  
-              transform: 'translate(-50%, -50%)',  
+              transform: 'translateX(-50%)',  
               width: '26%',  
               display: 'flex',  
               flexDirection: 'column',  
-              alignItems: 'center',  
-              justifyContent: 'center',  
+              alignItems: 'stretch',  
+              justifyContent: 'flex-start',  
               textAlign: 'center',  
               color: '#5d6e43',  
+              gap: '8px',  
+              lineHeight: 1,  
             }}  
           >  
-            <span data-key="save_date_label_1" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>Reserva</span>  
-            <span data-key="save_date_label_2" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>ESTA FECHA</span>  
-            <span className="serif" style={{ fontSize: 38, lineHeight: 0.9 }}>{eDay}</span>  
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15 }}>{eMes}</span>  
-            <span style={{ fontSize: 12, letterSpacing: '.1em' }}>{eYear}</span>  
+            <span data-key="save_date_label_1" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em', lineHeight: 1 }}>Reserva</span>  
+            <span data-key="save_date_label_2" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em', lineHeight: 1 }}>ESTA FECHA</span>  
+            <span className="serif" style={{ width: '100%', fontSize: 38, lineHeight: 1 }}>{eDay}</span>  
+            <span style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 15, lineHeight: 1 }}>{eMes}</span>  
+            <span style={{ width: '100%', fontSize: 12, letterSpacing: '.1em', lineHeight: 1 }}>{eYear}</span>  
           </div>  
   
           <button  
