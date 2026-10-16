@@ -592,11 +592,12 @@ button, a, input, textarea, select {
   font-size: 36px;  
   line-height: 1;  
 }  
-.guest-caption {  
-  font-family: 'Cormorant Garamond', serif;  
-  font-size: 13px;  
-  letter-spacing: .06em;  
-  line-height: 1.5;  
+.guest-caption {    
+  margin-top: 14px;  
+  font-family: 'Cormorant Garamond', serif;    
+  font-size: 13px;    
+  letter-spacing: .06em;    
+  line-height: 1.5;    
 }
 
 .video-still {  
