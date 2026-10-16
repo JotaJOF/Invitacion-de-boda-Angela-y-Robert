@@ -273,7 +273,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   
       const { data, error } = await supabase(env)  
         .from("guests")  
-        .select("id,name,phone,attendance,passes,message,source,created_at,modified,modified_at")  
+        .select("id,name,phone,attendance,passes,max_passes,message,source,code,opened_at,created_at,modified,modified_at")  
         .order("created_at");  
       if (error) return json({ error: "No se pudo cargar la lista." }, 502);  
       return json({ guests: data });  
@@ -293,13 +293,15 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         typeof body.message === "string" ? body.message.slice(0, 1000) : "";  
       const phone =  
         typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : "";  
-      const source = body.source === "whatsapp" ? "whatsapp" : "form";  
+      const source = body.source === "whatsapp" ? "whatsapp" : "form";
+      const code =  
+        typeof body.code === "string" ? body.code.trim().slice(0, 20) : "";
   
       const client = supabase(env);  
       const { data: existing } = await client  
         .from("guests")  
         .select("id")  
-        .eq("name", name)  
+        .eq(code ? "code" : "name", code || name)  
         .maybeSingle();  
   
       const row = existing  
@@ -332,7 +334,46 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         .eq("name", name)  
         .maybeSingle();  
       return json({ guest: data ?? null });  
+    }
+    // ===== Crear invitados con código (solo admin, acepta 1 o arreglo) =====  
+    if (path === "/api/invites" && method === "POST") {  
+      const session = await getSession(request, env);  
+      if (!session) return json({ error: "Inicia sesión." }, 401);  
+  
+      const body = (await request.json()) as Record<string, unknown>;  
+      const list = Array.isArray(body.guests) ? body.guests : [body];  
+      const rows = [];  
+      for (const g of list) {  
+        const name = typeof g?.name === "string" ? g.name.trim().slice(0, 200) : "";  
+        if (!name) continue;  
+        rows.push({  
+          name,  
+          phone: typeof g?.phone === "string" ? g.phone.trim().slice(0, 40) : "",  
+          max_passes: Math.max(0, Math.min(20, Number(g?.max_passes) || 0)),  
+          message: typeof g?.message === "string" ? g.message.slice(0, 1000) : "",  
+          code: crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase(),  
+        });  
+      }  
+      if (rows.length === 0) return json({ error: "Lista vacía." }, 400);  
+      const { data, error } = await supabase(env).from("guests").insert(rows).select("id,name,code,max_passes,phone");  
+      if (error) return json({ error: "No se pudieron crear los invitados." }, 502);  
+      return json({ created: data }, 201);  
     }  
+  
+    // ===== Datos del invitado por código (público) =====  
+    if (path.startsWith("/api/invite/") && method === "GET") {  
+      const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20);  
+      const client = supabase(env);  
+      const { data } = await client  
+        .from("guests")  
+        .select("name,max_passes,attendance,opened_at")  
+        .eq("code", code)  
+        .maybeSingle();  
+      if (data && !data.opened_at) {  
+        await client.from("guests").update({ opened_at: new Date().toISOString() }).eq("code", code);  
+      }  
+      return json({ guest: data ?? null });  
+    }
   
     // ===== Editar invitado manualmente (solo admin) =====  
     if (/^\/api\/guests\/[0-9a-f-]{36}$/iu.test(path) && method === "PUT") {  
@@ -345,7 +386,8 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         body.attendance === "yes" || body.attendance === "no"  
           ? body.attendance  
           : "";  
-      const passes = Math.max(0, Math.min(20, Number(body.passes) || 0));  
+      const passes = Math.max(0, Math.min(20, Number(body.passes) || 0));
+      const maxPasses = Math.max(0, Math.min(20, Number(body.max_passes) || 0));
       const name =  
         typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";  
       const phone =  
@@ -355,7 +397,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   
       const { error } = await supabase(env)  
         .from("guests")  
-        .update({ attendance, passes, name, phone, message })  
+        .update({ attendance, passes, max_passes: maxPasses, name, phone, message })  
         .eq("id", id);  
       if (error) return json({ error: "No se pudo actualizar." }, 502);  
       return json({ saved: true });  
