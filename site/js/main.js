@@ -379,3 +379,25 @@ api("/api/me", { method: "GET" })
   .catch(() => {
     authenticated = false;
   });
+// ===== Invitado personalizado por ?c=CODIGO =====  
+(async function loadInvite() {  
+  const code = new URLSearchParams(window.location.search).get("c");  
+  if (!code) return;  
+  try {  
+    const { guest } = await api(`/api/invite/${encodeURIComponent(code)}`, {  
+      method: "GET",  
+    });  
+    if (!guest) return;  
+    const greeting = document.querySelector("#guest-greeting");  
+    const nameEl = document.querySelector("#guest-name");  
+    const passesEl = document.querySelector("#guest-passes");  
+    if (!greeting || !nameEl || !passesEl) return;  
+    nameEl.textContent = guest.name;  
+    passesEl.textContent =  
+      guest.max_passes > 0 ? ` · Pases: ${guest.max_passes}` : "";  
+    greeting.hidden = false;  
+    document.title = `${guest.name} — Angela & Robert`;  
+  } catch {  
+    /* sin invitado válido: la página sigue normal */  
+  }  
+})();
