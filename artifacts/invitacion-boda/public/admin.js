@@ -652,3 +652,99 @@ document.querySelector("#invites-add").addEventListener("click", async () => {
     invitesMessage.textContent = e.message;  
   }  
 });
+// ===== Generar links personalizados =====  
+const invitesModal = document.querySelector("#invites-modal");  
+const invitesBody = document.querySelector("#invites-body");  
+const invitesInput = document.querySelector("#invites-input");  
+const invitesFile = document.querySelector("#invites-file");  
+let invitesData = [];  
+  
+function esc(text) {  
+  return String(text ?? "").replace(/[&<>"]/g, (c) =>  
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));  
+}  
+  
+async function loadInvites() {  
+  invitesBody.innerHTML = "<tr><td colspan='6'>Cargando…</td></tr>";  
+  const { guests = [] } = await api("/api/guests", { method: "GET" });  
+  invitesData = guests.filter((g) => g.code);  
+  invitesBody.innerHTML = invitesData.map((g) => {  
+    const link = `${location.origin}/?c=${g.code}`;  
+    const conf = g.attendance === "yes" ? "CONFIRMADO" : g.attendance === "no" ? "NO ASISTE" : "PENDIENTE";  
+    const wa = g.phone  
+      ? `<a href="https://wa.me/${g.phone}?text=${encodeURIComponent(`Hola, aquí está tu invitación a nuestra boda: ${link}`)}" target="_blank">Enviar</a>`  
+      : "—";  
+    return `<tr><td>${esc(g.name)}</td><td>${g.max_passes ?? 0}</td><td><button type="button" class="copy-link" data-link="${link}">Copiar</button></td><td>${g.opened_at ? "✔" : ""}</td><td>${conf}</td><td>${wa}</td></tr>`;  
+  }).join("") || "<tr><td colspan='6'>Sin invitados con link todavía.</td></tr>";  
+}  
+  
+invitesBody.addEventListener("click", (event) => {  
+  const btn = event.target.closest(".copy-link");  
+  if (!btn) return;  
+  navigator.clipboard.writeText(btn.dataset.link);  
+  btn.textContent = "Copiado";  
+});  
+  
+document.querySelector("#invites-open").addEventListener("click", () => {  
+  invitesModal.hidden = false;  
+  loadInvites().catch((e) => { invitesBody.innerHTML = `<tr><td colspan='6'>${e.message}</td></tr>`; });  
+});  
+  
+document.querySelector("#invites-close").addEventListener("click", () => { invitesModal.hidden = true; });  
+  
+document.querySelector("#invites-refresh").addEventListener("click", () => {  
+  loadInvites().catch((e) => { invitesBody.innerHTML = `<tr><td colspan='6'>${e.message}</td></tr>`; });  
+});  
+  
+function parseInviteLines(text) {  
+  return text.split(/\r?\n/).map((line) => {  
+    const cols = line.split(",").map((c) => c.replace(/^"|"$/g, "").trim());  
+    const [name, passes, phone] = cols;  
+    if (!name || name.toLowerCase() === "nombre") return null;  
+    return { name, max_passes: Number(passes) || 0, phone: phone || "" };  
+  }).filter(Boolean);  
+}  
+  
+async function addInvites(guests) {  
+  if (guests.length === 0) return;  
+  await api("/api/invites", { method: "POST", body: JSON.stringify({ guests }) });  
+  invitesInput.value = "";  
+  await loadInvites();  
+}  
+  
+document.querySelector("#invites-add").addEventListener("click", () => {  
+  addInvites(parseInviteLines(invitesInput.value)).catch((e) => alert(e.message));  
+});  
+  
+// Importar Excel/CSV  
+document.querySelector("#invites-import").addEventListener("click", () => invitesFile.click());  
+invitesFile.addEventListener("change", () => {  
+  const file = invitesFile.files[0];  
+  if (!file) return;  
+  const reader = new FileReader();  
+  reader.onload = () => {  
+    addInvites(parseInviteLines(String(reader.result)))  
+      .then(() => { invitesFile.value = ""; })  
+      .catch((e) => alert(e.message));  
+  };  
+  reader.readAsText(file);  
+});  
+  
+// Exportar Excel/CSV (nombres, pases, teléfono + links)  
+document.querySelector("#invites-export").addEventListener("click", () => {  
+  const rows = [["Nombre", "Pases", "Teléfono", "Link", "Abrió", "Confirmó"]];  
+  for (const g of invitesData) {  
+    rows.push([  
+      g.name, g.max_passes ?? 0, g.phone || "",  
+      `${location.origin}/?c=${g.code}`,  
+      g.opened_at ? "Sí" : "No",  
+      g.attendance || "pendiente",  
+    ]);  
+  }  
+  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");  
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });  
+  const a = document.createElement("a");  
+  a.href = URL.createObjectURL(blob);  
+  a.download = "invitados.csv";  
+  a.click();  
+});
