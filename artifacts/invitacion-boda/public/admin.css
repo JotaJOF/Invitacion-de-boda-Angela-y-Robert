@@ -239,23 +239,38 @@ html.is-loading-content img[data-key] {
 .guests-totals div { border: 1px solid #d9cec4; padding: 10px 16px; font-size: 12px; }  
 .guests-totals strong { font-size: 20px; display: block; }  
 @media print {  
-  body * {  
-    visibility: hidden;  
+  #root,  
+  .site-footer,  
+  .admin-panel,  
+  .admin-toolbar,  
+  .admin-float-bar,  
+  .login-dialog {  
+    display: none !important;  
   }  
+  
+  html, body {  
+    height: auto !important;  
+    background: #fff;  
+  }  
+  
   #guests-modal,  
   #guests-modal * {  
     visibility: visible;  
   }  
+  
   #guests-modal {  
-    position: absolute;  
-    inset: 0;  
+    position: static !important;  
     display: block !important;  
+    inset: auto;  
     padding: 0;  
     background: #fff;  
     overflow: visible;  
+    height: auto !important;  
+    max-height: none !important;  
   }  
-  #guests-modal .dialog-close,  
-  #guests-print {  
+  
+  #guests-print,  
+  #guests-modal .dialog-close {  
     display: none !important;  
   }  
 }
