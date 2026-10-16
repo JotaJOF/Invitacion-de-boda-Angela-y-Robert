@@ -105,8 +105,9 @@ async function setElementValue(element, type, value, isCurrent = () => true) {
       element.style.visibility = "hidden";  
       throw error;  
     }  
-  } else if (type === "text" && isCurrent()) {  
-    element.textContent = value;  
+  } else if (type === "text" && isCurrent()) {    
+    element.textContent = value;    
+    element.style.whiteSpace = "pre-wrap";    
   }  
 }  
   
@@ -341,7 +342,7 @@ document.addEventListener("input", (event) => {
   pendingChanges.set(target.dataset.key, {  
     element: target,  
     type: "text",  
-    value: target.textContent ?? "",  
+    value: target.innerText ?? "",  
   });  
   toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
 });  
