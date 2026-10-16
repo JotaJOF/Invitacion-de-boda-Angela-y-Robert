@@ -593,7 +593,7 @@ button, a, input, textarea, select {
   line-height: 1;  
 }  
 .guest-caption {    
-  margin-top: 2px;  
+  margin-top: 4px;  
   font-family: 'Cormorant Garamond', serif;    
   font-size: 13px;    
   letter-spacing: .06em;    
