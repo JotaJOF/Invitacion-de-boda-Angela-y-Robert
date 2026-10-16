@@ -360,3 +360,17 @@ button { -webkit-tap-highlight-color: transparent; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; }
 }
+/* ===== Saludo del invitado ===== */  
+.guest-greeting {  
+  font-family: "Montserrat", sans-serif;  
+  font-size: 1.1rem;  
+  letter-spacing: 0.08em;  
+  color: #596d37;  
+  margin: 0.5rem 0 0;  
+  text-align: center;  
+}  
+  
+#guest-name {  
+  font-family: "Great Vibes", cursive;  
+  font-size: 2rem;  
+}
