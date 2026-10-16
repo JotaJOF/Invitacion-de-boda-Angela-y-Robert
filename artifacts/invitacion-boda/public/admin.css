@@ -201,22 +201,22 @@ html.is-loading-content img[data-key] {
 .admin-panel-actions { display: flex; gap: 12px; flex-wrap: wrap; }  
 .admin-panel-actions .button { flex: 1; }  
 .panel-note { margin: 14px 0 0; color: #82766a; font-size: 11px; line-height: 1.5; }  
-.admin-float-bar {  
-  position: fixed;  
-  z-index: 36;  
-  right: 12px;  
-  bottom: max(12px, env(safe-area-inset-bottom));  
-  left: 12px;  
-  display: flex;  
-  width: min(calc(100% - 24px), 620px);  
-  margin: 0 auto;  
-  padding: 8px 11px;  
-  align-items: center;  
-  justify-content: space-between;  
-  gap: 10px;  
-  border: 1px solid #e4dbd0;  
-  background: #fffdfa;  
-  box-shadow: 0 6px 30px #2118102b;  
+.admin-float-bar {    
+  position: fixed;    
+  z-index: 36;    
+  right: 12px;    
+  bottom: max(12px, env(safe-area-inset-bottom));    
+  left: 12px;    
+  display: flex;    
+  width: min(calc(100% - 24px), 620px);    
+  margin: 0 auto;    
+  padding: 8px 11px;    
+  align-items: center;    
+  justify-content: space-between;    
+  gap: 10px;    
+  border: 0;    
+  background: transparent;    
+  box-shadow: none;    
 }  
 .admin-float-bar[hidden] { display: none; }  
 .float-back { border: 0; background: transparent; color: var(--olive-dark); font-size: 11px; font-weight: 600; letter-spacing: .1em; cursor: pointer; }
