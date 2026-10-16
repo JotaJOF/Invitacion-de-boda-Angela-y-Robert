@@ -54,9 +54,18 @@ create table if not exists public.guests (
   created_at timestamptz not null default now(), -- fecha y hora de envio  
   modified boolean not null default false,     -- señal: si se modifico  
   modified_at timestamptz                      -- fecha de la ultima modificacion  
-);  
+);    
   
-alter table public.guests enable row level security;
+alter table public.guests enable row level security;  
+  
+-- ===== Personalización por link (Opción 2) =====  
+alter table public.guests  
+  add column if not exists code text,          -- código corto del link (?c=A7F3K2)  
+  add column if not exists max_passes int not null default 0, -- pases que TÚ asignas  
+  add column if not exists opened_at timestamptz; -- cuándo abrió su link  
+  
+create unique index if not exists guests_code_key  
+  on public.guests (code) where code is not null;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)  
 values (  
