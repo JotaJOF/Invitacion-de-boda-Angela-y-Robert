@@ -361,25 +361,23 @@ const uploadToDrive = async () => {
           <div  
             style={{  
               position: 'absolute',  
-              top: '70%',  
+              top: '75%',  
               left: '79%',  
               transform: 'translate(-50%, -50%)',  
               width: '26%',  
               display: 'flex',  
               flexDirection: 'column',  
-              alignItems: 'stretch',  
+              alignItems: 'center',  
               justifyContent: 'center',  
               textAlign: 'center',  
               color: '#5d6e43',  
-              gap: '2px',  
-              lineHeight: 1.1,  
             }}  
           >  
-            <span data-key="save_date_label_1" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 10, letterSpacing: '.09em', lineHeight: 1.1 }}>Reserva</span>  
-            <span data-key="save_date_label_2" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 10, letterSpacing: '.09em', lineHeight: 1.1 }}>ESTA FECHA</span>  
-            <span className="serif" style={{ width: '100%', fontSize: 28, lineHeight: 1.1 }}>{eDay}</span>  
-            <span style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 13, lineHeight: 1.1 }}>{eMes}</span>  
-            <span style={{ width: '100%', fontSize: 10, letterSpacing: '.1em', lineHeight: 1.1 }}>{eYear}</span>  
+            <span data-key="save_date_label_1" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>Reserva</span>  
+            <span data-key="save_date_label_2" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em' }}>ESTA FECHA</span>  
+            <span className="serif" style={{ fontSize: 38, lineHeight: 0.9 }}>{eDay}</span>  
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15 }}>{eMes}</span>  
+            <span style={{ fontSize: 12, letterSpacing: '.1em' }}>{eYear}</span>  
           </div>  
   
           <button  
