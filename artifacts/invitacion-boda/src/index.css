@@ -798,10 +798,13 @@ button, a, input, textarea, select {
   background: #f7f0ec;  
   text-align: center;  
 }  
-.itinerary-list { margin: 25px auto 0; max-width: 280px; text-align: left; }  
-.itinerary-row { position: relative; display: grid; grid-template-columns: 58px 78px 1fr; gap: 15px; min-height: 58px; align-items: start; }  
+.itinerary-list { margin: 25px auto 0; max-width: 320px; text-align: left; }  
+.itinerary-row { position: relative; display: grid; grid-template-columns: 58px 78px auto; gap: 15px; min-height: 58px; align-items: start; }  
+.itinerary-row:nth-child(1) { margin-left: 0; }  
+.itinerary-row:nth-child(2) { margin-left: 35px; }  
+.itinerary-row:nth-child(3) { margin-left: 70px; }  
 .itinerary-img { width: 58px; height: 58px; object-fit: cover; border-radius: 4px; }  
-.itinerary-row::before { content: ''; position: absolute; left: 162px; top: 7px; bottom: -4px; width: 1px; background: #b5ae96; }  
+.itinerary-row::before { display: none; }  
 .itinerary-row:last-child::before { display: none; }  
 .itinerary-time { color: #67774a; font-family: 'Cormorant Garamond', serif; font-size: 19px; }  
 .itinerary-event { position: relative; color: #6e655d; font-size: 10px; letter-spacing: .13em; padding-top: 5px; }  
