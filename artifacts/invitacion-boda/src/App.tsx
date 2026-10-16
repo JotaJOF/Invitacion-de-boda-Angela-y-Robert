@@ -497,15 +497,18 @@ const uploadToDrive = async () => {
       <section className="itinerary">  
         <h2 className="script-title" data-key="itinerary_title">Itinerario</h2>  
         <div className="itinerary-list">  
-          <div className="itinerary-row">  
+         <div className="itinerary-row">  
+            <img className="itinerary-img" data-key="itinerary_img_1" src={asset('pdfimg-002.jpg')} alt="" />  
             <span className="itinerary-time" data-key="itinerary_time_1">8:00 PM</span>  
             <span className="itinerary-event" data-key="itinerary_event_1">RECEPCIÓN</span>  
           </div>  
           <div className="itinerary-row">  
+            <img className="itinerary-img" data-key="itinerary_img_2" src={asset('pdfimg-003.jpg')} alt="" />  
             <span className="itinerary-time" data-key="itinerary_time_2">9:00 PM</span>  
             <span className="itinerary-event" data-key="itinerary_event_2">CENA</span>  
           </div>  
           <div className="itinerary-row">  
+            <img className="itinerary-img" data-key="itinerary_img_3" src={asset('pdfimg-010.jpg')} alt="" />  
             <span className="itinerary-time" data-key="itinerary_time_3">10:00 PM</span>  
             <span className="itinerary-event" data-key="itinerary_event_3">CELEBRACIÓN</span>  
           </div>  
@@ -637,34 +640,35 @@ const uploadToDrive = async () => {
             </button>  
             {preview && <p className="preview-message" role="status" data-testid="status-rsvp-preview">{preview}</p>}  
             <p className="preview-caption" data-key="rsvp_preview_caption">TU CONFIRMACIÓN SERÁ ENVIADA A LOS NOVIOS.</p>  
-          </form>  
-          <div style={{ marginTop: 22 }}>  
-            <p className="eyebrow" data-key="whatsapp_eyebrow">RSVP POR WHATSAPP</p>  
-            <p className="preview-caption" data-key="whatsapp_caption">TAMBIÉN PUEDES CONFIRMAR TU ASISTENCIA A TRAVÉS DEL SIGUIENTE ENLACE DE WHATSAPP</p>  
-            <button  
-              className="olive-button light"  
-              type="button"  
-              onClick={async () => {  
-                const num = window.prompt('Escribe tu número de WhatsApp (con código de país):');  
-                if (!num) return;  
-                const name = (document.getElementById('guest-name') as HTMLInputElement)?.value || 'Invitado';  
-                try {  
-                  await fetch('/api/guests', {  
-                    method: 'POST',  
-                    headers: { 'content-type': 'application/json' },  
-                    body: JSON.stringify({ name: `${name} (${num})`, phone: num, source: 'whatsapp', attendance: '', passes: 0, message: '' }),  
-                  });  
-                } catch { /* seguir a WhatsApp igual */ }  
-                const dest = (cfg.cfg_whatsapp || '').replace(/\D/g, '');  
-                window.open(`https://wa.me/${dest}?text=${encodeURIComponent(`Hola, soy ${name}. Confirmo mi asistencia.`)}`, '_blank');  
-              }}  
-              style={{ marginTop: 13 }}  
-            >  
-              <span data-key="whatsapp_button_text">CONFIRMAR ASISTENCIA</span>  
-            </button>  
-            <p className="preview-caption" data-key="whatsapp_note">Enlace de WhatsApp no configurado; la acción solo muestra esta nota.</p>  
-          </div>  
+          </form>    
         </div>  
+      </section>  
+  
+      <section className="whatsapp-section">  
+        <p className="eyebrow" data-key="whatsapp_eyebrow">RSVP POR WHATSAPP</p>  
+        <p className="whatsapp-caption" data-key="whatsapp_caption">TAMBIÉN PUEDES CONFIRMAR TU ASISTENCIA A TRAVÉS DEL SIGUIENTE ENLACE DE WHATSAPP</p>  
+        <button  
+          className="olive-button"  
+          type="button"  
+          onClick={async () => {  
+            const num = window.prompt('Escribe tu número de WhatsApp (con código de país):');  
+            if (!num) return;  
+            const name = (document.getElementById('guest-name') as HTMLInputElement)?.value || 'Invitado';  
+            try {  
+              await fetch('/api/guests', {  
+                method: 'POST',  
+                headers: { 'content-type': 'application/json' },  
+                body: JSON.stringify({ name: `${name} (${num})`, phone: num, source: 'whatsapp', attendance: '', passes: 0, message: '' }),  
+              });  
+            } catch { /* seguir a WhatsApp igual */ }  
+            const dest = (cfg.cfg_whatsapp || '').replace(/\D/g, '');  
+            window.open(`https://wa.me/${dest}?text=${encodeURIComponent(`Hola, soy ${name}. Confirmo mi asistencia.`)}`, '_blank');  
+          }}  
+          style={{ marginTop: 13 }}  
+        >  
+          <span data-key="whatsapp_button_text">CONFIRMAR ASISTENCIA</span>  
+        </button>  
+        <p className="whatsapp-note" data-key="whatsapp_note">Enlace de WhatsApp no configurado; la acción solo muestra esta nota.</p>  
       </section>  
   
       <section className="closing">  
