@@ -268,9 +268,16 @@ function showStyleBar(element) {
   
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
+  const barHeight = styleBar.offsetHeight || 34;  
   const bounds = styleBarFor.getBoundingClientRect();  
-  styleBar.style.left = `${Math.max(4, bounds.left)}px`;  
-  styleBar.style.top = `${Math.max(4, bounds.top - 40)}px`;  
+  // Horizontal: SIEMPRE pegada al borde izquierdo (nunca se pasa).  
+  styleBar.style.left = "8px";  
+  styleBar.style.right = "auto";  
+  // Vertical: sigue al elemento, pero queda siempre dentro de la pantalla  
+  // (no te obliga a subir hasta la cabecera).  
+  let top = bounds.top - barHeight - 6;  
+  top = Math.max(8, Math.min(window.innerHeight - barHeight - 8, top));  
+  styleBar.style.top = `${top}px`;  
 }  
   
 function beginTextEdit(element) {  
