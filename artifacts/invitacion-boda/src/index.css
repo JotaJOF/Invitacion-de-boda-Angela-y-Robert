@@ -994,3 +994,13 @@ button, a, input, textarea, select {
 }
 .rsvp-modal { position: fixed; inset: 0; z-index: 50; background: #241b1bb0; display: flex; align-items: center; justify-content: center; padding: 20px; }  
 .rsvp-modal-card { background: #fffdfa; border: 1px solid #e4dbd0; padding: 26px; max-width: 360px; width: 100%; text-align: center; }
+
+.rsvp-modal-card .script-title {  
+  font-family: 'Cormorant Garamond', Georgia, serif;  
+  font-size: clamp(1.4rem, 6vw, 2rem);  
+  font-weight: 600;  
+  line-height: 1.15;  
+  letter-spacing: .02em;  
+  overflow-wrap: break-word;  
+  word-break: break-word;  
+}
