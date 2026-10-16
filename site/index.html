@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/styles.css?v=3" />
-    <script src="/js/main.js?v=3" defer></script>
+    <script src="/js/main.js?v=4" defer></script>
   </head>
   <body>
     <header class="invitation-banner">
@@ -25,9 +25,12 @@
         <span data-key="invitation_heading_line_1">QUEREMOS COMPARTIR CONTIGO LA</span>
         <span data-key="invitation_heading_line_2">ALEGRÍA DE CELEBRAR</span>
         <span data-key="invitation_heading_line_3">NUESTRA BODA</span>
-      </h1>
+      </h1>  
+      <p class="guest-greeting" id="guest-greeting" hidden>  
+        <span id="guest-name"></span>  
+        <span id="guest-passes"></span>  
+      </p>  
     </header>
-
     <main class="invitation-page">
       <section class="save-date" aria-label="Reserva la fecha de nuestra boda">
         <div class="save-date-art">
@@ -120,6 +123,7 @@
       <button class="button button-olive toolbar-save" id="save-content" type="button">
         GUARDAR
       </button>
+      <a class="button button-olive" href="/invitados.html" style="text-decoration:none">INVITADOS</a>
       <button class="toolbar-text" id="cancel-edit" type="button">Salir</button>
     </aside>
     <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" hidden />
