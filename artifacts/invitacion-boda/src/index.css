@@ -425,12 +425,12 @@ button, a, input, textarea, select {
 .serif { font-family: 'Cormorant Garamond', Georgia, serif; }  
 .script { font-family: 'Great Vibes', cursive; }  
   
-.cover {  
-  position: relative;  
-  padding: 22px 12px 20px;  
-  background: #f7f0ec;  
-  text-align: center;  
-}  
+.cover {    
+  position: relative;    
+  padding: 22px 12px 44px;    
+  background: #f7f0ec;    
+  text-align: center;    
+}
   
 .cover-names {  
   display: flex;  
