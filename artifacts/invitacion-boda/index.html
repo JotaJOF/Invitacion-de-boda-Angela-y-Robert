@@ -91,12 +91,19 @@
     </aside>
     <aside class="guests-modal" id="invites-modal" hidden>  
       <div class="guests-card">  
-        <button class="dialog-close" id="invites-close" type="button" aria-label="Cerrar">×</button>  
-        <h2>Generar links de invitados</h2>  
+        <div class="invites-topbar">  
+          <button class="button" id="invites-refresh" type="button" aria-label="Refrescar" title="Refrescar información">⟳</button>  
+          <button class="button" id="invites-close" type="button" aria-label="Cerrar" title="Cerrar">✕</button>  
+        </div>  
+        <h2>Generar links de invitados</h2> 
         <p>Una línea por invitado: <code>Nombre, pases, teléfono (opcional)</code></p>  
         <textarea id="invites-input" rows="5" style="width:100%" placeholder="Nicol y Josué, 2, 5218112345678&#10;Carlos y María, 5&#10;Juan, 1"></textarea>  
-        <button class="button button-olive" id="invites-add" type="button">AGREGAR Y GENERAR LINKS</button>  
-        <p class="form-message" id="invites-message"></p>  
+        <div class="invites-actions">  
+          <button class="button button-olive" id="invites-add" type="button">AGREGAR Y GENERAR LINKS</button>  
+          <button class="button" id="invites-import" type="button">IMPORTAR EXCEL</button>  
+          <button class="button" id="invites-export" type="button">EXPORTAR EXCEL</button>  
+        </div>  
+        <input id="invites-file" type="file" accept=".csv" hidden />  
         <div class="guests-table-wrap">  
           <table class="guests-table">  
             <thead><tr><th>Nombre</th><th>Pases</th><th>Link</th><th>Abrió</th><th>Confirmó</th><th>WhatsApp</th></tr></thead>  
@@ -109,7 +116,7 @@
     <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>  
     <script type="module" src="/src/main.tsx"></script>  
-   <link rel="stylesheet" href="/admin.css?v=9" />      
-<script src="/admin.js?v=9" defer></script>  
+   <link rel="stylesheet" href="/admin.css?v=10" />      
+<script src="/admin.js?v=10" defer></script>  
   </body>  
 </html>
