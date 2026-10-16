@@ -113,7 +113,7 @@ body.invite-open .site-footer { display: flex; }
   background: #fffdfa;  
   box-shadow: 0 6px 30px #2118102b;  
 }  
-.admin-toolbar[hidden] { display: none; }  
+.admin-toolbar { display: none !important; }  
 .toolbar-label { overflow: hidden; color: var(--olive-dark); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }  
 .toolbar-save { min-height: 37px; padding-inline: 15px; }  
 .toolbar-text { border: 0; background: transparent; color: #82766a; font-size: 11px; cursor: pointer; }  
