@@ -283,27 +283,40 @@ html.is-loading-content img[data-key] {
     height: auto !important;  
     max-height: none !important;  
   }  
-  /* ===== Barra de botones del modal de links ===== */  
+ /* ===== Barra de botones del modal de links ===== */  
+/* Refrescar + cerrar: a la derecha y compactos */  
 .invites-topbar {  
   display: flex;  
   justify-content: flex-end;  
   gap: 8px;  
-  margin-bottom: 10px;  
+  margin-bottom: 14px;  
 }  
 .invites-topbar .button {  
-  min-width: 42px;  
-  padding: 6px 12px;  
-  font-size: 18px;  
+  width: 36px;  
+  min-width: 36px;  
+  min-height: 36px;  
+  padding: 0;  
+  font-size: 16px;  
   line-height: 1;  
 }  
+  
+/* Agregar / importar / exportar */  
 .invites-actions {  
   display: flex;  
   flex-wrap: wrap;  
-  gap: 8px;  
-  margin: 10px 0;  
-}
-  #guests-print,  
-  #guests-modal .dialog-close {  
-    display: none !important;  
-  }  
+  gap: 10px;  
+  margin: 10px 0 42px;   /* 42px = triple del espacio hacia la tabla */  
+}  
+.invites-actions .button {  
+  min-height: 40px;  
+  padding: 0 16px;  
+  width: auto;  
+}  
+/* AGREGAR ocupa toda la fila; IMPORTAR y EXPORTAR comparten la fila de abajo */  
+.invites-actions #invites-add {  
+  flex: 1 1 100%;  
+}  
+.invites-actions #invites-import,  
+.invites-actions #invites-export {  
+  flex: 1 1 0;  
 }
