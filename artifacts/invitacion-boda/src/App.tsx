@@ -385,7 +385,7 @@ const uploadToDrive = async () => {
             type="button"  
             onClick={downloadCalendar}  
             data-testid="button-add-calendar"  
-            style={{ position: 'absolute', left: '0%', bottom: '14%', fontSize: 10, padding: '6px 9px' }}  
+            style={{ position: 'absolute', left: '-9%', bottom: '4%', fontSize: 10, padding: '6px 9px' }}  
           >  
             <CalendarDays size={14} /> AGENDAR EN CALENDARIO  
           </button>  
