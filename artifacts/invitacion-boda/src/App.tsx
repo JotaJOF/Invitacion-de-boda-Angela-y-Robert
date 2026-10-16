@@ -150,7 +150,9 @@ function App() {
   const [albumQueue, setAlbumQueue] = useState<{ id: string; f: File; status: 'pendiente' | 'subiendo' | 'listo' | 'error'; progress: number }[]>([]);  
   const [uploading, setUploading] = useState(false);  
   const albumInput = useRef<HTMLInputElement>(null);
-  const [cfg, setCfg] = useState<Record<string, string>>({});  
+  const [cfg, setCfg] = useState<Record<string, string>>({});
+  const inviteCode = new URLSearchParams(window.location.search).get('c') || '';  
+  const [invitee, setInvitee] = useState<{ name: string; max_passes: number } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);  
   const [modifyOpen, setModifyOpen] = useState(false);  
   const [thanks, setThanks] = useState<null | 'yes' | 'no'>(null);  
@@ -163,8 +165,14 @@ function App() {
       for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
       setCfg(flat);  
     }).catch(() => {});  
-    fetch(`/api/guests/check/${encodeURIComponent('María y Pablo')}`).then((r) => r.json())  
-      .then(({ guest }) => { if (guest) setRsvpDone(true); }).catch(() => {});  
+    if (inviteCode) {  
+      fetch(`/api/invite/${encodeURIComponent(inviteCode)}`).then((r) => r.json())  
+        .then(({ guest }) => {  
+          if (!guest) return;  
+          setInvitee(guest);  
+          if (guest.attendance) setRsvpDone(true);  
+        }).catch(() => {});  
+    }  
   }, []);  
   
   const eventDate = cfg.cfg_date ? new Date(cfg.cfg_date) : WEDDING_DATE;  
@@ -201,7 +209,8 @@ function App() {
       method: 'POST',  
       headers: { 'content-type': 'application/json' },  
       body: JSON.stringify({  
-        name: 'María y Pablo',  
+        name: invitee?.name || 'Invitado',  
+        code: inviteCode,  
         attendance: String(form.get('attendance') || 'yes'),  
         passes: Number(form.get('people')) || 0,  
         message: String(form.get('message') || '').trim(),  
@@ -303,9 +312,9 @@ const uploadToDrive = async () => {
         <div className="ornament-rule" aria-hidden="true" style={{ marginTop: 8 }}>  
           <span>✤</span>  
         </div>  
-        <p className="guest-name script" data-key="guest_names" data-testid="text-invitee-names">María y Pablo</p>  
+        <p className="guest-name script" data-key="guest_names" data-testid="text-invitee-names">{invitee?.name ?? 'María y Pablo'}</p>  
         <p className="guest-reserved" data-key="guest_reserved">HEMOS RESERVADO</p>  
-        <p className="guest-count" data-key="guest_count">2</p>  
+        <p className="guest-count" data-key="guest_count">{invitee?.max_passes || 2}</p>  
         <p className="guest-caption" data-key="guest_caption">LUGARES A TU NOMBRE</p>  
       </section>
       {envelopeOpen && (<>
@@ -616,9 +625,9 @@ const uploadToDrive = async () => {
           <form className="rsvp-form" onSubmit={previewRsvp}>  
             <div className="rsvp-field">  
               <label htmlFor="guest-name" data-key="rsvp_label_name">NOMBRE DEL INVITADO</label>  
-              <input id="guest-name" name="guestName" defaultValue="María y Pablo" readOnly data-testid="input-rsvp-name" />  
+              <input id="guest-name" name="guestName" value={invitee?.name ?? 'María y Pablo'} readOnly data-testid="input-rsvp-name" />  
             </div>  
-            <p className="rsvp-note" data-key="rsvp_note">ESTA INVITACIÓN CUENTA CON 2 PASES.<br />UNA SOLA PERSONA DEBE CONFIRMAR LA ASISTENCIA.</p>  
+            <p className="rsvp-note" data-key="rsvp_note">ESTA INVITACIÓN CUENTA CON {invitee?.max_passes || 2} PASES.<br />UNA SOLA PERSONA DEBE CONFIRMAR LA ASISTENCIA.</p>  
             <div className="rsvp-field">  
               <label htmlFor="attendance" data-key="rsvp_label_attendance">CONFIRMACIÓN</label>  
               <select id="attendance" name="attendance" defaultValue="yes" data-testid="select-rsvp-attendance">  
@@ -628,9 +637,10 @@ const uploadToDrive = async () => {
             </div>  
             <div className="rsvp-field">  
               <label htmlFor="people" data-key="rsvp_label_people">NÚMERO DE PASES</label>  
-              <select id="people" name="people" defaultValue="2" data-testid="select-rsvp-seats">  
-                <option value="1">1 PERSONA</option>  
-                <option value="2">2 PERSONAS</option>  
+              <select id="people" name="people" defaultValue={String(Math.min(2, invitee?.max_passes || 2))} data-testid="select-rsvp-seats">  
+                {Array.from({ length: invitee?.max_passes || 2 }, (_, i) => (  
+                  <option key={i + 1} value={i + 1}>{i + 1} PERSONA{i > 0 ? 'S' : ''}</option>  
+                ))}  
               </select>  
             </div>  
             <div className="rsvp-field">  
