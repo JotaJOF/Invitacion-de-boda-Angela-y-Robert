@@ -92,16 +92,18 @@
     <aside class="guests-modal" id="invites-modal" hidden>  
       <div class="guests-card">  
         <div class="invites-topbar">  
-          <button class="button" id="invites-refresh" type="button" aria-label="Refrescar" title="Refrescar información">⟳</button>  
-          <button class="button" id="invites-close" type="button" aria-label="Cerrar" title="Cerrar">✕</button>  
+          <button class="icon-btn" id="invites-refresh" type="button" aria-label="Refrescar" title="Refrescar">⟳</button>  
+          <button class="icon-btn" id="invites-close" type="button" aria-label="Cerrar" title="Cerrar">✕</button>  
         </div>  
-        <h2>Generar links de invitados</h2> 
+        <h2>Generar links de invitados</h2>  
         <p>Una línea por invitado: <code>Nombre, pases, teléfono (opcional)</code></p>  
         <textarea id="invites-input" rows="5" style="width:100%" placeholder="Nicol y Josué, 2, 5218112345678&#10;Carlos y María, 5&#10;Juan, 1"></textarea>  
         <div class="invites-actions">  
           <button class="button button-olive" id="invites-add" type="button">AGREGAR Y GENERAR LINKS</button>  
-          <button class="button" id="invites-import" type="button">IMPORTAR EXCEL</button>  
-          <button class="button" id="invites-export" type="button">EXPORTAR EXCEL</button>  
+          <div class="invites-actions-row">  
+            <button class="button" id="invites-import" type="button">IMPORTAR EXCEL</button>  
+            <button class="button" id="invites-export" type="button">EXPORTAR EXCEL</button>  
+          </div>  
         </div>  
         <input id="invites-file" type="file" accept=".csv" hidden />  
         <div class="guests-table-wrap">  
@@ -112,7 +114,6 @@
         </div>  
       </div>  
     </aside>  
-    <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden />
     <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>  
     <script type="module" src="/src/main.tsx"></script>  
