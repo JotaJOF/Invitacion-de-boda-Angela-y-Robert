@@ -286,7 +286,7 @@ const uploadToDrive = async () => {
         <div className="ornament-rule cover-separator" aria-hidden="true">  
           <span>✤</span>  
         </div>  
-        <p className="cover-date serif">MONTERREY, NL | {eFechaPunteada}</p>  
+        <p className="cover-date serif"><span data-key="cover_place">MONTERREY, NL</span> | {eFechaPunteada}</p>  
   
         <button  
           className={`envelope-button${envelopeOpen ? ' is-open' : ''}`}  
@@ -385,7 +385,7 @@ const uploadToDrive = async () => {
             type="button"  
             onClick={downloadCalendar}  
             data-testid="button-add-calendar"  
-            style={{ position: 'absolute', left: '0%', bottom: '4%', fontSize: 10, padding: '6px 9px' }}  
+            style={{ position: 'absolute', left: '0%', bottom: '14%', fontSize: 10, padding: '6px 9px' }}  
           >  
             <CalendarDays size={14} /> AGENDAR EN CALENDARIO  
           </button>  
