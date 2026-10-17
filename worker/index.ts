@@ -29,6 +29,9 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "video/mp4": "mp4",  
   "video/webm": "webm",  
   "video/quicktime": "mov",  
+  "audio/mpeg": "mp3",  
+  "audio/mp4": "m4a",  
+  "audio/ogg": "ogg",  
 };  
   
 function json(data: unknown, status = 200, headers: HeadersInit = {}): Response {  
@@ -429,7 +432,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         const extension = MIME_EXTENSIONS[file.type];  
         if (!extension) {  
           return json(  
-            { error: "Usa una imagen JPG, PNG, WebP, GIF o AVIF." },  
+            { error: "Usa una imagen JPG, PNG, WebP, GIF, AVIF, un video o un audio MP3." },  
             415,  
           );  
         }  
