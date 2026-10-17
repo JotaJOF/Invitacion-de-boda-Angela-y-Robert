@@ -198,16 +198,16 @@ function App() {
     document.body.classList.toggle('invite-open', envelopeOpen);  
   }, [envelopeOpen]);
   
-  const openInvitation = () => {    
-    setEnvelopeOpen(true);    
-    audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});  
-    window.setTimeout(() => {  
-      document.getElementById('invitation-start')?.scrollIntoView({  
-        behavior: 'smooth',  
-        block: 'start',  
-      });  
-    }, 360);  
-  };  
+  const openInvitation = () => {  
+  setEnvelopeOpen(true);  
+  audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});  
+  window.setTimeout(() => {  
+    document.getElementById('invitation-start')?.scrollIntoView({  
+      behavior: 'smooth',  
+      block: 'start',  
+    });  
+  }, 360);  
+};  
   
  const sendRsvp = async (form: FormData) => {  
     const res = await fetch('/api/guests', {  
@@ -734,7 +734,7 @@ const uploadToDrive = async () => {
           <audio ref={audioRef} src={cfg.cfg_music_url} loop preload="auto" />  
           {envelopeOpen && (  
             <button  
-              className="music-fab"  
+              className={`music-fab${musicPlaying ? ' is-playing' : ''}`}  
               type="button"  
               aria-label={musicPlaying ? 'Pausar música' : 'Reproducir música'}  
               onClick={() => {  
