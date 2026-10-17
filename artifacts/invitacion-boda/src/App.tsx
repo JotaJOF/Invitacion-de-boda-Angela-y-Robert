@@ -209,6 +209,14 @@ function App() {
   }, 360);  
 };  
   
+  useEffect(() => {  
+    if (!envelopeOpen) return;  
+    const a = audioRef.current;  
+    if (a && a.paused) {  
+      a.play().then(() => setMusicPlaying(true)).catch(() => {});  
+    }  
+  }, [envelopeOpen]);  
+  
  const sendRsvp = async (form: FormData) => {  
     const res = await fetch('/api/guests', {  
       method: 'POST',  
