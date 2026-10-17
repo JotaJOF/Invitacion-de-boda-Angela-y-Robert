@@ -693,3 +693,67 @@ document.querySelector("#invites-export").addEventListener("click", () => {
   a.download = "invitados.csv";  
   a.click();  
 });
+
+// ===== Canción de fondo =====  
+const musicUploadBtn = document.querySelector("#music-upload");  
+const musicFileInput = document.querySelector("#music-file");  
+const musicTestBtn = document.querySelector("#music-test");  
+const musicStatus = document.querySelector("#music-status");  
+let musicUrl = "";  
+let musicPreview = null;  
+  
+async function refreshMusicStatus() {  
+  try {  
+    const { content = {} } = await api("/api/content", { method: "GET" });  
+    musicUrl = content.cfg_music_url ? content.cfg_music_url.value : "";  
+    if (musicStatus) musicStatus.textContent = musicUrl ? "Canción cargada ✔" : "Sin canción";  
+    if (musicTestBtn) musicTestBtn.hidden = !musicUrl;  
+  } catch { /* sin datos */ }  
+}  
+  
+if (musicUploadBtn && musicFileInput) {  
+  musicUploadBtn.addEventListener("click", () => musicFileInput.click());  
+  musicFileInput.addEventListener("change", async () => {  
+    const file = musicFileInput.files?.[0];  
+    if (!file) return;  
+    musicStatus.textContent = "Subiendo canción…";  
+    try {  
+      const form = new FormData();  
+      form.set("file", file);  
+      form.set("key", "cfg_music_url");  
+      const { url } = await api("/api/upload", { method: "POST", body: form });  
+      await api("/api/content/cfg_music_url", {  
+        method: "PUT",  
+        body: JSON.stringify({ type: "text", value: url }),  
+      });  
+      musicUrl = url;  
+      musicStatus.textContent = `Guardada: ${file.name}`;  
+      musicTestBtn.hidden = false;  
+      showToast("Canción guardada.");  
+    } catch (error) {  
+      musicStatus.textContent = "Error al subir.";  
+      showToast(error.message);  
+    }  
+    musicFileInput.value = "";  
+  });  
+}  
+  
+if (musicTestBtn) {  
+  musicTestBtn.addEventListener("click", () => {  
+    if (!musicUrl) return;  
+    if (musicPreview && !musicPreview.paused) {  
+      musicPreview.pause();  
+      musicTestBtn.textContent = "▶ PROBAR CANCIÓN";  
+      return;  
+    }  
+    if (!musicPreview) musicPreview = new Audio(musicUrl);  
+    musicPreview.play();  
+    musicTestBtn.textContent = "⏸ PAUSAR PRUEBA";  
+  });  
+}  
+  
+if (adminPanel) {  
+  new MutationObserver(() => {  
+    if (!adminPanel.hidden) refreshMusicStatus();  
+  }).observe(adminPanel, { attributes: true, attributeFilter: ["hidden"] });  
+}
