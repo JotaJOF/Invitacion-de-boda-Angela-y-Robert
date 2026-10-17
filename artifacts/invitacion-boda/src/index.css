@@ -1022,3 +1022,11 @@ button, a, input, textarea, select {
   transition: transform 0.15s ease;  
 }  
 .music-fab:hover { transform: scale(1.08); }
+.music-fab.is-playing {  
+  animation: music-spin 3s linear infinite;  
+}  
+  
+@keyframes music-spin {  
+  from { transform: rotate(0deg); }  
+  to { transform: rotate(360deg); }  
+}
