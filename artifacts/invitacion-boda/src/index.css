@@ -1004,3 +1004,21 @@ button, a, input, textarea, select {
   overflow-wrap: break-word;  
   word-break: break-word;  
 }
+.music-fab {  
+  position: fixed;  
+  bottom: 18px;  
+  right: 18px;  
+  z-index: 60;  
+  width: 54px;  
+  height: 54px;  
+  border-radius: 50%;  
+  background: #536948;  
+  color: #fffaf4;  
+  border: 2px solid rgba(255, 255, 255, 0.65);  
+  display: grid;  
+  place-items: center;  
+  box-shadow: 0 6px 16px rgba(47, 58, 39, 0.35);  
+  cursor: pointer;  
+  transition: transform 0.15s ease;  
+}  
+.music-fab:hover { transform: scale(1.08); }
