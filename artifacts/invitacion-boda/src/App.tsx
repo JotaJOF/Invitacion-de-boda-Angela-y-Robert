@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';  
-import {  
-  CalendarDays,  
-  ChevronDown,  
-  ChevronUp,  
-  MapPin,  
-  Upload,  
+import {    
+  CalendarDays,    
+  ChevronDown,    
+  ChevronUp,    
+  MapPin,    
+  Pause,  
+  Play,  
+  Upload,    
 } from 'lucide-react';  
   
 const asset = (filename: string) => `${import.meta.env.BASE_URL}assets/${filename}`;  
@@ -158,6 +160,8 @@ function App() {
   const [thanks, setThanks] = useState<null | 'yes' | 'no'>(null);  
   const [rsvpDone, setRsvpDone] = useState(false);  
   const pendingForm = useRef<FormData | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);  
+  const [musicPlaying, setMusicPlaying] = useState(false);
    
   useEffect(() => {  
     fetch('/api/content').then((r) => r.json()).then(({ content = {} }) => {  
@@ -194,8 +198,9 @@ function App() {
     document.body.classList.toggle('invite-open', envelopeOpen);  
   }, [envelopeOpen]);
   
-  const openInvitation = () => {  
-    setEnvelopeOpen(true);  
+  const openInvitation = () => {    
+    setEnvelopeOpen(true);    
+    audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});  
     window.setTimeout(() => {  
       document.getElementById('invitation-start')?.scrollIntoView({  
         behavior: 'smooth',  
@@ -723,6 +728,26 @@ const uploadToDrive = async () => {
             <button className="olive-button light" type="button" onClick={() => setThanks(null)}>CERRAR</button>  
           </div>  
         </div>  
+      )}
+{cfg.cfg_music_url && (  
+        <>  
+          <audio ref={audioRef} src={cfg.cfg_music_url} loop preload="auto" />  
+          {envelopeOpen && (  
+            <button  
+              className="music-fab"  
+              type="button"  
+              aria-label={musicPlaying ? 'Pausar música' : 'Reproducir música'}  
+              onClick={() => {  
+                const a = audioRef.current;  
+                if (!a) return;  
+                if (a.paused) { a.play(); setMusicPlaying(true); }  
+                else { a.pause(); setMusicPlaying(false); }  
+              }}  
+            >  
+              {musicPlaying ? <Pause size={22} /> : <Play size={22} />}  
+            </button>  
+          )}  
+        </>  
       )}
       <footer className="footer-note" data-key="footer_note">CON CARIÑO, ANGELA &amp; ROBERT · {fechaPunteada}</footer>  
         </>)}
