@@ -3,80 +3,448 @@
   <head>  
     <meta charset="UTF-8" />  
     <meta name="viewport" content="width=device-width, initial-scale=1" />  
-    <title>Invitados — Panel</title>  
+    <title>Panel de Invitados — Angela & Robert</title>  
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/styles.css" />  
     <style>  
+      :root {
+        --panel-bg: #f7f9f6;
+        --card-bg: #ffffff;
+        --border-color: #e6e3dc;
+        --olive: #465a37;
+        --olive-dark: #344329;
+        --olive-soft: #edf3e8;
+        --ink: #1f1d1a;
+        --ink-muted: #6e675d;
+        --wa-green: #25d366;
+        --wa-bg: #eafaf1;
+      }
+
       body {  
-        font-family: "Montserrat", sans-serif;  
-        padding: 2rem;  
-        max-width: 960px;  
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Montserrat", sans-serif;
+        background-color: var(--panel-bg);
+        color: var(--ink);
+        padding: clamp(16px, 3vw, 36px) clamp(14px, 3vw, 24px);
+        max-width: 1040px;  
         margin: auto;  
+        min-height: 100vh;
       }  
+
+      /* Header del Dashboard */
+      .dashboard-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .dashboard-title-group h1 {
+        margin: 0;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: clamp(26px, 4vw, 36px);
+        font-weight: 600;
+        color: var(--olive-dark);
+        line-height: 1.15;
+      }
+
+      .dashboard-subtitle {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--ink-muted);
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn-nav, .btn-print {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .btn-nav {
+        background: #ffffff;
+        color: var(--ink);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      }
+
+      .btn-nav:hover {
+        background: var(--olive-soft);
+        color: var(--olive-dark);
+        border-color: var(--olive);
+        transform: translateY(-1px);
+      }
+
+      .btn-print {
+        background: var(--olive);
+        color: #ffffff;
+        border: 1px solid transparent;
+        box-shadow: 0 2px 8px rgba(70, 90, 55, 0.25);
+      }
+
+      .btn-print:hover {
+        background: var(--olive-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(70, 90, 55, 0.35);
+      }
+
+      .btn-print:active, .btn-nav:active {
+        transform: scale(0.96);
+      }
+
+      /* Tarjetas del Dashboard (macOS Card Style) */
+      .dashboard-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
+        padding: clamp(16px, 2.5vw, 24px);
+        margin-bottom: 24px;
+        position: relative;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .card-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+
+      .card-desc {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin: 4px 0 14px;
+        line-height: 1.45;
+      }
+
+      .card-desc code {
+        background: #f1ede6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--olive-dark);
+      }
+
+      /* Área de texto para importar */
+      textarea#guest-input {  
+        width: 100%;  
+        min-height: 110px;  
+        padding: 12px 14px;
+        border: 1px solid #dcd7ce;
+        border-radius: 10px;
+        background: #fdfcfb;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Mono", Menlo, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        resize: vertical;
+        transition: all 0.2s ease;
+        margin-bottom: 12px;
+      }  
+
+      textarea#guest-input:focus {
+        outline: none;
+        border-color: var(--olive);
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(70, 90, 55, 0.18);
+      }
+
+      /* Botones de Acción */
+      .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      button#add-guests, button#reload {  
+        font-family: inherit;  
+        cursor: pointer;  
+        padding: 9px 20px;  
+        background: var(--olive);  
+        color: #ffffff;  
+        border: none;  
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        box-shadow: 0 2px 8px rgba(70, 90, 55, 0.2);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }  
+
+      button#add-guests:hover, button#reload:hover {
+        background: var(--olive-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(70, 90, 55, 0.3);
+      }
+
+      button#reload {
+        background: #ffffff;
+        color: var(--ink-muted);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      }
+
+      button#reload:hover {
+        background: #f7f5f0;
+        color: var(--ink);
+        border-color: #cac4ba;
+      }
+
+      button:active {
+        transform: scale(0.96) !important;
+      }
+
+      #panel-message {  
+        margin: 10px 0 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--olive-dark);  
+        min-height: 18px;
+      }  
+
+      /* Tabla de Invitados Estilo Apple */
+      .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+      }
+
       table {  
         width: 100%;  
         border-collapse: collapse;  
-        margin-top: 1rem;  
-        font-size: 0.85rem;  
+        font-size: 13px;  
+        text-align: left;
+        background: #ffffff;
       }  
-      td,  
-      th {  
-        border: 1px solid #ccc;  
-        padding: 0.4rem;  
-        text-align: left;  
+
+      thead {
+        background: #f8f6f2;
+      }
+
+      th {
+        padding: 12px 14px;
+        font-weight: 600;
+        color: var(--ink-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+      }
+
+      td {  
+        padding: 12px 14px;  
+        border-bottom: 1px solid #f0ede7;  
+        color: var(--ink);
+        vertical-align: middle;
       }  
-      textarea {  
-        width: 100%;  
-        min-height: 140px;  
-        font-family: monospace;  
-      }  
-      button {  
-        font-family: inherit;  
-        cursor: pointer;  
-        margin: 0.4rem 0.4rem 0.4rem 0;  
-        padding: 0.5rem 1rem;  
-        background: #596d37;  
-        color: #fff;  
-        border: none;  
-        border-radius: 4px;  
-      }  
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      tbody tr:hover {
+        background-color: #faf8f5;
+      }
+
+      /* Botón Copiar Link */
+      button[data-link] {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        transition: all 0.2s ease;
+      }
+
+      button[data-link]:hover {
+        background: var(--olive-soft);
+        color: var(--olive-dark);
+        border-color: var(--olive);
+      }
+
+      /* Enlace WhatsApp */
       a.wa {  
-        color: #596d37;  
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 5px 14px;
+        border-radius: 9999px;
+        background: var(--wa-bg);
+        color: #128c7e;
+        border: 1px solid rgba(37, 211, 102, 0.35);
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
       }  
-      .toplink {  
-        color: #596d37;  
-      }  
-      #panel-message {  
-        color: #a33;  
-      }  
+
+      a.wa:hover {
+        background: #25d366;
+        color: #ffffff;
+        border-color: #25d366;
+        box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+      }
+
+      /* Badge de Estado */
+      .badge-opened {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 9999px;
+        background: var(--olive-soft);
+        color: var(--olive-dark);
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      /* ==========================================================================
+         Optimización para Impresión / Guardar en PDF
+         ========================================================================== */
+      @media print {
+        body {
+          background: #ffffff !important;
+          color: #000000 !important;
+          padding: 0 !important;
+        }
+
+        .header-actions,
+        .btn-nav,
+        .btn-print,
+        .card-import,
+        #panel-message,
+        button#reload,
+        button[data-link],
+        a.wa {
+          display: none !important;
+        }
+
+        .dashboard-header {
+          border-bottom: 2px solid #000000;
+          margin-bottom: 16px;
+        }
+
+        .dashboard-card {
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+
+        .table-wrapper {
+          border: 1px solid #000000 !important;
+          border-radius: 0 !important;
+        }
+
+        table {
+          font-size: 11px !important;
+        }
+
+        th, td {
+          border: 1px solid #cccccc !important;
+          padding: 6px 8px !important;
+          color: #000000 !important;
+        }
+
+        thead {
+          background: #f0f0f0 !important;
+        }
+      }
     </style>  
   </head>  
   <body>  
-    <h1>Invitados</h1>  
-    <p><a class="toplink" href="/">← Volver a la invitación</a></p>  
-    <p id="panel-message"></p>  
-    <p>  
-      Pega tu lista desde Excel: <strong>una línea por invitado</strong> con el  
-      formato <code>Nombre, pases, teléfono (opcional)</code>  
-    </p>  
-    <textarea  
-      id="guest-input"  
-      placeholder="Nicol &amp; Josué, 2, 5218112345678&#10;Carlos y María, 5&#10;Juan, 1"  
-    ></textarea>  
-    <button id="add-guests" type="button">AGREGAR Y GENERAR LINKS</button>  
-    <button id="reload" type="button">RECARGAR</button>  
-    <table>  
-      <thead>  
-        <tr>  
-          <th>Nombre</th>  
-          <th>Pases</th>  
-          <th>Link</th>  
-          <th>Abrió</th>  
-          <th>Confirmó</th>  
-          <th>WhatsApp</th>  
-        </tr>  
-      </thead>  
-      <tbody id="guest-table"></tbody>  
-    </table>  
+    <header class="dashboard-header">
+      <div class="dashboard-title-group">
+        <h1>Lista de Invitados</h1>
+        <p class="dashboard-subtitle">Control de pases, confirmaciones y enlaces para Angela & Robert</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn-nav" href="/">← Volver a la invitación</a>
+        <button class="btn-print" type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Tarjeta de Importación -->
+      <section class="dashboard-card card-import">
+        <h2 class="card-title">Agregar nuevos invitados</h2>
+        <p class="card-desc">
+          Pega tu lista desde Excel o redacta <strong>una línea por invitado</strong> con el formato:  
+          <code>Nombre, pases, teléfono (opcional)</code>
+        </p>  
+        <textarea  
+          id="guest-input"  
+          placeholder="Nicol & Josué, 2, 5218112345678&#10;Carlos y María, 5&#10;Juan Pérez, 1"  
+        ></textarea>  
+        <div class="action-buttons">
+          <button id="add-guests" type="button">AGREGAR Y GENERAR LINKS</button>  
+          <button id="reload" type="button">RECARGAR LISTA</button>  
+        </div>
+        <p id="panel-message"></p>  
+      </section>
+
+      <!-- Tarjeta de Tabla de Invitados -->
+      <section class="dashboard-card">
+        <div class="card-header">
+          <h2 class="card-title">Invitados registrados</h2>
+        </div>
+        <div class="table-wrapper">
+          <table>  
+            <thead>  
+              <tr>  
+                <th>Nombre</th>  
+                <th>Pases</th>  
+                <th>Link personal</th>  
+                <th>Abrió</th>  
+                <th>Confirmó</th>  
+                <th>WhatsApp</th>  
+              </tr>  
+            </thead>  
+            <tbody id="guest-table"></tbody>  
+          </table>  
+        </div>
+      </section>
+    </main>
+
     <script src="/js/invitados.js" defer></script>  
   </body>  
 </html>
