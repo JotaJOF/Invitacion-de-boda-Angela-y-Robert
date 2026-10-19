@@ -76,8 +76,8 @@ async function preloadVideo(value) {
   const video = document.createElement("video");  
   video.preload = "auto";  
   video.muted = true;  
-  video.src = value;
-  if (video.readyState >= 2) return value;
+  video.src = value;  
+  if (video.readyState >= 2) return value;  
   await new Promise((resolve, reject) => {  
     video.addEventListener("loadeddata", resolve, { once: true });  
     video.addEventListener("error", () => reject(new Error("No se pudo cargar el video.")), { once: true });  
@@ -123,6 +123,8 @@ function recordBaseline(element) {
     element.dataset.originalText = element.textContent ?? "";  
     element.dataset.originalFontFamily = element.style.fontFamily ?? "";  
     element.dataset.originalFontSize = element.style.fontSize ?? "";  
+    element.dataset.originalMaxWidth = element.style.maxWidth ?? "";  
+    element.dataset.originalTransform = element.style.transform ?? "";  
   }  
 }  
   
@@ -154,8 +156,10 @@ async function loadContent() {
           const style = JSON.parse(styleSaved.value);  
           if (style.fontFamily) element.style.fontFamily = style.fontFamily;  
           if (style.fontSize) element.style.fontSize = style.fontSize;  
+          if (style.maxWidth) element.style.maxWidth = style.maxWidth;  
+          if (style.transform) element.style.transform = style.transform;  
         } catch { /* estilo inválido, se ignora */ }  
-      }  
+      } 
     }  
     await Promise.all(imageLoads);  
     for (const element of contentNodes) recordBaseline(element);  
@@ -178,6 +182,7 @@ function pencilMarkup() {
 }  
   
 function positionPencils() {  
+  // Ya no hay lápices flotantes; solo reposiciona la barra de estilo.  
   positionStyleBar();  
 }  
   
@@ -199,17 +204,12 @@ function currentFontLabel(element) {
   return match ? match.label : family.split(",")[0].replace(/["']/g, "").trim();  
 }  
   
-function markStyleChange(element) {  
-  pendingChanges.set(`${element.dataset.key}__style`, {  
-    element,  
-    type: "style",  
-    value: JSON.stringify({  
+value: JSON.stringify({  
       fontFamily: element.style.fontFamily || "",  
       fontSize: element.style.fontSize || "",  
+      maxWidth: element.style.maxWidth || "",  
+      transform: element.style.transform || "",  
     }),  
-  });  
-  toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
-}  
   
 function showStyleBar(element) {  
   hideStyleBar();  
@@ -248,21 +248,34 @@ function showStyleBar(element) {
     styleBar.append(menu);  
   });  
   
-  sizeBtn.addEventListener("click", () => {  
-    const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
-    const input = window.prompt("Tamaño de letra (solo el número):", String(actual));  
+  const widthBtn = document.createElement("button");  
+  widthBtn.type = "button";  
+  widthBtn.className = "style-btn";  
+  widthBtn.textContent = "Ancho";  
+  widthBtn.addEventListener("click", () => {  
+    const input = window.prompt("Ancho máximo (ej. 100%, 500px, none):", element.style.maxWidth || "");  
     if (input === null) return;  
-    const n = Number(input);  
-    if (!Number.isFinite(n) || n <= 0) { showToast("Tamaño no válido."); return; }  
-    element.style.fontSize = `${n}px`;  
-    sizeBtn.textContent = `${n}`;  
+    element.style.maxWidth = input.trim();  
     markStyleChange(element);  
   });  
   
-  styleBar.append(fontBtn, sizeBtn);  
-  document.body.append(styleBar);  
-  positionStyleBar();  
-}  
+  const leftBtn = document.createElement("button");  
+  leftBtn.type = "button";  
+  leftBtn.className = "style-btn";  
+  leftBtn.textContent = "◀";  
+  const rightBtn = document.createElement("button");  
+  rightBtn.type = "button";  
+  rightBtn.className = "style-btn";  
+  rightBtn.textContent = "▶";  
+  const nudge = (dir) => {  
+    const cur = parseFloat(element.dataset.shiftX || "0") || 0;  
+    const next = dir === "left" ? cur - 10 : cur + 10;  
+    element.dataset.shiftX = String(next);  
+    element.style.transform = `translateX(${next}px)`;  
+    markStyleChange(element);  
+  };  
+  leftBtn.addEventListener("click", () => nudge("left"));  
+  rightBtn.addEventListener("click", () => nudge("right"));  
   
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
@@ -301,6 +314,8 @@ function addPencils() {
         activeImage = element;  
         imagePicker.value = "";  
         imagePicker.click();  
+      } else if (element.dataset.styleOnly) {  
+        showStyleBar(element);  
       } else {  
         beginTextEdit(element);  
       }  
