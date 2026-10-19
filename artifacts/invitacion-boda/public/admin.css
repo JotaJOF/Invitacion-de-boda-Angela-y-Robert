@@ -354,3 +354,14 @@ html.is-loading-content video[data-key] {
   backdrop-filter: blur(8px) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04) !important;
 }
+.rs-handle {  
+  position: fixed;  
+  width: 12px;  
+  height: 28px;  
+  border-radius: 7px;  
+  background: #fff;  
+  border: 2px solid #b9932f;  
+  z-index: 60;  
+  cursor: ew-resize;  
+  touch-action: none;  
+}
