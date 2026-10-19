@@ -233,8 +233,7 @@ function markStyleChange(element) {
   });
 }  
   
-function showStyleBar(element) { 
-  let resizeHandles = [];  
+let resizeHandles = [];  
   
 function removeResizeHandles() {  
   resizeHandles.forEach((h) => h.remove());  
