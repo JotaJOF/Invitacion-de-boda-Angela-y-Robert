@@ -366,7 +366,7 @@ const uploadToDrive = async () => {
         <div className="ornament-rule cover-separator" aria-hidden="true">  
           <span>✤</span>  
         </div>  
-        <p className="cover-date serif"><span data-key="cover_place">MONTERREY, NL</span> | {eFechaPunteada}</p>  
+        <p className="cover-date serif"><span data-key="cover_place">MONTERREY, NL</span> | <span data-key="cover_date_fmt" data-style-only="1">{eFechaPunteada}</span></p>  
   
         <button  
           className={`envelope-button${envelopeOpen ? ' is-open' : ''}`}  
@@ -469,10 +469,9 @@ const uploadToDrive = async () => {
               textAlign: 'center',
               color: '#526339',
               gap: '2px',
-              lineHeight: 1.05,
-              pointerEvents: 'none',
-              userSelect: 'none',
-            }}
+              lineHeight: 1.05,  
+              pointerEvents: 'auto',  
+            }}  
           >
             <span
               data-key="save_date_label_1"
@@ -500,40 +499,46 @@ const uploadToDrive = async () => {
             >
               ESTA FECHA
             </span>
-            <span
-              className="serif"
-              style={{
-                width: '100%',
-                fontSize: 'clamp(28px, 7.8vw, 36px)',
-                fontWeight: 600,
-                lineHeight: 1,
-                color: '#3d4b27',
-                margin: '2px 0 1px',
-              }}
-            >
-              {eDay}
+            <span  
+              className="serif"  
+              data-key="save_date_day"  
+              data-style-only="1"  
+              style={{  
+                width: '100%',  
+                fontSize: 'clamp(28px, 7.8vw, 36px)',  
+                fontWeight: 600,  
+                lineHeight: 1,  
+                color: '#3d4b27',  
+                margin: '2px 0 1px',  
+              }}  
+            >  
+              {eDay}  
             </span>
-            <span
-              style={{
-                width: '100%',
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: 'clamp(13px, 3.4vw, 15px)',
-                letterSpacing: '.08em',
-                textTransform: 'uppercase',
-                fontWeight: 500,
-              }}
-            >
-              {eMes}
+            <span  
+              data-key="save_date_month"  
+              data-style-only="1"  
+              style={{  
+                width: '100%',  
+                fontFamily: "'Cormorant Garamond', serif",  
+                fontSize: 'clamp(13px, 3.4vw, 15px)',  
+                letterSpacing: '.08em',  
+                textTransform: 'uppercase',  
+                fontWeight: 500,  
+              }}  
+            >  
+              {eMes}  
             </span>
-            <span
-              style={{
-                width: '100%',
-                fontSize: 'clamp(10px, 2.5vw, 11.5px)',
-                letterSpacing: '.12em',
-                opacity: 0.85,
-              }}
-            >
-              {eYear}
+            <span  
+              data-key="save_date_year"  
+              data-style-only="1"  
+              style={{  
+                width: '100%',  
+                fontSize: 'clamp(10px, 2.5vw, 11.5px)',  
+                letterSpacing: '.12em',  
+                opacity: 0.85,  
+              }}  
+            >  
+              {eYear}  
             </span>
           </div>
         </div>
@@ -595,8 +600,8 @@ const uploadToDrive = async () => {
                   transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
-                <strong style={{ display: 'block', fontSize: '1.85rem', fontWeight: 600, lineHeight: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{value}</strong>
-                <span style={{ display: 'block', marginTop: 6, fontSize: '0.62rem', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 600, color: '#7a6a57' }}>{label}</span>
+                <strong style={{ display: 'block', fontSize: '2.4rem', fontWeight: 600, lineHeight: 1, fontFamily: "'Great Vibes', cursive" }}>{value}</strong>
+                <span style={{ display: 'block', marginTop: 6, fontSize: '0.85rem', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 600, color: '#7a6a57', fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{label}</span>
               </div>
             ))}
           </div>
