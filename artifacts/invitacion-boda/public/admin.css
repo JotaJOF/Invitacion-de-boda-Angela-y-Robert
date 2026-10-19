@@ -17,7 +17,7 @@ body.invite-open .site-footer { display: flex; }
 .admin-open {  
   padding: 5px 9px;  
   border: 0;  
-  border-radius: 2px;  
+  border-radius: 9999px;  
   background: transparent;  
   color: #8c857d;  
   font-size: 7px;  
@@ -37,14 +37,14 @@ body.invite-open .site-footer { display: flex; }
   inset: 0;  
   margin: auto;  
 }  
-.login-dialog::backdrop { background: #28251fcc; backdrop-filter: blur(5px); }  
+.login-dialog::backdrop { background: #28251fcc; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }  
 .login-card {  
   position: relative;  
   display: flex;  
   padding: 34px;  
   flex-direction: column;  
   background: #fffdfa;  
-  box-shadow: 0 24px 80px #241b1b45;  
+  box-shadow: 0 24px 80px rgba(36,27,27,.25); border-radius: 24px; border: 1px solid rgba(228,219,208,.8);  
 }  
 .login-card .eyebrow {  
   margin: 0;  
@@ -61,7 +61,7 @@ body.invite-open .site-footer { display: flex; }
   margin-bottom: 17px;  
   padding: 10px;  
   border: 1px solid #d9cec4;  
-  border-radius: 0;  
+  border-radius: 10px;  
   background: white;  
   color: var(--ink);  
 }  
@@ -83,7 +83,7 @@ body.invite-open .site-footer { display: flex; }
   align-items: center;  
   justify-content: center;  
   border: 1px solid transparent;  
-  border-radius: 2px;  
+  border-radius: 9999px;  
   background: var(--olive);  
   color: #fff;  
   font-size: 10px;  
@@ -146,7 +146,7 @@ body.invite-open .site-footer { display: flex; }
   max-width: min(440px, calc(100% - 32px));  
   margin: auto;  
   padding: 11px 15px;  
-  border-radius: 2px;  
+  border-radius: 9999px;  
   background: #393a32;  
   color: white;  
   font-size: 12px;  
@@ -176,7 +176,7 @@ html.is-loading-content img[data-key] {
   padding: 28px 26px 34px;  
   background: #fffdfa;  
   border: 1px solid #e4dbd0;  
-  box-shadow: 0 24px 80px #241b1b30;  
+  box-shadow: 0 24px 80px rgba(36,27,27,.2); border-radius: 24px; border: 1px solid rgba(228,219,208,.8);  
 }  
 .admin-panel-card .eyebrow {  
   margin: 0;  
@@ -226,7 +226,7 @@ html.is-loading-content img[data-key] {
   width: 40px; height: 52px; border: 0; background: var(--olive);    
   display: flex; align-items: center; justify-content: center;    
   font-size: 22px; color: #fff; text-decoration: none;    
-  box-shadow: 0 3px 10px #0003; border-radius: 3px;    
+  box-shadow: 0 3px 10px #0003; border-radius: 12px;    
 }    
 .panel-home:hover { background: var(--olive-dark); }  
 .admin-panel-card { position: relative; }  
@@ -245,10 +245,10 @@ html.is-loading-content img[data-key] {
 .guests-totals div { border: 1px solid #d9cec4; padding: 10px 16px; font-size: 12px; }  
 .guests-totals strong { font-size: 20px; display: block; }  
 .style-bar { position: fixed; z-index: 55; display: flex; gap: 4px; }  
-.style-btn { height: 30px; padding: 0 6px; border: 1px solid #d9cec4; background: #fffdfa; color: #4d473e; font: 600 11px var(--sans); border-radius: 4px; box-shadow: 0 2px 6px #0002; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }  
+.style-btn { height: 30px; padding: 0 6px; border: 1px solid #d9cec4; background: #fffdfa; color: #4d473e; font: 600 11px var(--sans); border-radius: 10px; box-shadow: 0 2px 6px #0002; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }  
 .style-btn-font { width: 96px; }  
 .style-btn-size { width: 44px; text-align: center; }  
-.style-menu { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; min-width: 96px; background: #fffdfa; border: 1px solid #d9cec4; border-radius: 4px; box-shadow: 0 4px 12px #0003; }  
+.style-menu { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; min-width: 96px; background: #fffdfa; border: 1px solid #d9cec4; border-radius: 10px; box-shadow: 0 4px 12px #0003; }  
 .style-menu-item { padding: 6px 10px; border: 0; background: none; text-align: left; font-size: 12px; cursor: pointer; }  
 .style-menu-item:hover { background: #f0e9e2; }
 @media print {    
@@ -301,7 +301,7 @@ html.is-loading-content img[data-key] {
   justify-content: center;  
   padding: 0;  
   border: none;  
-  border-radius: 4px;  
+  border-radius: 10px;  
   background: var(--olive);  
   color: #fff;  
   font-size: 16px;  
@@ -328,4 +328,28 @@ html.is-loading-content img[data-key] {
 }  
 .invites-actions-row .button {  
   flex: 1 1 0;           /* mitad y mitad, lado a lado en móvil */  
+}
+
+
+.button {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.button:active {
+  transform: scale(0.96) !important;
+}
+.admin-open {
+  transition: all 0.2s ease;
+}
+.guests-card {
+  border-radius: 24px !important;
+  box-shadow: 0 20px 60px rgba(36, 27, 27, 0.15) !important;
+}
+.guests-table th {
+  border-radius: 4px 4px 0 0;
+}
+.guests-totals div {
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04) !important;
 }

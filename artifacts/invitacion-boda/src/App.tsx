@@ -84,67 +84,111 @@ type Slide = { file: string; key: string };
   
 const isVideoFile = (f: string) => /\.(mp4|webm|mov)$/i.test(f);  
   
-function PhotoCarousel({ slides }: { slides: Slide[] }) {  
-  const track = useRef<HTMLDivElement>(null);  
-  const pauseUntil = useRef(0);  
-  
-  useEffect(() => {  
-    if (slides.length < 2) return; // una sola imagen o video => no rota  
-    const timer = window.setInterval(() => {  
-      const el = track.current;  
-      if (!el || Date.now() < pauseUntil.current) return;  
-      const w = el.clientWidth;  
-      const next = Math.round(el.scrollLeft / w) + 1;  
-      el.scrollTo({ left: next >= slides.length ? 0 : next * w, behavior: 'smooth' });  
-    }, 3000);  
-    return () => window.clearInterval(timer);  
-  }, [slides.length]);  
-  
-  const holdForSwipe = () => { pauseUntil.current = Date.now() + 4000; };  
-  
-  return (  
-    <section style={{ width: '100%' }}>  
-      <div  
-        ref={track}  
-        onTouchStart={holdForSwipe}  
-        onScroll={holdForSwipe}  
-        style={{  
-          display: 'flex',  
-          overflowX: 'auto',  
-          scrollSnapType: 'x mandatory',  
-          scrollbarWidth: 'none',  
-          msOverflowStyle: 'none',  
-          WebkitOverflowScrolling: 'touch',  
-        }}  
-      >  
-        {slides.map((s) =>  
-          isVideoFile(s.file) ? (  
-            <video  
-              key={s.key}  
-              data-key={s.key}  
-              src={asset(s.file)}  
-              autoPlay  
-              loop  
-              muted  
-              playsInline  
-              preload="auto"  
-              style={{ minWidth: '100%', width: '100%', aspectRatio: '1.17', height: 'auto', objectFit: 'cover', display: 'block', scrollSnapAlign: 'start' }}  
-            />  
-          ) : (  
-            <img  
-              key={s.key}  
-              data-key={s.key}  
-              src={asset(s.file)}  
-              alt="Angela y Robert"  
-              style={{ minWidth: '100%', width: '100%', aspectRatio: '1.17', height: 'auto', objectFit: 'cover', display: 'block', scrollSnapAlign: 'start' }}  
-            />  
-          ),  
-        )}  
-      </div>  
-      <style>{`.invite-shell section div::-webkit-scrollbar{display:none}`}</style>  
-    </section>  
-  );  
-}  
+function PhotoCarousel({ slides }: { slides: Slide[] }) {
+  const track = useRef<HTMLDivElement>(null);
+  const pauseUntil = useRef(0);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const timer = window.setInterval(() => {
+      const el = track.current;
+      if (!el || Date.now() < pauseUntil.current) return;
+      const w = el.clientWidth;
+      const next = Math.round(el.scrollLeft / w) + 1;
+      const target = next >= slides.length ? 0 : next;
+      el.scrollTo({ left: target * w, behavior: 'smooth' });
+      setActiveIdx(target);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  const handleScroll = () => {
+    pauseUntil.current = Date.now() + 4000;
+    const el = track.current;
+    if (el && el.clientWidth) {
+      const idx = Math.round(el.scrollLeft / el.clientWidth);
+      if (idx !== activeIdx && idx >= 0 && idx < slides.length) {
+        setActiveIdx(idx);
+      }
+    }
+  };
+
+  return (
+    <section style={{ width: '100%', position: 'relative' }}>
+      <div
+        ref={track}
+        onTouchStart={() => { pauseUntil.current = Date.now() + 4000; }}
+        onScroll={handleScroll}
+        style={{
+          display: 'flex',
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {slides.map((s) =>
+          isVideoFile(s.file) ? (
+            <video
+              key={s.key}
+              data-key={s.key}
+              src={asset(s.file)}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              style={{ minWidth: '100%', width: '100%', aspectRatio: '1.17', height: 'auto', objectFit: 'cover', display: 'block', scrollSnapAlign: 'start' }}
+            />
+          ) : (
+            <img
+              key={s.key}
+              data-key={s.key}
+              src={asset(s.file)}
+              alt="Angela y Robert"
+              style={{ minWidth: '100%', width: '100%', aspectRatio: '1.17', height: 'auto', objectFit: 'cover', display: 'block', scrollSnapAlign: 'start' }}
+            />
+          ),
+        )}
+      </div>
+      {slides.length > 1 && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '6px',
+            padding: '4px 8px',
+            borderRadius: '9999px',
+            background: 'rgba(0, 0, 0, 0.28)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            pointerEvents: 'none',
+          }}
+        >
+          {slides.map((_, i) => (
+            <span
+              key={i}
+              style={{
+                width: i === activeIdx ? '16px' : '6px',
+                height: '6px',
+                borderRadius: '9999px',
+                background: i === activeIdx ? '#ffffff' : 'rgba(255, 255, 255, 0.45)',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            />
+          ))}
+        </div>
+      )}
+      <style>{`.invite-shell section div::-webkit-scrollbar{display:none}`}</style>
+    </section>
+  );
+}
+
 function App() {  
   const [envelopeOpen, setEnvelopeOpen] = useState(false);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
@@ -366,95 +410,174 @@ const uploadToDrive = async () => {
         <p className="section-copy" data-key="invite_intro">  
           QUEREMOS COMPARTIR CONTIGO LA ALEGRÍA DE CELEBRAR NUESTRA BODA  
         </p>  
-        <div  
-          style={{  
-            position: 'relative',  
-            width: 'min(100%, 340px)',  
-            margin: '18px auto 22px',  
-          }}  
-        >  
-          <img  
-            src={asset('sobre.png')}  
-            data-key="save_date_envelope_img"  
-            alt="Sobre de Angela y Robert"  
-            style={{ width: '100%', height: 'auto', display: 'block' }}  
-          />  
-  
-          <div  
-            style={{  
-              position: 'absolute',  
-              top: '60%',  
-              left: '79%',  
-              transform: 'translateX(-50%)',  
-              width: '26%',  
-              display: 'flex',  
-              flexDirection: 'column',  
-              alignItems: 'stretch',  
-              justifyContent: 'flex-start',  
-              textAlign: 'center',  
-              color: '#5d6e43',  
-              gap: '8px',  
-              lineHeight: 1,  
-            }}  
-          >  
-            <span data-key="save_date_label_1" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em', lineHeight: 1 }}>Reserva</span>  
-            <span data-key="save_date_label_2" style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 12, letterSpacing: '.09em', lineHeight: 1 }}>ESTA FECHA</span>  
-            <span className="serif" style={{ width: '100%', fontSize: 38, lineHeight: 1.2, marginTop: '-10px' }}>{eDay}</span>  
-            <span style={{ width: '100%', fontFamily: "'Cormorant Garamond', serif", fontSize: 15, lineHeight: 1.2, marginTop: '-10px' }}>{eMes}</span>  
-            <span style={{ width: '100%', fontSize: 12, letterSpacing: '.1em', lineHeight: 1 }}>{eYear}</span>  
-          </div>  
-  
-          <button  
-            className="outline-button"  
-            type="button"  
-            onClick={downloadCalendar}  
-            data-testid="button-add-calendar"  
-            style={{ position: 'absolute', left: '-4%', bottom: '4%', fontSize: 10, padding: '6px 9px' }}  
-          >  
-            <CalendarDays size={14} /> AGENDAR EN CALENDARIO  
-          </button>  
-        </div>  
+        <div
+          className="save-date-wrapper"
+          style={{
+            position: 'relative',
+            width: 'min(100%, 350px)',
+            margin: '22px auto 14px',
+          }}
+        >
+          <img
+            src={asset('sobre.png')}
+            data-key="save_date_envelope_img"
+            alt="Sobre de Angela y Robert"
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              filter: 'drop-shadow(0 14px 28px rgba(67, 56, 47, 0.12))',
+              transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          />
+
+          <div
+            className="save-date-badge"
+            style={{
+              position: 'absolute',
+              top: '55%',
+              left: '79%',
+              transform: 'translate(-50%, -50%)',
+              width: '30%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              color: '#526339',
+              gap: '2px',
+              lineHeight: 1.05,
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
+          >
+            <span
+              data-key="save_date_label_1"
+              style={{
+                width: '100%',
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 'clamp(11px, 2.7vw, 13px)',
+                letterSpacing: '.06em',
+                fontStyle: 'italic',
+                opacity: 0.9,
+              }}
+            >
+              Reserva
+            </span>
+            <span
+              data-key="save_date_label_2"
+              style={{
+                width: '100%',
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: 'clamp(8px, 2.1vw, 9.5px)',
+                letterSpacing: '.14em',
+                fontWeight: 600,
+                opacity: 0.85,
+              }}
+            >
+              ESTA FECHA
+            </span>
+            <span
+              className="serif"
+              style={{
+                width: '100%',
+                fontSize: 'clamp(28px, 7.8vw, 36px)',
+                fontWeight: 600,
+                lineHeight: 1,
+                color: '#3d4b27',
+                margin: '2px 0 1px',
+              }}
+            >
+              {eDay}
+            </span>
+            <span
+              style={{
+                width: '100%',
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 'clamp(13px, 3.4vw, 15px)',
+                letterSpacing: '.08em',
+                textTransform: 'uppercase',
+                fontWeight: 500,
+              }}
+            >
+              {eMes}
+            </span>
+            <span
+              style={{
+                width: '100%',
+                fontSize: 'clamp(10px, 2.5vw, 11.5px)',
+                letterSpacing: '.12em',
+                opacity: 0.85,
+              }}
+            >
+              {eYear}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '22px' }}>
+          <button
+            className="outline-button"
+            type="button"
+            onClick={downloadCalendar}
+            data-testid="button-add-calendar"
+            style={{
+              padding: '11px 24px',
+              fontSize: '11px',
+              letterSpacing: '.1em',
+            }}
+          >
+            <CalendarDays size={14} /> AGENDAR EN CALENDARIO
+          </button>
+        </div>
       </section>  
   
-      <section  
-        className="countdown"  
-        aria-label="Cuenta regresiva"  
-        style={{ position: 'relative', overflow: 'hidden', padding: '48px 24px', textAlign: 'center' }}  
-      >  
-        <img  
-          src={asset('roses-countdown.webp')}  
-          data-key="countdown_bg_img"  
-          alt=""  
-          aria-hidden="true"  
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}  
-        />  
-        <div style={{ position: 'relative', zIndex: 1 }}>  
-          <h2 className="countdown-heading" data-key="countdown_heading" style={{ color: '#4a3f2f' }}>SOLO FALTAN</h2>  
-          <p className="countdown-label" style={{ color: '#6b5d4a' }}>  
-            {eDay} · {eMes.toUpperCase()} · {eYear}  
-          </p>  
-          <div  
-            className="countdown-grid"  
-            data-testid="status-countdown-live"  
-            style={{ display: 'flex', justifyContent: 'center', gap: 9, flexWrap: 'wrap' }}  
-          >  
-            {timeLeft.map(([value, label]) => (  
-              <div  
-                key={label}  
-                style={{  
-                  minWidth: 69,  
-                  padding: '11px 8px 8px',  
-                  background: 'rgba(255,255,255,0.85)',  
-                  borderRadius: 8,  
-                  color: '#4a3f2f',  
-                }}  
-              >  
-                <strong style={{ display: 'block', fontSize: 31, fontWeight: 600, lineHeight: 1 }}>{value}</strong>  
-                <span style={{ display: 'block', marginTop: 6, fontSize: 9, letterSpacing: '.1em' }}>{label}</span>  
-              </div>  
-            ))}  
-          </div>  
-        </div>  
+      <section
+        className="countdown"
+        aria-label="Cuenta regresiva"
+        style={{ position: 'relative', overflow: 'hidden', padding: '52px 20px', textAlign: 'center' }}
+      >
+        <img
+          src={asset('roses-countdown.webp')}
+          data-key="countdown_bg_img"
+          alt=""
+          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0, filter: 'saturate(0.9) brightness(0.95)' }}
+        />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h2 className="countdown-heading" data-key="countdown_heading" style={{ color: '#3d3428', letterSpacing: '.18em', fontSize: '1.4rem' }}>SOLO FALTAN</h2>
+          <p className="countdown-label" style={{ color: '#685949', letterSpacing: '.14em', margin: '6px 0 24px', fontSize: '0.82rem', fontWeight: 500 }}>
+            {eDay} · {eMes.toUpperCase()} · {eYear}
+          </p>
+          <div
+            className="countdown-grid"
+            data-testid="status-countdown-live"
+            style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', maxWidth: '380px', margin: '0 auto' }}
+          >
+            {timeLeft.map(([value, label]) => (
+              <div
+                key={label}
+                className="countdown-card"
+                style={{
+                  flex: '1 1 68px',
+                  maxWidth: '82px',
+                  padding: '12px 6px 10px',
+                  background: 'rgba(255, 255, 255, 0.78)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  borderRadius: 14,
+                  border: '1px solid rgba(255, 255, 255, 0.65)',
+                  boxShadow: '0 8px 24px rgba(45, 36, 24, 0.08)',
+                  color: '#3d3428',
+                  transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                <strong style={{ display: 'block', fontSize: '1.85rem', fontWeight: 600, lineHeight: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{value}</strong>
+                <span style={{ display: 'block', marginTop: 6, fontSize: '0.62rem', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 600, color: '#7a6a57' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>  
   
       <PhotoCarousel  
