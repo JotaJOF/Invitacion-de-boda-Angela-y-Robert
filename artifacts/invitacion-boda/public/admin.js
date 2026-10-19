@@ -157,9 +157,9 @@ async function loadContent() {
           if (style.fontFamily) element.style.fontFamily = style.fontFamily;  
           if (style.fontSize) element.style.fontSize = style.fontSize;  
           if (style.maxWidth) element.style.maxWidth = style.maxWidth;  
-          if (style.transform) element.style.transform = style.transform;  
-          if (style.marginLeft) element.style.marginLeft = style.marginLeft;  
-          if (style.marginRight) element.style.marginRight = style.marginRight;  
+          if (style.transform && window.innerWidth < 600) element.style.transform = style.transform;  
+          if (style.marginLeft && window.innerWidth < 600) element.style.marginLeft = style.marginLeft;  
+          if (style.marginRight && window.innerWidth < 600) element.style.marginRight = style.marginRight;  
           if (style.marginTop) element.style.marginTop = style.marginTop;  
           if (style.marginBottom) element.style.marginBottom = style.marginBottom;  
         } catch { /* estilo inválido, se ignora */ }  
