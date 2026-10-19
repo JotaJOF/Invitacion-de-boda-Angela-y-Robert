@@ -177,14 +177,6 @@ function pencilMarkup() {
 }  
   
 function positionPencils() {  
-  document.querySelectorAll(".edit-pencil").forEach((button) => {  
-    const element = document.querySelector(`[data-key="${CSS.escape(button.dataset.forKey)}"]`);  
-    if (!element) return;  
-    const bounds = element.getBoundingClientRect();  
-    button.style.left = `${Math.max(4, Math.min(window.innerWidth - 38, bounds.right - 12))}px`;  
-    button.style.top = `${Math.max(4, bounds.top - 12)}px`;  
-    button.hidden = bounds.bottom < 0 || bounds.top > window.innerHeight;  
-  });  
   positionStyleBar();  
 }  
   
@@ -273,16 +265,10 @@ function showStyleBar(element) {
   
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
-  const barHeight = styleBar.offsetHeight || 34;  
-  const bounds = styleBarFor.getBoundingClientRect();  
-  // Horizontal: SIEMPRE pegada al borde izquierdo (nunca se pasa).  
   styleBar.style.left = "8px";  
   styleBar.style.right = "auto";  
-  // Vertical: sigue al elemento, pero queda siempre dentro de la pantalla  
-  // (no te obliga a subir hasta la cabecera).  
-  let top = bounds.top - barHeight - 6;  
-  top = Math.max(8, Math.min(window.innerHeight - barHeight - 8, top));  
-  styleBar.style.top = `${top}px`;  
+  styleBar.style.top = "50%";  
+  styleBar.style.transform = "translateY(-50%)";  
 }  
   
 function beginTextEdit(element) {  
@@ -306,13 +292,10 @@ function addPencils() {
   if (!editing) return;  
   
   contentNodes.forEach((element) => {  
-    const button = document.createElement("button");  
-    button.className = "edit-pencil";  
-    button.type = "button";  
-    button.dataset.forKey = element.dataset.key;  
-    button.setAttribute("aria-label", `Editar ${element.dataset.key}`);  
-    button.innerHTML = pencilMarkup();  
-    button.addEventListener("click", () => {  
+    if (element.dataset.tapEdit) return;  
+    element.dataset.tapEdit = "1";  
+    element.addEventListener("click", () => {  
+      if (!editing) return;  
       if (isMediaElement(element)) {  
         activeImage = element;  
         imagePicker.value = "";  
@@ -321,9 +304,7 @@ function addPencils() {
         beginTextEdit(element);  
       }  
     });  
-    document.body.append(button);  
   });  
-  positionPencils();  
 }  
   
 function setEditingMode(enabled) {  
@@ -336,7 +317,7 @@ function setEditingMode(enabled) {
   });  
   addPencils();  
   if (enabled) {  
-    toolbarMessage.textContent = "Pulsa un lápiz para editar textos o imágenes.";  
+    toolbarMessage.textContent = "Toca un texto o imagen para editarlo.";  
   }  
 }  
   
@@ -487,8 +468,7 @@ loginForm.addEventListener("submit", async (event) => {
   }  
 });  
   
-window.addEventListener("scroll", positionPencils, { passive: true });  
-window.addEventListener("resize", positionPencils);  
+// Los lápices ya no existen; no hace falta reposicionar en scroll.  
   
 const inviteRoot = document.querySelector("#root");  
   
