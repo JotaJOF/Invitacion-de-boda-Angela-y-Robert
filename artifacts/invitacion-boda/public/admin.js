@@ -158,6 +158,10 @@ async function loadContent() {
           if (style.fontSize) element.style.fontSize = style.fontSize;  
           if (style.maxWidth) element.style.maxWidth = style.maxWidth;  
           if (style.transform) element.style.transform = style.transform;  
+          if (style.marginLeft) element.style.marginLeft = style.marginLeft;  
+          if (style.marginRight) element.style.marginRight = style.marginRight;  
+          if (style.marginTop) element.style.marginTop = style.marginTop;  
+          if (style.marginBottom) element.style.marginBottom = style.marginBottom;  
         } catch { /* estilo inválido, se ignora */ }  
       } 
     }  
@@ -213,6 +217,10 @@ function markStyleChange(element) {
       fontSize: element.style.fontSize || "",  
       maxWidth: element.style.maxWidth || "",  
       transform: element.style.transform || "",  
+      marginLeft: element.style.marginLeft || "",  
+      marginRight: element.style.marginRight || "",  
+      marginTop: element.style.marginTop || "",  
+      marginBottom: element.style.marginBottom || "",  
     }),  
   });  
   toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
@@ -284,26 +292,25 @@ function showStyleBar(element) {
   const moveWrap = document.createElement("div");  
   moveWrap.className = "style-move";  
   
-  const mkArrow = (txt, dx, dy) => {  
+  const mkArrow = (txt, side) => {  
     const b = document.createElement("button");  
     b.type = "button";  
     b.className = "style-btn style-btn-mini";  
     b.textContent = txt;  
     b.addEventListener("click", () => {  
-      const x = (parseFloat(element.dataset.shiftX || "0") || 0) + dx;  
-      const y = (parseFloat(element.dataset.shiftY || "0") || 0) + dy;  
-      element.dataset.shiftX = String(x);  
-      element.dataset.shiftY = String(y);  
-      element.style.transform = `translate(${x}px, ${y}px)`;  
+      const prop = { left: "marginLeft", right: "marginRight", up: "marginTop", down: "marginBottom" }[side];  
+      const cur = parseFloat(element.style[prop] || "0") || 0;  
+      const next = cur - 10; // margen negativo = estira ese borde hacia afuera  
+      element.style[prop] = `${next}px`;  
       markStyleChange(element);  
     });  
     return b;  
   };  
   moveWrap.append(  
-    mkArrow("◀", -10, 0),  
-    mkArrow("▲", 0, -10),  
-    mkArrow("▼", 0, 10),  
-    mkArrow("▶", 10, 0),  
+    mkArrow("◀", "left"),  
+    mkArrow("▲", "up"),  
+    mkArrow("▼", "down"),  
+    mkArrow("▶", "right"),  
   );  
   
   styleBar.append(fontBtn, sizeWrap, moveWrap);  
@@ -318,18 +325,11 @@ function positionStyleBar() {
   styleBar.style.top = "50%";  
   styleBar.style.transform = "translateY(-50%)";  
 } 
-function beginTextEdit(element) {
+function beginTextEdit(element) {  
   document.querySelectorAll('[data-key].is-editing').forEach(stopInlineEditing);  
   element.contentEditable = "true";  
   element.classList.add("is-editing");  
   element.focus();  
-  const selection = window.getSelection();  
-  if (selection) {  
-    const range = document.createRange();  
-    range.selectNodeContents(element);  
-    selection.removeAllRanges();  
-    selection.addRange(range);  
-  }  
   toolbarMessage.textContent = `Editando: ${element.dataset.key}`;  
   showStyleBar(element);  
 }  
@@ -343,6 +343,7 @@ function addPencils() {
     element.dataset.tapEdit = "1";  
     element.addEventListener("click", () => {  
       if (!editing) return;  
+      if (element.classList.contains("is-editing")) return; // ya editando: deja mover el cursor  
       if (isMediaElement(element)) {  
         activeImage = element;  
         imagePicker.value = "";  
