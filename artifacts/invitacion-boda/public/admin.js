@@ -200,6 +200,7 @@ function hideStyleBar() {
   if (styleBar) styleBar.remove();  
   styleBar = null;  
   styleBarFor = null;  
+  removeResizeHandles();  
 }  
   
 function currentFontLabel(element) {  
@@ -274,7 +275,60 @@ function showStyleBar(element) {
   const sizeUp = document.createElement("button");  
   sizeUp.type = "button";  
   sizeUp.className = "style-btn style-btn-mini";  
-  sizeUp.textContent = "+";  
+  sizeUp.textContent = "+";
+  let resizeHandles = [];  
+  
+function removeResizeHandles() {  
+  resizeHandles.forEach((h) => h.remove());  
+  resizeHandles = [];  
+}  
+  
+function positionResizeHandles() {  
+  if (!styleBarFor || !resizeHandles.length) return;  
+  const r = styleBarFor.getBoundingClientRect();  
+  resizeHandles.forEach((h) => {  
+    const top = r.top + r.height / 2 - 14;  
+    h.style.top = `${top}px`;  
+    h.style.left = h.dataset.side === "left" ? `${r.left - 18}px` : `${r.right + 4}px`;  
+  });  
+}  
+  
+function addResizeHandles(element) {  
+  removeResizeHandles();  
+  ["left", "right"].forEach((side) => {  
+    const h = document.createElement("div");  
+    h.className = "rs-handle";  
+    h.dataset.side = side;  
+    document.body.append(h);  
+    resizeHandles.push(h);  
+    h.addEventListener("pointerdown", (e) => {  
+      e.preventDefault();  
+      e.stopPropagation();  
+      const rect = element.getBoundingClientRect();  
+      const startX = e.clientX;  
+      const startW = rect.width;  
+      const startML = parseFloat(getComputedStyle(element).marginLeft) || 0;  
+      const onMove = (ev) => {  
+        const dx = ev.clientX - startX;  
+        if (side === "right") {  
+          element.style.maxWidth = `${Math.max(60, startW + dx)}px`;  
+        } else {  
+          element.style.maxWidth = `${Math.max(60, startW - dx)}px`;  
+          element.style.marginLeft = `${startML + dx}px`;  
+        }  
+        positionResizeHandles();  
+      };  
+      const onUp = () => {  
+        window.removeEventListener("pointermove", onMove);  
+        window.removeEventListener("pointerup", onUp);  
+        markStyleChange(element);  
+      };  
+      window.addEventListener("pointermove", onMove);  
+      window.addEventListener("pointerup", onUp);  
+    });  
+  });  
+  positionResizeHandles();  
+}
   
   const bumpSize = (delta) => {  
     const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
@@ -292,31 +346,35 @@ function showStyleBar(element) {
   const moveWrap = document.createElement("div");  
   moveWrap.className = "style-move";  
   
-  const mkArrow = (txt, side) => {  
+  const mkArrow = (txt, dx, dy) => {  
     const b = document.createElement("button");  
     b.type = "button";  
     b.className = "style-btn style-btn-mini";  
     b.textContent = txt;  
     b.addEventListener("click", () => {  
-      const prop = { left: "marginLeft", right: "marginRight", up: "marginTop", down: "marginBottom" }[side];  
-      const cur = parseFloat(element.style[prop] || "0") || 0;  
-      const next = cur - 10; // margen negativo = estira ese borde hacia afuera  
-      element.style[prop] = `${next}px`;  
+      if (element.dataset.baseTransform === undefined) {  
+        element.dataset.baseTransform = element.style.transform || "";  
+      }  
+      const x = (parseFloat(element.dataset.shiftX || "0") || 0) + dx;  
+      const y = (parseFloat(element.dataset.shiftY || "0") || 0) + dy;  
+      element.dataset.shiftX = String(x);  
+      element.dataset.shiftY = String(y);  
+      element.style.transform = `${element.dataset.baseTransform} translate(${x}px, ${y}px)`.trim();  
       markStyleChange(element);  
     });  
     return b;  
   };  
   moveWrap.append(  
-    mkArrow("◀", "left"),  
-    mkArrow("▲", "up"),  
-    mkArrow("▼", "down"),  
-    mkArrow("▶", "right"),  
+    mkArrow("◀", -10, 0),  
+    mkArrow("▲", 0, -10),  
+    mkArrow("▼", 0, 10),  
+    mkArrow("▶", 10, 0),  
   );  
   
   styleBar.append(fontBtn, sizeWrap, moveWrap);  
   document.body.append(styleBar);  
   positionStyleBar();  
-}
+  addResizeHandles(element);
   
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
@@ -520,7 +578,9 @@ loginForm.addEventListener("submit", async (event) => {
   }  
 });  
   
-// Los lápices ya no existen; no hace falta reposicionar en scroll.  
+// Las manijas de resize siguen al elemento al hacer scroll o resize.  
+window.addEventListener("scroll", positionResizeHandles, { passive: true });  
+window.addEventListener("resize", positionResizeHandles);  
   
 const inviteRoot = document.querySelector("#root");  
   
