@@ -2,6 +2,24 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
+@font-face {  
+  font-family: 'Farmstead';  
+  src: url('/Farmstead.ttf') format('truetype');  
+  font-weight: 400;  
+  font-display: swap;  
+}  
+@font-face {  
+  font-family: 'Yapari';  
+  src: url('/YapariTrial-SemiBold.ttf') format('truetype');  
+  font-weight: 600;  
+  font-display: swap;  
+}  
+@font-face {  
+  font-family: 'Throhand Ink';  
+  src: url('/throhandink-roman.otf') format('opentype');  
+  font-weight: 400;  
+  font-display: swap;  
+}
 
 @custom-variant dark (&:is(.dark *));
 
