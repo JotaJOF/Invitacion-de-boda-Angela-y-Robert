@@ -574,7 +574,7 @@ const uploadToDrive = async () => {
         />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h2 className="countdown-heading" data-key="countdown_heading" style={{ color: '#3d3428', letterSpacing: '.18em', fontSize: '1.4rem' }}>SOLO FALTAN</h2>
-          <p className="countdown-label" style={{ color: '#685949', letterSpacing: '.14em', margin: '6px 0 24px', fontSize: '0.82rem', fontWeight: 500 }}>
+          <p className="countdown-label" data-key="countdown_date" data-style-only="1" style={{ color: '#685949', letterSpacing: '.14em', margin: '6px 0 24px', fontSize: '0.82rem', fontWeight: 500 }}>
             {eDay} · {eMes.toUpperCase()} · {eYear}
           </p>
           <div
@@ -600,8 +600,8 @@ const uploadToDrive = async () => {
                   transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
-                <strong style={{ display: 'block', fontSize: '2.4rem', fontWeight: 600, lineHeight: 1, fontFamily: "'Great Vibes', cursive" }}>{value}</strong>
-                <span style={{ display: 'block', marginTop: 6, fontSize: '0.85rem', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 600, color: '#7a6a57', fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{label}</span>
+                <strong data-key="countdown_num" data-style-only="1" style={{ display: 'block', fontSize: '2.4rem', fontWeight: 600, lineHeight: 1, fontFamily: "'Great Vibes', cursive" }}>{value}</strong>
+                <span data-key="countdown_lbl" data-style-only="1" style={{ display: 'block', marginTop: 6, fontSize: '0.85rem', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 600, color: '#7a6a57', fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{label}</span>
               </div>
             ))}
           </div>
