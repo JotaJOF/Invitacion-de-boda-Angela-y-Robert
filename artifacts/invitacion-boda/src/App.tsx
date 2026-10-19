@@ -391,12 +391,25 @@ const uploadToDrive = async () => {
       {envelopeOpen && (<>
   
       <section className="video-still" id="invitation-start" aria-label="Recuerdo de Angela y Robert">  
-        <img  
-          data-key="video_still_img"  
-          src={asset('pdfimg-000.png')}  
-          alt="Recuerdo de Angela y Robert"  
-          style={{ width: '100%', height: 'auto', display: 'block' }}  
-        />  
+        {/\.(mp4|webm|mov)$/i.test(String(cfg['video_still_img'] || 'pdfimg-000.png')) ? (  
+          <video  
+            data-key="video_still_img"  
+            src={asset(String(cfg['video_still_img'] || 'pdfimg-000.png'))}  
+            autoPlay  
+            loop  
+            muted  
+            playsInline  
+            preload="auto"  
+            style={{ width: '100%', height: 'auto', display: 'block' }}  
+          />  
+        ) : (  
+          <img  
+            data-key="video_still_img"  
+            src={asset(String(cfg['video_still_img'] || 'pdfimg-000.png'))}  
+            alt="Recuerdo de Angela y Robert"  
+            style={{ width: '100%', height: 'auto', display: 'block' }}  
+          />  
+        )}  
       </section>  
   
       <section className="olive-section blessing">  
