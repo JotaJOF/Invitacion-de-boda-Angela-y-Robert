@@ -76,7 +76,8 @@ async function preloadVideo(value) {
   const video = document.createElement("video");  
   video.preload = "auto";  
   video.muted = true;  
-  video.src = value;  
+  video.src = value;
+  if (video.readyState >= 2) return value;
   await new Promise((resolve, reject) => {  
     video.addEventListener("loadeddata", resolve, { once: true });  
     video.addEventListener("error", () => reject(new Error("No se pudo cargar el video.")), { once: true });  
