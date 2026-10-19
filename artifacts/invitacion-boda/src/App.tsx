@@ -770,7 +770,7 @@ const uploadToDrive = async () => {
                   onClick={() => setOpenFaq(expanded ? null : index)}  
                   data-testid={`button-faq-${index + 1}`}  
                 >  
-                  <span data-key={`faq_question_${index + 1}`}>{faq.question}</span>  
+                  <span data-key={`faq_question_${index + 1}`}>{cfg[`faq_question_${index + 1}`] || faq.question}</span>  
                   {expanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}  
                 </button>  
                 {expanded && <p className="faq-answer" data-key={`faq_answer_${index + 1}`}>{faq.answer}</p>}  
