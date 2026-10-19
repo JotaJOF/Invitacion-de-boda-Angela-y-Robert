@@ -458,7 +458,7 @@ const uploadToDrive = async () => {
             className="save-date-badge"
             style={{
               position: 'absolute',
-              top: '55%',
+              top: '64%',
               left: '79%',
               transform: 'translate(-50%, -50%)',
               width: '30%',
