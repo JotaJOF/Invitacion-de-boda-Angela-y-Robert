@@ -204,12 +204,19 @@ function currentFontLabel(element) {
   return match ? match.label : family.split(",")[0].replace(/["']/g, "").trim();  
 }  
   
-value: JSON.stringify({  
+function markStyleChange(element) {  
+  pendingChanges.set(`${element.dataset.key}__style`, {  
+    element,  
+    type: "style",  
+    value: JSON.stringify({  
       fontFamily: element.style.fontFamily || "",  
       fontSize: element.style.fontSize || "",  
       maxWidth: element.style.maxWidth || "",  
       transform: element.style.transform || "",  
     }),  
+  });  
+  toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
+}  
   
 function showStyleBar(element) {  
   hideStyleBar();  
@@ -248,6 +255,17 @@ function showStyleBar(element) {
     styleBar.append(menu);  
   });  
   
+  sizeBtn.addEventListener("click", () => {  
+    const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
+    const input = window.prompt("Tamaño de letra (solo el número):", String(actual));  
+    if (input === null) return;  
+    const n = Number(input);  
+    if (!Number.isFinite(n) || n <= 0) { showToast("Tamaño no válido."); return; }  
+    element.style.fontSize = `${n}px`;  
+    sizeBtn.textContent = `${n}`;  
+    markStyleChange(element);  
+  });  
+  
   const widthBtn = document.createElement("button");  
   widthBtn.type = "button";  
   widthBtn.className = "style-btn";  
@@ -277,6 +295,11 @@ function showStyleBar(element) {
   leftBtn.addEventListener("click", () => nudge("left"));  
   rightBtn.addEventListener("click", () => nudge("right"));  
   
+  styleBar.append(fontBtn, sizeBtn, widthBtn, leftBtn, rightBtn);  
+  document.body.append(styleBar);  
+  positionStyleBar();  
+}  
+  
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
   styleBar.style.left = "8px";  
@@ -284,8 +307,6 @@ function positionStyleBar() {
   styleBar.style.top = "50%";  
   styleBar.style.transform = "translateY(-50%)";  
 }  
-  
-function beginTextEdit(element) {  
   document.querySelectorAll('[data-key].is-editing').forEach(stopInlineEditing);  
   element.contentEditable = "true";  
   element.classList.add("is-editing");  
@@ -430,6 +451,8 @@ document.querySelector("#cancel-edit").addEventListener("click", async () => {
       element.textContent = element.dataset.originalText ?? "";  
       element.style.fontFamily = element.dataset.originalFontFamily ?? "";  
       element.style.fontSize = element.dataset.originalFontSize ?? "";  
+      element.style.maxWidth = element.dataset.originalMaxWidth ?? "";  
+      element.style.transform = element.dataset.originalTransform ?? "";  
     }  
     stopInlineEditing(element);  
     pendingChanges.delete(key);  
