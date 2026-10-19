@@ -224,7 +224,13 @@ function markStyleChange(element) {
       marginBottom: element.style.marginBottom || "",  
     }),  
   });  
-  toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
+  toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`; 
+  document.querySelectorAll(`[data-key="${element.dataset.key}"]`).forEach((el) => {  
+    if (el === element) return;  
+    ["fontFamily", "fontSize", "maxWidth", "transform", "marginLeft", "marginRight", "marginTop", "marginBottom"].forEach((p) => {  
+      el.style[p] = element.style[p];  
+    });  
+  });
 }  
   
 function showStyleBar(element) {  
