@@ -224,16 +224,11 @@ function showStyleBar(element) {
   styleBar = document.createElement("div");  
   styleBar.className = "style-bar";  
   
+  // --- Botón de fuente ---  
   const fontBtn = document.createElement("button");  
   fontBtn.type = "button";  
   fontBtn.className = "style-btn style-btn-font";  
   fontBtn.textContent = currentFontLabel(element);  
-  
-  const sizeBtn = document.createElement("button");  
-  sizeBtn.type = "button";  
-  sizeBtn.className = "style-btn style-btn-size";  
-  sizeBtn.textContent = `${Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0}`;  
-  
   fontBtn.addEventListener("click", () => {  
     styleBar.querySelectorAll(".style-menu").forEach((m) => m.remove());  
     const menu = document.createElement("div");  
@@ -255,50 +250,66 @@ function showStyleBar(element) {
     styleBar.append(menu);  
   });  
   
-  sizeBtn.addEventListener("click", () => {  
+  // --- Tamaño: flechitas − numero + (sin ventana emergente) ---  
+  const sizeWrap = document.createElement("div");  
+  sizeWrap.className = "style-size";  
+  
+  const sizeDown = document.createElement("button");  
+  sizeDown.type = "button";  
+  sizeDown.className = "style-btn style-btn-mini";  
+  sizeDown.textContent = "−";  
+  
+  const sizeNum = document.createElement("span");  
+  sizeNum.className = "style-size-num";  
+  sizeNum.textContent = `${Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0}`;  
+  
+  const sizeUp = document.createElement("button");  
+  sizeUp.type = "button";  
+  sizeUp.className = "style-btn style-btn-mini";  
+  sizeUp.textContent = "+";  
+  
+  const bumpSize = (delta) => {  
     const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
-    const input = window.prompt("Tamaño de letra (solo el número):", String(actual));  
-    if (input === null) return;  
-    const n = Number(input);  
-    if (!Number.isFinite(n) || n <= 0) { showToast("Tamaño no válido."); return; }  
-    element.style.fontSize = `${n}px`;  
-    sizeBtn.textContent = `${n}`;  
-    markStyleChange(element);  
-  });  
-  
-  const widthBtn = document.createElement("button");  
-  widthBtn.type = "button";  
-  widthBtn.className = "style-btn";  
-  widthBtn.textContent = "Ancho";  
-  widthBtn.addEventListener("click", () => {  
-    const input = window.prompt("Ancho máximo (ej. 100%, 500px, none):", element.style.maxWidth || "");  
-    if (input === null) return;  
-    element.style.maxWidth = input.trim();  
-    markStyleChange(element);  
-  });  
-  
-  const leftBtn = document.createElement("button");  
-  leftBtn.type = "button";  
-  leftBtn.className = "style-btn";  
-  leftBtn.textContent = "◀";  
-  const rightBtn = document.createElement("button");  
-  rightBtn.type = "button";  
-  rightBtn.className = "style-btn";  
-  rightBtn.textContent = "▶";  
-  const nudge = (dir) => {  
-    const cur = parseFloat(element.dataset.shiftX || "0") || 0;  
-    const next = dir === "left" ? cur - 10 : cur + 10;  
-    element.dataset.shiftX = String(next);  
-    element.style.transform = `translateX(${next}px)`;  
+    const next = Math.max(6, actual + delta);  
+    element.style.fontSize = `${next}px`;  
+    sizeNum.textContent = `${next}`;  
     markStyleChange(element);  
   };  
-  leftBtn.addEventListener("click", () => nudge("left"));  
-  rightBtn.addEventListener("click", () => nudge("right"));  
+  sizeDown.addEventListener("click", () => bumpSize(-1));  
+  sizeUp.addEventListener("click", () => bumpSize(1));  
   
-  styleBar.append(fontBtn, sizeBtn, widthBtn, leftBtn, rightBtn);  
+  sizeWrap.append(sizeDown, sizeNum, sizeUp);  
+  
+  // --- Flechas para mover el elemento: ◀ ▲ ▼ ▶ (10px por toque) ---  
+  const moveWrap = document.createElement("div");  
+  moveWrap.className = "style-move";  
+  
+  const mkArrow = (txt, dx, dy) => {  
+    const b = document.createElement("button");  
+    b.type = "button";  
+    b.className = "style-btn style-btn-mini";  
+    b.textContent = txt;  
+    b.addEventListener("click", () => {  
+      const x = (parseFloat(element.dataset.shiftX || "0") || 0) + dx;  
+      const y = (parseFloat(element.dataset.shiftY || "0") || 0) + dy;  
+      element.dataset.shiftX = String(x);  
+      element.dataset.shiftY = String(y);  
+      element.style.transform = `translate(${x}px, ${y}px)`;  
+      markStyleChange(element);  
+    });  
+    return b;  
+  };  
+  moveWrap.append(  
+    mkArrow("◀", -10, 0),  
+    mkArrow("▲", 0, -10),  
+    mkArrow("▼", 0, 10),  
+    mkArrow("▶", 10, 0),  
+  );  
+  
+  styleBar.append(fontBtn, sizeWrap, moveWrap);  
   document.body.append(styleBar);  
   positionStyleBar();  
-}  
+}
   
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
