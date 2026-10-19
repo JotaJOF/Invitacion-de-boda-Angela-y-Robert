@@ -250,9 +250,23 @@ function App() {
       behavior: 'smooth',  
       block: 'start',  
     });  
-  }, 360);  
-};  
-  
+  }, 900);  
+};
+useEffect(() => {  
+    if (!envelopeOpen) return;  
+    const sections = document.querySelectorAll('.invite-shell section');  
+    sections.forEach((s) => s.classList.add('reveal'));  
+    const io = new IntersectionObserver((entries) => {  
+      entries.forEach((e) => {  
+        if (e.isIntersecting) {  
+          e.target.classList.add('reveal-in');  
+          io.unobserve(e.target);  
+        }  
+      });  
+    }, { threshold: 0.15 });  
+    sections.forEach((s) => io.observe(s));  
+    return () => io.disconnect();  
+  }, [envelopeOpen]);
   useEffect(() => {  
     if (!envelopeOpen) return;  
     const a = audioRef.current;  
