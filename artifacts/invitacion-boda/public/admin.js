@@ -233,55 +233,7 @@ function markStyleChange(element) {
   });
 }  
   
-function showStyleBar(element) {  
-  hideStyleBar();  
-  styleBarFor = element;  
-  styleBar = document.createElement("div");  
-  styleBar.className = "style-bar";  
-  
-  // --- Botón de fuente ---  
-  const fontBtn = document.createElement("button");  
-  fontBtn.type = "button";  
-  fontBtn.className = "style-btn style-btn-font";  
-  fontBtn.textContent = currentFontLabel(element);  
-  fontBtn.addEventListener("click", () => {  
-    styleBar.querySelectorAll(".style-menu").forEach((m) => m.remove());  
-    const menu = document.createElement("div");  
-    menu.className = "style-menu";  
-    FONTS.forEach((f) => {  
-      const opt = document.createElement("button");  
-      opt.type = "button";  
-      opt.className = "style-menu-item";  
-      opt.textContent = f.label;  
-      opt.style.fontFamily = f.value;  
-      opt.addEventListener("click", () => {  
-        element.style.fontFamily = f.value;  
-        fontBtn.textContent = f.label;  
-        markStyleChange(element);  
-        menu.remove();  
-      });  
-      menu.append(opt);  
-    });  
-    styleBar.append(menu);  
-  });  
-  
-  // --- Tamaño: flechitas − numero + (sin ventana emergente) ---  
-  const sizeWrap = document.createElement("div");  
-  sizeWrap.className = "style-size";  
-  
-  const sizeDown = document.createElement("button");  
-  sizeDown.type = "button";  
-  sizeDown.className = "style-btn style-btn-mini";  
-  sizeDown.textContent = "−";  
-  
-  const sizeNum = document.createElement("span");  
-  sizeNum.className = "style-size-num";  
-  sizeNum.textContent = `${Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0}`;  
-  
-  const sizeUp = document.createElement("button");  
-  sizeUp.type = "button";  
-  sizeUp.className = "style-btn style-btn-mini";  
-  sizeUp.textContent = "+";
+function showStyleBar(element) { 
   let resizeHandles = [];  
   
 function removeResizeHandles() {  
@@ -334,10 +286,54 @@ function addResizeHandles(element) {
     });  
   });  
   positionResizeHandles();  
-}
+}  
   
-  const bumpSize = (delta) => {  
-    const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
+function showStyleBar(element) {
+  hideStyleBar();  
+  styleBarFor = element;  
+  styleBar = document.createElement("div");  
+  styleBar.className = "style-bar";  
+  
+  // --- Botón de fuente ---  
+  const fontBtn = document.createElement("button");  
+  fontBtn.type = "button";  
+  fontBtn.className = "style-btn style-btn-font";  
+  fontBtn.textContent = currentFontLabel(element);  
+  fontBtn.addEventListener("click", () => {  
+    styleBar.querySelectorAll(".style-menu").forEach((m) => m.remove());  
+    const menu = document.createElement("div");  
+    menu.className = "style-menu";  
+    FONTS.forEach((f) => {  
+      const opt = document.createElement("button");  
+      opt.type = "button";  
+      opt.className = "style-menu-item";  
+      opt.textContent = f.label;  
+      opt.style.fontFamily = f.value;  
+      opt.addEventListener("click", () => {  
+        element.style.fontFamily = f.value;  
+        fontBtn.textContent = f.label;  
+        markStyleChange(element);  
+        menu.remove();  
+      });  
+      menu.append(opt);  
+    });  
+    styleBar.append(menu);  
+  });  
+  
+  // --- Tamaño: flechitas − numero + (sin ventana emergente) ---  
+  const sizeWrap = document.createElement("div");  
+  sizeWrap.className = "style-size";  
+  
+  const sizeDown = document.createElement("button");  
+  sizeDown.type = "button";  
+  sizeDown.className = "style-btn style-btn-mini";  
+  sizeDown.textContent = "−";  
+  
+  const sizeNum = document.createElement("span");  
+  sizeNum.className = "style-size-num";  
+  sizeNum.textContent = `${Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0}`;  
+  
+      const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
     const next = Math.max(6, actual + delta);  
     element.style.fontSize = `${next}px`;  
     sizeNum.textContent = `${next}`;  
