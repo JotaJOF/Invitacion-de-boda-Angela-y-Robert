@@ -380,7 +380,8 @@ function addResizeHandles(element) {
   styleBar.append(fontBtn, sizeWrap, moveWrap);  
   document.body.append(styleBar);  
   positionStyleBar();  
-  addResizeHandles(element);
+  addResizeHandles(element);  
+}  
   
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
