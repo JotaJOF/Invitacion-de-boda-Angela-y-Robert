@@ -306,7 +306,8 @@ function positionStyleBar() {
   styleBar.style.right = "auto";  
   styleBar.style.top = "50%";  
   styleBar.style.transform = "translateY(-50%)";  
-}  
+} 
+function beginTextEdit(element) {
   document.querySelectorAll('[data-key].is-editing').forEach(stopInlineEditing);  
   element.contentEditable = "true";  
   element.classList.add("is-editing");  
