@@ -288,17 +288,17 @@ function addResizeHandles(element) {
   positionResizeHandles();  
 }  
   
-function showStyleBar(element) {
+function showStyleBar(element) {  
   hideStyleBar();  
   styleBarFor = element;  
   styleBar = document.createElement("div");  
   styleBar.className = "style-bar";  
   
-  // --- Botón de fuente ---  
   const fontBtn = document.createElement("button");  
   fontBtn.type = "button";  
   fontBtn.className = "style-btn style-btn-font";  
   fontBtn.textContent = currentFontLabel(element);  
+  
   fontBtn.addEventListener("click", () => {  
     styleBar.querySelectorAll(".style-menu").forEach((m) => m.remove());  
     const menu = document.createElement("div");  
@@ -320,7 +320,6 @@ function showStyleBar(element) {
     styleBar.append(menu);  
   });  
   
-  // --- Tamaño: flechitas − numero + (sin ventana emergente) ---  
   const sizeWrap = document.createElement("div");  
   sizeWrap.className = "style-size";  
   
@@ -333,7 +332,13 @@ function showStyleBar(element) {
   sizeNum.className = "style-size-num";  
   sizeNum.textContent = `${Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0}`;  
   
-      const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
+  const sizeUp = document.createElement("button");  
+  sizeUp.type = "button";  
+  sizeUp.className = "style-btn style-btn-mini";  
+  sizeUp.textContent = "+";  
+  
+  const bumpSize = (delta) => {  
+    const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
     const next = Math.max(6, actual + delta);  
     element.style.fontSize = `${next}px`;  
     sizeNum.textContent = `${next}`;  
@@ -344,9 +349,12 @@ function showStyleBar(element) {
   
   sizeWrap.append(sizeDown, sizeNum, sizeUp);  
   
-  // --- Flechas para mover el elemento: ◀ ▲ ▼ ▶ (10px por toque) ---  
   const moveWrap = document.createElement("div");  
   moveWrap.className = "style-move";  
+  
+  if (!element.dataset.baseTransform) {  
+    element.dataset.baseTransform = element.style.transform || "";  
+  }  
   
   const mkArrow = (txt, dx, dy) => {  
     const b = document.createElement("button");  
@@ -354,14 +362,11 @@ function showStyleBar(element) {
     b.className = "style-btn style-btn-mini";  
     b.textContent = txt;  
     b.addEventListener("click", () => {  
-      if (element.dataset.baseTransform === undefined) {  
-        element.dataset.baseTransform = element.style.transform || "";  
-      }  
       const x = (parseFloat(element.dataset.shiftX || "0") || 0) + dx;  
       const y = (parseFloat(element.dataset.shiftY || "0") || 0) + dy;  
       element.dataset.shiftX = String(x);  
       element.dataset.shiftY = String(y);  
-      element.style.transform = `${element.dataset.baseTransform} translate(${x}px, ${y}px)`.trim();  
+      element.style.transform = `${element.dataset.baseTransform} translate(${x}px, ${y}px)`;  
       markStyleChange(element);  
     });  
     return b;  
@@ -378,7 +383,6 @@ function showStyleBar(element) {
   positionStyleBar();  
   addResizeHandles(element);  
 }  
-  
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
   styleBar.style.left = "8px";  
