@@ -16,10 +16,13 @@ let toastTimeout;
 let contentLoadVersion = 0;  
   
 // Lista de fuentes disponibles (agregar más aquí cuando se carguen nuevas)    
-const FONTS = [    
-  { label: "Great Vibes", value: "'Great Vibes', cursive" },    
-  { label: "Cormorant Garamond", value: "'Cormorant Garamond', Georgia, serif" },    
-  { label: "Montserrat", value: "'Montserrat', Arial, sans-serif" },    
+const FONTS = [  
+  { label: "Great Vibes", value: "'Great Vibes', cursive" },  
+  { label: "Cormorant Garamond", value: "'Cormorant Garamond', Georgia, serif" },  
+  { label: "Montserrat", value: "'Montserrat', Arial, sans-serif" },  
+  { label: "Farmstead", value: "'Farmstead', serif" },  
+  { label: "Yapari", value: "'Yapari', serif" },  
+  { label: "Throhand Ink", value: "'Throhand Ink', serif" },  
 ];  
 let styleBar = null;  
 let styleBarFor = null;  
