@@ -83,7 +83,7 @@ body.invite-open .site-footer { display: flex; }
   align-items: center;  
   justify-content: center;  
   border: 1px solid transparent;  
-  border-radius: 9999px;  
+  border-radius: 10px;  
   background: var(--olive);  
   color: #fff;  
   font-size: 10px;  
@@ -364,4 +364,8 @@ html.is-loading-content video[data-key] {
   z-index: 60;  
   cursor: ew-resize;  
   touch-action: none;  
+}
+@media (max-width: 640px) {  
+  .admin-panel-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  
+  .admin-panel-actions .button { flex: none; width: 100%; }  
 }
