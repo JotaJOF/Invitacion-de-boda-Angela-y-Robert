@@ -433,10 +433,12 @@ const uploadToDrive = async () => {
         <p className="section-copy" data-key="invite_intro">  
           QUEREMOS COMPARTIR CONTIGO LA ALEGRÍA DE CELEBRAR NUESTRA BODA  
         </p>  
-        <div
-          className="save-date-wrapper"
-          style={{
-            position: 'relative',
+        <div  
+          className="save-date-wrapper"  
+          data-key="save_date_box"  
+          data-style-only="1"  
+          style={{  
+            position: 'relative',  
             width: 'min(100%, 350px)',
             margin: '22px auto 14px',
           }}
@@ -773,7 +775,7 @@ const uploadToDrive = async () => {
                   <span data-key={`faq_question_${index + 1}`}>{cfg[`faq_question_${index + 1}`] || faq.question}</span>  
                   {expanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}  
                 </button>  
-                {expanded && <p className="faq-answer" data-key={`faq_answer_${index + 1}`}>{faq.answer}</p>}  
+                {expanded && <p className="faq-answer" data-key={`faq_answer_${index + 1}`}>{cfg[`faq_answer_${index + 1}`] || faq.answer}</p>}  
               </div>  
             );  
           })}  
@@ -871,7 +873,7 @@ const uploadToDrive = async () => {
             <p className="script" style={{ fontSize: 40, margin: 0 }}>☺</p>  
             <p className="script-title">¿Desea modificar su respuesta?</p>  
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>  
-              <button className="olive-button" type="button" onClick={() => setConfirm("no")}>NO</button>  
+              <button className="olive-button" type="button" onClick={() => { setRsvpDone(false); setModifyOpen(false); }}>SÍ</button>    
               <button className="outline-button" type="button" onClick={() => setModifyOpen(false)}>NO</button>  
             </div>  
           </div>  
