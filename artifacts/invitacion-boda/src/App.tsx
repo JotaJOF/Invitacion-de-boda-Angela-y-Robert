@@ -859,7 +859,7 @@ const uploadToDrive = async () => {
           <div className="rsvp-modal-card">  
             <p className="script-title">¿Está seguro de la información que enviará?</p>  
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>  
-              <button className="olive-button light" type="button" onClick={doConfirm}>SÍ</button>  
+              <button className="olive-button" type="button" onClick={doConfirm}>SÍ</button>  
               <button className="outline-button" type="button" onClick={() => setConfirmOpen(false)}>NO</button>  
             </div>  
           </div>  
@@ -871,7 +871,7 @@ const uploadToDrive = async () => {
             <p className="script" style={{ fontSize: 40, margin: 0 }}>☺</p>  
             <p className="script-title">¿Desea modificar su respuesta?</p>  
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>  
-              <button className="olive-button light" type="button" onClick={() => { setRsvpDone(false); setModifyOpen(false); }}>SÍ</button>  
+              <button className="olive-button" type="button" onClick={() => setConfirm("no")}>NO</button>  
               <button className="outline-button" type="button" onClick={() => setModifyOpen(false)}>NO</button>  
             </div>  
           </div>  
@@ -884,7 +884,7 @@ const uploadToDrive = async () => {
             <p className="script-title" data-key={thanks === 'yes' ? 'confirm_thanks_yes' : 'confirm_thanks_no'}>  
               {thanks === 'yes' ? '¡GRACIAS POR CONFIRMAR TU ASISTENCIA!' : '¡GRACIAS POR AVISARNOS!'}  
             </p>  
-            <button className="olive-button light" type="button" onClick={() => setThanks(null)}>CERRAR</button>  
+            <button className="olive-button" type="button" onClick={() => setThanks(null)}>CERRAR</button>  
           </div>  
         </div>  
       )}
