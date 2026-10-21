@@ -384,10 +384,16 @@ function showStyleBar(element) {
 }  
 function positionStyleBar() {    
   if (!styleBar || !styleBarFor) return;    
+  const vv = window.visualViewport;    
+  const top = vv ? vv.offsetTop + 8 : 8;    
   styleBar.style.left = "50%";    
   styleBar.style.right = "auto";    
-  styleBar.style.top = "8px";    
+  styleBar.style.top = `${top}px`;    
   styleBar.style.transform = "translateX(-50%)";    
+}    
+if (window.visualViewport) {    
+  window.visualViewport.addEventListener("resize", positionStyleBar);    
+  window.visualViewport.addEventListener("scroll", positionStyleBar);    
 } 
 function beginTextEdit(element) {  
   document.querySelectorAll('[data-key].is-editing').forEach(stopInlineEditing);  
@@ -427,7 +433,17 @@ function addPencils() {
     });  
   });  
 }  
-  
+document.addEventListener("click", (e) => {    
+  if (!editing) return;    
+  const btn = e.target.closest("button, a");    
+  if (!btn) return;    
+  if (btn.querySelector('[data-key^="faq_question"]')) return; // FAQ: dejar que se despliegue    
+  if (btn.querySelector("[data-key]") || btn.closest("[data-key]")) {    
+    e.preventDefault();    
+    e.stopPropagation();    
+  }    
+}, true);
+
 function setEditingMode(enabled) {  
   editing = enabled;  
   adminToolbar.hidden = !enabled;  
