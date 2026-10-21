@@ -484,6 +484,8 @@ const uploadToDrive = async () => {
               gap: '2px',
               lineHeight: 1.05,  
               pointerEvents: 'auto',  
+              position: 'absolute',  
+              zIndex: 5,  
             }}  
           >
             <span
@@ -568,7 +570,7 @@ const uploadToDrive = async () => {
               letterSpacing: '.1em',
             }}
           >
-            <CalendarDays size={14} /> AGENDAR EN CALENDARIO
+            <CalendarDays size={14} /> <span data-key="calendar_button_text">AGENDAR EN CALENDARIO</span>
           </button>
         </div>
       </section>  
