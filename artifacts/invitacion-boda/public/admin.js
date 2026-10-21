@@ -830,9 +830,7 @@ let musicPreview = null;
 async function refreshMusicStatus() {  
   try {  
     const { content = {} } = await api("/api/content", { method: "GET" });  
-    musicUrl = content.cfg_music_url ? content.cfg_music_url.value : "";  
-    if (musicStatus) musicStatus.textContent = musicUrl ? "Canción cargada ✔" : "Sin canción";  
-    if (musicTestBtn) musicTestBtn.hidden = !musicUrl;  
+    musicUrl = content.cfg_music_url ? content.cfg_music_url.value : "";    
   } catch { /* sin datos */ }  
 }  
   
