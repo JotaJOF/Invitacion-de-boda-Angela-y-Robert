@@ -369,4 +369,5 @@ html.is-loading-content video[data-key] {
 @media (max-width: 640px) {  
   .admin-panel-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  
   .admin-panel-actions .button { flex: none; width: 100%; }  
+  #panel-save { grid-column: 1 / -1; }
 }
