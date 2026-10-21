@@ -500,18 +500,19 @@ const uploadToDrive = async () => {
             >
               Reserva
             </span>
-            <span
-              data-key="save_date_label_2"
-              style={{
-                width: '100%',
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: 'clamp(8px, 2.1vw, 9.5px)',
-                letterSpacing: '.14em',
-                fontWeight: 600,
-                opacity: 0.85,
-              }}
-            >
-              ESTA FECHA
+            <span  
+              data-key="save_date_label_2"  
+              data-style-only="1"  
+              style={{  
+                width: '100%',  
+                fontFamily: "'Montserrat', sans-serif",  
+                fontSize: 'clamp(8px, 2.1vw, 9.5px)',  
+                letterSpacing: '.14em',  
+                fontWeight: 600,  
+                opacity: 0.85,  
+              }}  
+            >  
+              ESTA FECHA  
             </span>
             <span    
               className="serif"    
