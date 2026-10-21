@@ -405,9 +405,16 @@ function addPencils() {
   contentNodes.forEach((element) => {  
     if (element.dataset.tapEdit) return;  
     element.dataset.tapEdit = "1";  
-    element.addEventListener("click", () => {  
+    element.addEventListener("click", (e) => {  
       if (!editing) return;  
       if (element.classList.contains("is-editing")) return; // ya editando: deja mover el cursor  
+      // Bloquea la acción del botón padre (subir foto, abrir link) al editar,  
+      // EXCEPTO los botones de FAQ (niños, estacionamiento) que deben desplegar.  
+      const btn = element.closest("button, a");  
+      if (btn && !btn.closest('[data-key^="button-faq-"]') && !btn.classList.contains("faq-question")) {  
+        e.preventDefault();  
+        e.stopPropagation();  
+      }  
       if (isMediaElement(element)) {  
         activeImage = element;  
         imagePicker.value = "";  
