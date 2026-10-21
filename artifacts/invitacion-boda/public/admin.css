@@ -246,10 +246,10 @@ html.is-loading-content video[data-key] {
 .guests-totals { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }  
 .guests-totals div { border: 1px solid #d9cec4; padding: 10px 16px; font-size: 12px; }  
 .guests-totals strong { font-size: 20px; display: block; }  
-.style-bar { position: fixed; z-index: 55; left: 50%; top: 8px; transform: translateX(-50%); display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 94vw; }  
-.style-btn { height: 30px; padding: 0 6px; border: 1px solid #d9cec4; background: #fffdfa; color: #4d473e; font: 600 11px var(--sans); border-radius: 10px; box-shadow: 0 2px 6px #0002; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }  
-.style-btn-font { width: 96px; }  
-.style-btn-size { width: 44px; text-align: center; }  
+.style-bar { position: fixed; z-index: 55; left: 8px; top: 8px; transform: none; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; gap: 6px; max-width: 94vw; }  
+.style-btn { height: 36px; padding: 0 9px; border: 1px solid #d9cec4; background: #fffdfa; color: #4d473e; font: 600 13px var(--sans); border-radius: 10px; box-shadow: 0 2px 6px #0002; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }  
+.style-btn-font { width: 112px; }  
+.style-btn-size { width: 50px; text-align: center; }  
 .style-menu { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; min-width: 96px; background: #fffdfa; border: 1px solid #d9cec4; border-radius: 10px; box-shadow: 0 4px 12px #0003; }  
 .style-menu-item { padding: 6px 10px; border: 0; background: none; text-align: left; font-size: 12px; cursor: pointer; }  
 .style-menu-item:hover { background: #f0e9e2; }
