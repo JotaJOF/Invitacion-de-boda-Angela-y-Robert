@@ -382,14 +382,14 @@ function showStyleBar(element) {
   positionStyleBar();  
   addResizeHandles(element);  
 }  
-function positionStyleBar() {    
-  if (!styleBar || !styleBarFor) return;    
-  const vv = window.visualViewport;    
-  const top = vv ? vv.offsetTop + 8 : 8;    
-  styleBar.style.left = "50%";    
-  styleBar.style.right = "auto";    
-  styleBar.style.top = `${top}px`;    
-  styleBar.style.transform = "translateX(-50%)";    
+function positionStyleBar() {  
+  if (!styleBar || !styleBarFor) return;  
+  const vv = window.visualViewport;  
+  const top = vv ? vv.offsetTop + 8 : 8;  
+  styleBar.style.left = "8px";  
+  styleBar.style.right = "auto";  
+  styleBar.style.top = `${top}px`;  
+  styleBar.style.transform = "none";  
 }    
 if (window.visualViewport) {    
   window.visualViewport.addEventListener("resize", positionStyleBar);    
