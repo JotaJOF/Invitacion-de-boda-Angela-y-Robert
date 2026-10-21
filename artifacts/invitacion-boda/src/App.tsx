@@ -467,24 +467,23 @@ const uploadToDrive = async () => {
             }}
           />
 
-          <div
-            className="save-date-badge"
-            style={{
-              position: 'absolute',
-              top: '74%',
-              left: '79%',
-              transform: 'translate(-50%, -50%)',
-              width: '30%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              color: '#526339',
-              gap: '2px',
-              lineHeight: 1.05,  
-              pointerEvents: 'auto',  
+          <div  
+            className="save-date-badge"  
+            style={{  
               position: 'absolute',  
+              top: '74%',  
+              left: '79%',  
+              transform: 'translate(-50%, -50%)',  
+              width: '30%',  
+              display: 'flex',  
+              flexDirection: 'column',  
+              alignItems: 'center',  
+              justifyContent: 'center',  
+              textAlign: 'center',  
+              color: '#526339',  
+              gap: '6px',  
+              lineHeight: 1.15,  
+              pointerEvents: 'auto',  
               zIndex: 5,  
             }}  
           >
@@ -514,46 +513,49 @@ const uploadToDrive = async () => {
             >
               ESTA FECHA
             </span>
-            <span  
-              className="serif"  
-              data-key="save_date_day"  
-              data-style-only="1"  
-              style={{  
-                width: '100%',  
-                fontSize: 'clamp(28px, 7.8vw, 36px)',  
-                fontWeight: 600,  
-                lineHeight: 1,  
-                color: '#3d4b27',  
-                margin: '2px 0 1px',  
-              }}  
-            >  
-              {eDay}  
+            <span    
+              className="serif"    
+              data-key="save_date_day"    
+              data-style-only="1"    
+              style={{    
+                width: '100%',    
+                padding: '4px 0',  
+                fontSize: 'clamp(28px, 7.8vw, 36px)',    
+                fontWeight: 600,    
+                lineHeight: 1,    
+                color: '#3d4b27',    
+                margin: '2px 0 1px',    
+              }}    
+            >    
+              {eDay}    
             </span>
-            <span  
-              data-key="save_date_month"  
-              data-style-only="1"  
-              style={{  
-                width: '100%',  
-                fontFamily: "'Cormorant Garamond', serif",  
-                fontSize: 'clamp(13px, 3.4vw, 15px)',  
-                letterSpacing: '.08em',  
-                textTransform: 'uppercase',  
-                fontWeight: 500,  
-              }}  
-            >  
-              {eMes}  
+            <span    
+              data-key="save_date_month"    
+              data-style-only="1"    
+              style={{    
+                width: '100%',    
+                padding: '4px 0',  
+                fontFamily: "'Cormorant Garamond', serif",    
+                fontSize: 'clamp(13px, 3.4vw, 15px)',    
+                letterSpacing: '.08em',    
+                textTransform: 'uppercase',    
+                fontWeight: 500,    
+              }}    
+            >    
+              {eMes}    
             </span>
-            <span  
-              data-key="save_date_year"  
-              data-style-only="1"  
-              style={{  
-                width: '100%',  
-                fontSize: 'clamp(10px, 2.5vw, 11.5px)',  
-                letterSpacing: '.12em',  
-                opacity: 0.85,  
-              }}  
-            >  
-              {eYear}  
+            <span    
+              data-key="save_date_year"    
+              data-style-only="1"    
+              style={{    
+                width: '100%',    
+                padding: '4px 0',  
+                fontSize: 'clamp(10px, 2.5vw, 11.5px)',    
+                letterSpacing: '.12em',    
+                opacity: 0.85,    
+              }}    
+            >    
+              {eYear}    
             </span>
           </div>
         </div>
