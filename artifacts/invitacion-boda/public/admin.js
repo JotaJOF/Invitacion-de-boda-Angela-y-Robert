@@ -433,15 +433,29 @@ function addPencils() {
     });  
   });  
 }  
-document.addEventListener("click", (e) => {    
-  if (!editing) return;    
-  const btn = e.target.closest("button, a");    
-  if (!btn) return;    
-  if (btn.querySelector('[data-key^="faq_question"]')) return; // FAQ: dejar que se despliegue    
-  if (btn.querySelector("[data-key]") || btn.closest("[data-key]")) {    
-    e.preventDefault();    
-    e.stopPropagation();    
-  }    
+document.addEventListener("click", (e) => {  
+  if (!editing) return;  
+  const keyEl = e.target.closest("[data-key]");  
+  const btn = e.target.closest("button, a");  
+  // FAQ: dejar que se despliegue normalmente  
+  if (btn && (btn.classList.contains("faq-question") || btn.querySelector('[data-key^="faq_question"]'))) return;  
+  if (!keyEl) {  
+    // botón sin texto editable: solo bloquear su acción  
+    if (btn) { e.preventDefault(); e.stopPropagation(); }  
+    return;  
+  }  
+  // hay texto/imagen editable: bloquear la acción del botón e iniciar edición  
+  if (btn) { e.preventDefault(); e.stopPropagation(); }  
+  if (keyEl.classList.contains("is-editing")) return;  
+  if (isMediaElement(keyEl)) {  
+    activeImage = keyEl;  
+    imagePicker.value = "";  
+    imagePicker.click();  
+  } else if (keyEl.dataset.styleOnly) {  
+    showStyleBar(keyEl);  
+  } else {  
+    beginTextEdit(keyEl);  
+  }  
 }, true);
 
 function setEditingMode(enabled) {  
