@@ -803,7 +803,7 @@ const uploadToDrive = async () => {
             </div>  
             <div className="rsvp-field">  
               <label htmlFor="people" data-key="rsvp_label_people">NÚMERO DE PASES</label>  
-              <select id="people" name="people" defaultValue={String(Math.min(2, invitee?.max_passes || 2))} data-testid="select-rsvp-seats">  
+              <select id="people" name="people" key={invitee?.max_passes || 2} defaultValue={String(invitee?.max_passes || 2)} data-testid="select-rsvp-seats">  
                 {Array.from({ length: invitee?.max_passes || 2 }, (_, i) => (  
                   <option key={i + 1} value={i + 1}>{i + 1} PERSONA{i > 0 ? 'S' : ''}</option>  
                 ))}  
