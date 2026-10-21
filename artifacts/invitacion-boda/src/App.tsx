@@ -243,15 +243,29 @@ function App() {
   }, [envelopeOpen]);
   
   const openInvitation = () => {  
-  setEnvelopeOpen(true);  
-  audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});  
-  window.setTimeout(() => {  
-    document.getElementById('invitation-start')?.scrollIntoView({  
-      behavior: 'smooth',  
-      block: 'start',  
-    });  
-  }, 900);  
-};
+    setEnvelopeOpen(true);  
+    audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});  
+    window.setTimeout(() => {  
+      const target = document.getElementById('invitation-start');  
+      if (!target) return;  
+      const startY = window.scrollY;  
+      const endY = startY + target.getBoundingClientRect().top;  
+      const distance = endY - startY;  
+      const duration = 1600; // ms — ni rápido ni lento; sube/baja este número para ajustar  
+      let startTime: number | null = null;  
+      // easeInOutCubic: arranca suave, acelera y frena suave (sensación "elegante")  
+      const ease = (t: number) =>  
+        t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;  
+      const step = (now: number) => {  
+        if (startTime === null) startTime = now;  
+        const elapsed = now - startTime;  
+        const progress = Math.min(elapsed / duration, 1);  
+        window.scrollTo(0, startY + distance * ease(progress));  
+        if (progress < 1) window.requestAnimationFrame(step);  
+      };  
+      window.requestAnimationFrame(step);  
+    }, 900);  
+  };
 useEffect(() => {  
     if (!envelopeOpen) return;  
     const sections = document.querySelectorAll('.invite-shell section');  
