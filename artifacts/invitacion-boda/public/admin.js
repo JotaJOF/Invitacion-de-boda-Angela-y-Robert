@@ -435,16 +435,16 @@ function addPencils() {
 }  
 document.addEventListener("click", (e) => {  
   if (!editing) return;  
+  // No bloquear la barra de estilo, los tiradores de tamaño ni el panel admin:  
+  if (!e.target.closest("#root")) return;  
   const keyEl = e.target.closest("[data-key]");  
   const btn = e.target.closest("button, a");  
-  // FAQ: dejar que se despliegue normalmente  
+  // FAQ: dejar que se despliegue  
   if (btn && (btn.classList.contains("faq-question") || btn.querySelector('[data-key^="faq_question"]'))) return;  
   if (!keyEl) {  
-    // botón sin texto editable: solo bloquear su acción  
     if (btn) { e.preventDefault(); e.stopPropagation(); }  
     return;  
   }  
-  // hay texto/imagen editable: bloquear la acción del botón e iniciar edición  
   if (btn) { e.preventDefault(); e.stopPropagation(); }  
   if (keyEl.classList.contains("is-editing")) return;  
   if (isMediaElement(keyEl)) {  
