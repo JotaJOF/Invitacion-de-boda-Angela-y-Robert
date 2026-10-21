@@ -382,12 +382,12 @@ function showStyleBar(element) {
   positionStyleBar();  
   addResizeHandles(element);  
 }  
-function positionStyleBar() {  
-  if (!styleBar || !styleBarFor) return;  
-  styleBar.style.left = "8px";  
-  styleBar.style.right = "auto";  
-  styleBar.style.top = "50%";  
-  styleBar.style.transform = "translateY(-50%)";  
+function positionStyleBar() {    
+  if (!styleBar || !styleBarFor) return;    
+  styleBar.style.left = "50%";    
+  styleBar.style.right = "auto";    
+  styleBar.style.top = "8px";    
+  styleBar.style.transform = "translateX(-50%)";    
 } 
 function beginTextEdit(element) {  
   document.querySelectorAll('[data-key].is-editing').forEach(stopInlineEditing);  
@@ -429,9 +429,10 @@ function setEditingMode(enabled) {
     element.classList.toggle("editable-target", enabled);  
     if (!enabled) stopInlineEditing(element);  
   });  
-  addPencils();  
-  if (enabled) {  
-    toolbarMessage.textContent = "Toca un texto o imagen para editarlo.";  
+  addPencils();    
+  document.querySelectorAll(".music-fab").forEach((b) => { b.style.display = enabled ? "none" : ""; });    
+  if (enabled) {    
+    toolbarMessage.textContent = "Toca un texto o imagen para editarlo.";    
   }  
 }  
   
