@@ -66,13 +66,15 @@
         <input id="cfg-date" type="datetime-local" />  
         <label for="cfg-drive">Carpeta de Google Drive para fotos/videos de invitados</label>  
         <input id="cfg-drive" type="url" placeholder="https://drive.google.com/drive/folders/..." />
-        <label for="music-upload">Canción de fondo (suena al abrir el sobre)</label>  
-        <button class="button" id="music-upload" type="button">SUBIR CANCIÓN (MP3)</button>  
-        <input id="music-file" type="file" accept="audio/mpeg,audio/mp4,audio/ogg" hidden />  
-        <button class="button" id="music-test" type="button" hidden>▶ PROBAR CANCIÓN</button>  
-        <p class="form-message" id="music-status" role="status"></p>
-        <button class="button" id="guests-list" type="button">VER LISTA DE INVITADOS</button> 
-        <button class="button" id="invites-open" type="button">GENERAR LINKS</button>
+        <label for="music-upload">Canción de fondo (suena al abrir el sobre)</label>    
+        <div class="admin-panel-actions">    
+          <button class="button" id="music-upload" type="button">SUBIR CANCIÓN (MP3)</button>    
+          <button class="button" id="music-test" type="button" hidden>▶ PROBAR CANCIÓN</button>    
+          <button class="button" id="guests-list" type="button">VER LISTA DE INVITADOS</button>    
+          <button class="button" id="invites-open" type="button">GENERAR LINKS</button>    
+        </div>    
+        <input id="music-file" type="file" accept="audio/mpeg,audio/mp4,audio/ogg" hidden />    
+        <p class="form-message" id="music-status" role="status"></p>    
         <p class="form-message" id="panel-message" role="status"></p>  
         <div class="admin-panel-actions">  
           <button class="button" id="panel-edit" type="button">EDITAR TU INVITACIÓN</button>  
@@ -127,7 +129,7 @@
     <input id="image-picker" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>  
     <script type="module" src="/src/main.tsx"></script>  
-   <link rel="stylesheet" href="/admin.css?v=13" />  
-<script src="/admin.js?v=13" defer></script>  
+   <link rel="stylesheet" href="/admin.css?v=14" />    
+<script src="/admin.js?v=14" defer></script>  
   </body>  
 </html>
