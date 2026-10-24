@@ -220,7 +220,9 @@ function markStyleChange(element) {
       fontFamily: element.style.fontFamily || "",  
       fontSize: element.style.fontSize || "",  
       maxWidth: element.style.maxWidth || "",
-      width: element.style.width || "",
+      width: element.style.width || "",  
+      display: element.style.display || "",  
+      whiteSpace: element.style.whiteSpace || "",
       transform: element.style.transform || "",  
       marginLeft: element.style.marginLeft || "",  
       marginRight: element.style.marginRight || "",  
@@ -231,7 +233,7 @@ function markStyleChange(element) {
   toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`; 
   document.querySelectorAll(`[data-key="${element.dataset.key}"]`).forEach((el) => {  
     if (el === element) return;  
-    ["fontFamily", "fontSize", "maxWidth", "width", "transform", "marginLeft", "marginRight", "marginTop", "marginBottom"].forEach((p) => {  
+    ["fontFamily", "fontSize", "maxWidth", "width", "display", "whiteSpace", "transform", "marginLeft", "marginRight", "marginTop", "marginBottom"].forEach((p) => {  
       el.style[p] = element.style[p];  
     });  
   });
