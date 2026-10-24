@@ -444,15 +444,13 @@ const uploadToDrive = async () => {
         <p className="section-copy" data-key="invite_intro">  
           QUEREMOS COMPARTIR CONTIGO LA ALEGRÍA DE CELEBRAR NUESTRA BODA  
         </p>  
-        <div  
-          className="save-date-wrapper"  
-          data-key="save_date_box"  
-          data-style-only="1"  
-          style={{  
-            position: 'relative',  
-            width: 'min(100%, 350px)',
-            margin: '22px auto 14px',
-          }}
+        <div    
+          className="save-date-wrapper"    
+          style={{    
+            position: 'relative',    
+            width: 'min(100%, 350px)',  
+            margin: '22px auto 14px',  
+          }}  
         >
           <img
             src={asset('sobre.png')}
