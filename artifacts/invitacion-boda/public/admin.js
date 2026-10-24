@@ -157,9 +157,12 @@ async function loadContent() {
           if (style.fontFamily) element.style.fontFamily = style.fontFamily;  
           if (style.fontSize) element.style.fontSize = style.fontSize;  
           if (style.maxWidth) element.style.maxWidth = style.maxWidth;  
+          if (style.width) element.style.width = style.width;  
+          if (style.display === "inline-block") element.style.display = "inline-block";  
+          if (style.whiteSpace) element.style.whiteSpace = style.whiteSpace;  
           if (style.transform) element.style.transform = style.transform;  
-if (style.marginLeft) element.style.marginLeft = style.marginLeft;  
-if (style.marginRight) element.style.marginRight = style.marginRight;  
+          if (style.marginLeft) element.style.marginLeft = style.marginLeft;  
+          if (style.marginRight) element.style.marginRight = style.marginRight;  
           if (style.marginTop) element.style.marginTop = style.marginTop;  
           if (style.marginBottom) element.style.marginBottom = style.marginBottom;  
         } catch { /* estilo inválido, se ignora */ }  
@@ -216,7 +219,8 @@ function markStyleChange(element) {
     value: JSON.stringify({  
       fontFamily: element.style.fontFamily || "",  
       fontSize: element.style.fontSize || "",  
-      maxWidth: element.style.maxWidth || "",  
+      maxWidth: element.style.maxWidth || "",
+      width: element.style.width || "",
       transform: element.style.transform || "",  
       marginLeft: element.style.marginLeft || "",  
       marginRight: element.style.marginRight || "",  
@@ -227,7 +231,7 @@ function markStyleChange(element) {
   toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`; 
   document.querySelectorAll(`[data-key="${element.dataset.key}"]`).forEach((el) => {  
     if (el === element) return;  
-    ["fontFamily", "fontSize", "maxWidth", "transform", "marginLeft", "marginRight", "marginTop", "marginBottom"].forEach((p) => {  
+    ["fontFamily", "fontSize", "maxWidth", "width", "transform", "marginLeft", "marginRight", "marginTop", "marginBottom"].forEach((p) => {  
       el.style[p] = element.style[p];  
     });  
   });
