@@ -234,10 +234,12 @@ function markStyleChange(element) {
 }  
   
 let resizeHandles = [];  
+let resizeRaf = null;  
   
-function removeResizeHandles() {  
-  resizeHandles.forEach((h) => h.remove());  
-  resizeHandles = [];  
+function removeResizeHandles() {    
+  if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = null; }    
+  resizeHandles.forEach((h) => h.remove());    
+  resizeHandles = [];    
 }  
   
 function positionResizeHandles() {  
@@ -283,8 +285,12 @@ function addResizeHandles(element) {
       window.addEventListener("pointermove", onMove);  
       window.addEventListener("pointerup", onUp);  
     });  
-  });  
-  positionResizeHandles();  
+  });    
+  const loop = () => {    
+    positionResizeHandles();    
+    resizeRaf = requestAnimationFrame(loop);    
+  };    
+  loop();    
 }  
   
 function showStyleBar(element) {  
