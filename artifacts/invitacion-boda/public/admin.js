@@ -292,6 +292,7 @@ function showStyleBar(element) {
   styleBarFor = element;  
   styleBar = document.createElement("div");  
   styleBar.className = "style-bar";  
+  styleBar.addEventListener("pointerdown", (e) => e.preventDefault());  
   
   const fontBtn = document.createElement("button");  
   fontBtn.type = "button";  
