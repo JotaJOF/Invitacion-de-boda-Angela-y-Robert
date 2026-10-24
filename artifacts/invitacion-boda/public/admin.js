@@ -234,22 +234,26 @@ function markStyleChange(element) {
 }  
   
 let resizeHandles = [];  
-let resizeRaf = null;  
+let resizeRaf = 0;  
   
-function removeResizeHandles() {    
-  if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = null; }    
-  resizeHandles.forEach((h) => h.remove());    
-  resizeHandles = [];    
+function removeResizeHandles() {  
+  resizeHandles.forEach((h) => h.remove());  
+  resizeHandles = [];  
+  if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = 0; }  
 }  
   
 function positionResizeHandles() {  
-  if (!styleBarFor || !resizeHandles.length) return;  
+  if (!styleBarFor || !resizeHandles.length) {  
+    if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = 0; }  
+    return;  
+  }  
   const r = styleBarFor.getBoundingClientRect();  
   resizeHandles.forEach((h) => {  
     const top = r.top + r.height / 2 - 14;  
     h.style.top = `${top}px`;  
     h.style.left = h.dataset.side === "left" ? `${r.left - 18}px` : `${r.right + 4}px`;  
   });  
+  resizeRaf = requestAnimationFrame(positionResizeHandles);  
 }  
   
 function addResizeHandles(element) {  
