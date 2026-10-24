@@ -499,8 +499,7 @@ const uploadToDrive = async () => {
               Reserva
             </span>
             <span  
-              data-key="save_date_label_2"  
-              data-style-only="1"  
+              data-key="save_date_label_2"    
               style={{  
                 width: '100%',  
                 fontFamily: "'Montserrat', sans-serif",  
