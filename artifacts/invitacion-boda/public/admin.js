@@ -248,10 +248,15 @@ function positionResizeHandles() {
     return;  
   }  
   const r = styleBarFor.getBoundingClientRect();  
+  const vv = window.visualViewport;  
+  const offX = vv ? vv.offsetLeft : 0;  
+  const offY = vv ? vv.offsetTop : 0;  
   resizeHandles.forEach((h) => {  
-    const top = r.top + r.height / 2 - 14;  
+    const top = offY + r.top + r.height / 2 - 14;  
     h.style.top = `${top}px`;  
-    h.style.left = h.dataset.side === "left" ? `${r.left - 18}px` : `${r.right + 4}px`;  
+    h.style.left = h.dataset.side === "left"  
+      ? `${offX + r.left - 18}px`  
+      : `${offX + r.right + 4}px`;  
   });  
   resizeRaf = requestAnimationFrame(positionResizeHandles);  
 }  
