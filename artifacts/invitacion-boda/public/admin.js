@@ -279,10 +279,14 @@ function addResizeHandles(element) {
       const onMove = (ev) => {  
         const dx = ev.clientX - startX;  
         if (side === "right") {  
-          element.style.maxWidth = `${Math.max(60, startW + dx)}px`;  
+        element.style.display = "inline-block";  
+        element.style.whiteSpace = "normal";  
+        element.style.width = `${Math.max(60, startW + dx)}px`;  
         } else {  
-          element.style.maxWidth = `${Math.max(60, startW - dx)}px`;  
-          element.style.marginLeft = `${startML + dx}px`;  
+        element.style.display = "inline-block";  
+        element.style.whiteSpace = "normal";  
+        element.style.width = `${Math.max(60, startW - dx)}px`;  
+        element.style.marginLeft = `${startML + dx}px`;  
         }  
         positionResizeHandles();  
       };  
