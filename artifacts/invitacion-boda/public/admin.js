@@ -277,23 +277,28 @@ function addResizeHandles(element) {
       e.preventDefault();  
       e.stopPropagation();  
       const rect = element.getBoundingClientRect();  
-      const startX = e.clientX;  
-      const startW = rect.width;  
-      const startML = parseFloat(getComputedStyle(element).marginLeft) || 0;  
-      const onMove = (ev) => {  
-        const dx = ev.clientX - startX;  
-        if (side === "right") {  
-        element.style.display = "inline-block";  
-        element.style.whiteSpace = "normal";  
-        element.style.width = `${Math.max(60, startW + dx)}px`;  
-        } else {  
-        element.style.display = "inline-block";  
-        element.style.whiteSpace = "normal";  
-        element.style.width = `${Math.max(60, startW - dx)}px`;  
-        element.style.marginLeft = `${startML + dx}px`;  
-        }  
-        positionResizeHandles();  
-      };  
+const startX = e.clientX;  
+const startW = rect.width;  
+const cs = getComputedStyle(element);  
+const startML = parseFloat(cs.marginLeft) || 0;  
+const startMR = parseFloat(cs.marginRight) || 0;  
+const onMove = (ev) => {  
+  const dx = ev.clientX - startX;  
+  element.style.display = "inline-block";  
+  element.style.whiteSpace = "normal";  
+  if (side === "right") {  
+    // fija el borde IZQUIERDO, solo crece a la derecha  
+    element.style.marginLeft = `${startML}px`;  
+    element.style.marginRight = "auto";  
+    element.style.width = `${Math.max(60, startW + dx)}px`;  
+  } else {  
+    // fija el borde DERECHO, solo crece a la izquierda  
+    element.style.marginRight = `${startMR}px`;  
+    element.style.marginLeft = "auto";  
+    element.style.width = `${Math.max(60, startW - dx)}px`;  
+  }  
+  positionResizeHandles();  
+};  
       const onUp = () => {  
         window.removeEventListener("pointermove", onMove);  
         window.removeEventListener("pointerup", onUp);  
@@ -395,11 +400,11 @@ function showStyleBar(element) {
     return b;  
   };  
   moveWrap.append(  
-    mkArrow("◀", -10, 0),  
-    mkArrow("▲", 0, -10),  
-    mkArrow("▼", 0, 10),  
-    mkArrow("▶", 10, 0),  
-  );  
+  mkArrow("◀", -5, 0),  
+  mkArrow("▲", 0, -5),  
+  mkArrow("▼", 0, 5),  
+  mkArrow("▶", 5, 0),  
+);  
   
   styleBar.append(fontBtn, sizeWrap, moveWrap);  
   document.body.append(styleBar);  
