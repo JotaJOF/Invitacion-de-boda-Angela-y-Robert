@@ -371,3 +371,27 @@ html.is-loading-content video[data-key] {
   .admin-panel-actions .button { flex: none; width: 100%; }  
   #panel-save { grid-column: 1 / -1; }
 }
+/* Modo TEMAS */  
+body.themes-active .music-fab { display: none !important; }  
+body.themes-active .invite-shell button,  
+body.themes-active .invite-shell a { pointer-events: none !important; }  
+body.themes-active [data-bg] { cursor: pointer; }  
+.bg-editable { outline: 2px dashed #506443; outline-offset: -4px; }  
+  
+#bg-chooser {  
+  position: fixed; inset: 0; z-index: 9999;  
+  display: flex; align-items: center; justify-content: center;  
+  background: rgba(0,0,0,.45);  
+}  
+.bg-chooser-card {  
+  background: #fff; color: #3d3428; width: min(90%, 320px);  
+  padding: 20px; border-radius: 14px;  
+  display: flex; flex-direction: column; gap: 10px;  
+}  
+.bg-chooser-card button {  
+  padding: 11px; border-radius: 9px; border: 1px solid #506443;  
+  background: #506443; color: #fffaf4; font-weight: 600; cursor: pointer;  
+}  
+.bg-chooser-card button[data-act="cancel"] { background: #fff; color: #506443; }  
+.bg-chooser-color { display: flex; align-items: center; justify-content: space-between; gap: 10px; }  
+.bg-chooser-card input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
