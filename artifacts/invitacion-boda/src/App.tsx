@@ -867,12 +867,11 @@ const uploadToDrive = async () => {
   
       <section className="closing">  
         <img src={asset('pdfimg-003.jpg')} data-key="closing_img" alt="" />  
-      </section>  
-  
-      <section className="closing-footer" data-bg="closing">  
-        <div className="closing-content">  
-          <p data-key="closing_text">AGRADECEMOS PROFUNDAMENTE SU PRESENCIA Y SUS MUESTRAS DE CARIÑO EN NUESTRO DÍA ESPECIAL.</p>  
-          <p className="script" data-key="closing_names">Angela y Robert</p>  
+        <div className="closing-footer" data-bg="closing">  
+          <div className="closing-content">  
+            <p className="script" data-key="closing_names">Angela y Robert</p>  
+            <p data-key="closing_text">Gracias por acompañarnos en un día que llevaremos siempre en el corazón.</p>  
+          </div>  
         </div>  
       </section>
       {confirmOpen && (  
