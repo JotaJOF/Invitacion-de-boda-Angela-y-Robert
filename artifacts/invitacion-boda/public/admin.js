@@ -169,6 +169,7 @@ async function loadContent() {
       } 
     }  
     await Promise.all(imageLoads);  
+    applySavedBackgrounds(content);  
     for (const element of contentNodes) recordBaseline(element);  
     if (failedImages) {  
       showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");  
@@ -735,6 +736,7 @@ document.querySelector("#panel-edit").addEventListener("click", () => {
   
 document.querySelector("#float-back").addEventListener("click", () => {  
   setEditingMode(false);  
+  setThemesMode(false);  
   adminFloatBar.hidden = true;  
   showAdminPanel();  
 });  
@@ -925,3 +927,85 @@ if (adminPanel) {
     if (!adminPanel.hidden) refreshMusicStatus();  
   }).observe(adminPanel, { attributes: true, attributeFilter: ["hidden"] });  
 }
+// ===== TEMAS (edición de fondos) =====  
+const bgPicker = document.querySelector("#bg-picker");  
+let editingThemes = false;  
+let activeBg = null;  
+  
+function applyBg(el, url, isVideo) {  
+  el.querySelectorAll("video.bg-video").forEach((v) => v.remove());  
+  if (isVideo) {  
+    el.style.position = "relative";  
+    el.style.overflow = "hidden";  
+    el.style.backgroundImage = "none";  
+    const v = document.createElement("video");  
+    v.className = "bg-video";  
+    v.src = url;  
+    v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;  
+    v.setAttribute("muted", ""); v.setAttribute("playsinline", "");  
+    v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;";  
+    el.prepend(v);  
+    el.querySelectorAll(":scope > :not(video.bg-video)").forEach((child) => {  
+      child.style.position = child.style.position || "relative";  
+      child.style.zIndex = "1";  
+    });  
+  } else {  
+    el.style.backgroundImage = `url(${url})`;  
+    el.style.backgroundSize = "cover";  
+    el.style.backgroundPosition = "center";  
+    el.style.backgroundRepeat = "no-repeat";  
+  }  
+}  
+  
+function isVideoUrl(url) {  
+  return /\.(mp4|webm|mov)(\?|$)/i.test(url);  
+}  
+  
+function applySavedBackgrounds(content) {  
+  document.querySelectorAll("[data-bg]").forEach((el) => {  
+    const saved = content[`bg_${el.dataset.bg}`];  
+    if (saved && saved.value) applyBg(el, saved.value, isVideoUrl(saved.value));  
+  });  
+}  
+  
+function setThemesMode(enabled) {  
+  editingThemes = enabled;  
+  adminFloatBar.hidden = !enabled;  
+  adminOpen.hidden = enabled;  
+  document.querySelectorAll("[data-bg]").forEach((el) => el.classList.toggle("bg-editable", enabled));  
+  if (enabled) showToast("Toca una sección para cambiar su fondo (imagen o video).");  
+}  
+  
+document.querySelector("#panel-themes").addEventListener("click", () => {  
+  adminPanel.hidden = true;  
+  setThemesMode(true);  
+});  
+  
+document.addEventListener("click", (e) => {  
+  if (!editingThemes) return;  
+  const sec = e.target.closest("[data-bg]");  
+  if (!sec) return;  
+  e.preventDefault();  
+  e.stopPropagation();  
+  activeBg = sec;  
+  bgPicker.value = "";  
+  bgPicker.click();  
+}, true);  
+  
+bgPicker.addEventListener("change", async () => {  
+  const file = bgPicker.files?.[0];  
+  if (!file || !activeBg) return;  
+  const key = `bg_${activeBg.dataset.bg}`;  
+  showToast("Subiendo fondo…");  
+  try {  
+    const form = new FormData();  
+    form.set("file", file);  
+    form.set("key", key);  
+    const { url } = await api("/api/upload", { method: "POST", body: form });  
+    applyBg(activeBg, url, file.type.startsWith("video/"));  
+    await api(`/api/content/${key}`, { method: "PUT", body: JSON.stringify({ type: "text", value: url }) });  
+    showToast("Fondo guardado.");  
+  } catch (error) {  
+    showToast(error.message);  
+  }  
+});
