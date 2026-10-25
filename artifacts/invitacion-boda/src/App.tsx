@@ -356,7 +356,7 @@ const uploadToDrive = async () => {
   
   return (  
     <main className="invite-shell" data-testid="page-wedding-invitation">  
-      <section className="cover" aria-label="Invitación personalizada">  
+      <section className="cover" aria-label="Invitación personalizada" data-bg="cover">  
         <div className="cover-names">  
           <div className="cover-name" data-testid="text-bride-name">  
             <span className="script" data-key="bride_initial">A</span>  
@@ -423,7 +423,7 @@ const uploadToDrive = async () => {
         )}  
       </section>  
   
-      <section className="olive-section blessing">  
+      <section className="olive-section blessing" data-bg="padres">  
         <p className="eyebrow" data-key="blessing_eyebrow">CON LA BENDICIÓN DE DIOS Y EL CARIÑO DE<br />NUESTROS PADRES</p>  
         <div className="parents-block">  
           <h3 data-key="bride_parents_title">PADRES DE LA NOVIA</h3>  
@@ -437,7 +437,7 @@ const uploadToDrive = async () => {
         </div>  
       </section>  
   
-      <section className="paper-section">  
+      <section className="paper-section" data-bg="portada">  
         <h1 className="couple-heading script" data-key="couple_heading" data-testid="text-couple-names">  
           Angela Palmerston <small>y</small> Robert Wilson  
         </h1>  
@@ -769,7 +769,7 @@ const uploadToDrive = async () => {
         ]}  
       />
   
-      <section className="faq-section">  
+      <section className="faq-section" data-bg="faq">  
         <h2 className="script-title" data-key="faq_title">Recomendaciones <span className="serif">& FAQ</span></h2>  
         <p className="faq-intro" data-key="faq_intro">  
           <strong>RECEPCIÓN</strong><br />  
@@ -798,7 +798,7 @@ const uploadToDrive = async () => {
         </div>  
       </section>  
   
-      <section className="rsvp-section" id="rsvp">  
+      <section className="rsvp-section" id="rsvp" data-bg="rsvp">  
         <h2 className="script-title" data-key="rsvp_title" style={{ color: '#fffaf4' }}>RSVP</h2>  
         <div className="rsvp-panel">  
           <p className="eyebrow" data-key="rsvp_eyebrow_1">AGRADECEMOS CONFIRMAR SU<br />ASISTENCIA ANTES DEL</p>  
@@ -838,7 +838,7 @@ const uploadToDrive = async () => {
         </div>  
       </section>  
   
-      <section className="whatsapp-section">  
+      <section className="whatsapp-section" data-bg="whatsapp">  
         <p className="eyebrow" data-key="whatsapp_eyebrow">RSVP POR WHATSAPP</p>  
         <p className="whatsapp-caption" data-key="whatsapp_caption">TAMBIÉN PUEDES CONFIRMAR TU ASISTENCIA A TRAVÉS DEL SIGUIENTE ENLACE DE WHATSAPP</p>  
         <button  
@@ -865,7 +865,7 @@ const uploadToDrive = async () => {
         <p className="whatsapp-note" data-key="whatsapp_note">Enlace de WhatsApp no configurado; la acción solo muestra esta nota.</p>  
       </section>  
   
-      <section className="closing">  
+      <section className="closing" data-bg="closing">  
         <img src={asset('pdfimg-003.jpg')} data-key="closing_img" alt="" />  
         <div className="closing-content">  
           <p data-key="closing_text">AGRADECEMOS PROFUNDAMENTE SU PRESENCIA Y SUS MUESTRAS DE CARIÑO EN NUESTRO DÍA ESPECIAL.</p>  
