@@ -631,7 +631,7 @@ const uploadToDrive = async () => {
         ]}  
       />  
   
-      <section className="paper-section venue-section">  
+      <section className="paper-section venue-section" data-bg="venue">  
         <h2 className="script-title" data-key="venue_title">Ceremonia <span className="serif">&</span> Recepción</h2>  
         <img className="venue-image" data-key="venue_image" src={asset('pdfimg-011.jpg')} alt="Jardines y arquitectura de la Quinta El Edén" />  
         <h3 className="venue-name" data-key="venue_name">QUINTA EL EDÉN</h3>  
@@ -652,7 +652,7 @@ const uploadToDrive = async () => {
         ]}  
       />
   
-      <section className="dress-section">  
+      <section className="dress-section" data-bg="dress">  
         <h2 className="dress-title"><span data-key="dress_title_1">CÓDIGO DE</span><strong data-key="dress_title_2">Vestimenta</strong></h2>  
         <p className="dress-copy" data-key="dress_copy">  
           FORMAL<br />  
@@ -684,7 +684,7 @@ const uploadToDrive = async () => {
         </div>  
       </section>  
   
-      <section className="itinerary">  
+      <section className="itinerary" data-bg="itinerary">  
         <h2 className="script-title" data-key="itinerary_title">Itinerario</h2>  
         <div className="itinerary-list">  
          <div className="itinerary-row">  
@@ -705,7 +705,7 @@ const uploadToDrive = async () => {
         </div>  
       </section>  
   
-      <section className="gift-section">  
+      <section className="gift-section" data-bg="gift">  
         <h2 className="dress-title"><span data-key="gift_title_1">SUGERENCIA DE</span><strong data-key="gift_title_2">Regalo</strong></h2>  
         <p className="gift-copy" data-key="gift_copy">  
           COMPARTIR ESTE DÍA CON USTEDES ES EL REGALO MÁS VALIOSO PARA NOSOTROS.  
@@ -715,7 +715,7 @@ const uploadToDrive = async () => {
         <p className="gift-highlight" data-key="gift_highlight">NUESTRA LLUVIA DE SOBRES<br />EL DÍA DEL EVENTO</p>  
         </section>  
 
-    <section className="album-section">  
+    <section className="album-section" data-bg="album">  
       <div className="photo-album">  
           <p data-key="album_copy">COMPARTE TUS FOTOS Y LOS MOMENTOS MÁS ESPECIALES USANDO NUESTRO ÁLBUM DE FOTOS</p>  
           <input  
