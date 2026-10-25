@@ -733,7 +733,7 @@ const uploadToDrive = async () => {
                 event.target.value = '';  
               }}  
           />  
-          <button className="olive-button light" type="button" onClick={() => albumInput.current?.click()} data-testid="button-photo-upload">  
+          <button className="olive-button" type="button" onClick={() => albumInput.current?.click()} data-testid="button-photo-upload">  
             <Upload size={14} /> <span data-key="album_button_text">CARGAR</span>  
           </button>  
           {albumQueue.length > 0 && (  
