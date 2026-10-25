@@ -713,7 +713,10 @@ const uploadToDrive = async () => {
           SEA A TRAVÉS DE  
         </p>  
         <p className="gift-highlight" data-key="gift_highlight">NUESTRA LLUVIA DE SOBRES<br />EL DÍA DEL EVENTO</p>  
-        <div className="photo-album">  
+        </section>  
+
+    <section className="album-section">  
+      <div className="photo-album">  
           <p data-key="album_copy">COMPARTE TUS FOTOS Y LOS MOMENTOS MÁS ESPECIALES USANDO NUESTRO ÁLBUM DE FOTOS</p>  
           <input  
             ref={albumInput}  
