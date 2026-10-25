@@ -865,8 +865,11 @@ const uploadToDrive = async () => {
         <p className="whatsapp-note" data-key="whatsapp_note">Enlace de WhatsApp no configurado; la acción solo muestra esta nota.</p>  
       </section>  
   
-      <section className="closing" data-bg="closing">  
+      <section className="closing">  
         <img src={asset('pdfimg-003.jpg')} data-key="closing_img" alt="" />  
+      </section>  
+  
+      <section className="closing-footer" data-bg="closing">  
         <div className="closing-content">  
           <p data-key="closing_text">AGRADECEMOS PROFUNDAMENTE SU PRESENCIA Y SUS MUESTRAS DE CARIÑO EN NUESTRO DÍA ESPECIAL.</p>  
           <p className="script" data-key="closing_names">Angela y Robert</p>  
