@@ -932,15 +932,25 @@ const bgPicker = document.querySelector("#bg-picker");
 let editingThemes = false;  
 let activeBg = null;  
   
-function applyBg(el, url, isVideo) {  
+function isVideoUrl(url) {  
+  return /\.(mp4|webm|mov)(\?|$)/i.test(url);  
+}  
+  
+function applyBg(el, value) {  
   el.querySelectorAll("video.bg-video").forEach((v) => v.remove());  
-  if (isVideo) {  
+  if (value.startsWith("color:")) {  
+    el.style.backgroundImage = "none";  
+    el.style.backgroundColor = value.slice(6);  
+    return;  
+  }  
+  el.style.backgroundColor = "";  
+  if (isVideoUrl(value)) {  
     el.style.position = "relative";  
     el.style.overflow = "hidden";  
     el.style.backgroundImage = "none";  
     const v = document.createElement("video");  
     v.className = "bg-video";  
-    v.src = url;  
+    v.src = value;  
     v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;  
     v.setAttribute("muted", ""); v.setAttribute("playsinline", "");  
     v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;";  
@@ -950,21 +960,56 @@ function applyBg(el, url, isVideo) {
       child.style.zIndex = "1";  
     });  
   } else {  
-    el.style.backgroundImage = `url(${url})`;  
+    el.style.backgroundImage = `url(${value})`;  
     el.style.backgroundSize = "cover";  
     el.style.backgroundPosition = "center";  
     el.style.backgroundRepeat = "no-repeat";  
   }  
 }  
   
-function isVideoUrl(url) {  
-  return /\.(mp4|webm|mov)(\?|$)/i.test(url);  
-}  
-  
 function applySavedBackgrounds(content) {  
   document.querySelectorAll("[data-bg]").forEach((el) => {  
     const saved = content[`bg_${el.dataset.bg}`];  
-    if (saved && saved.value) applyBg(el, saved.value, isVideoUrl(saved.value));  
+    if (saved && saved.value) applyBg(el, saved.value);  
+  });  
+}  
+  
+async function saveBg(sec, value) {  
+  applyBg(sec, value);  
+  await api(`/api/content/bg_${sec.dataset.bg}`, {  
+    method: "PUT",  
+    body: JSON.stringify({ type: "text", value }),  
+  });  
+  showToast("Fondo guardado.");  
+}  
+  
+function openBgChooser(sec) {  
+  document.querySelector("#bg-chooser")?.remove();  
+  const box = document.createElement("div");  
+  box.id = "bg-chooser";  
+  box.innerHTML = `  
+    <div class="bg-chooser-card">  
+      <p>¿Qué fondo quieres para esta sección?</p>  
+      <button type="button" data-act="file">Subir imagen o video</button>  
+      <label class="bg-chooser-color">Elegir color  
+        <input type="color" id="bg-color-input" value="#506443" />  
+      </label>  
+      <input type="text" id="bg-color-name" placeholder="o escribe el color (ej: crema, #f3ece0)" />  
+      <button type="button" data-act="color">Aplicar color</button>  
+      <button type="button" data-act="cancel">Cancelar</button>  
+    </div>`;  
+  document.body.appendChild(box);  
+  box.addEventListener("click", async (e) => {  
+    const act = e.target.dataset.act;  
+    if (!act) return;  
+    if (act === "file") { box.remove(); bgPicker.value = ""; bgPicker.click(); }  
+    else if (act === "color") {  
+      const name = document.querySelector("#bg-color-name").value.trim();  
+      const picked = document.querySelector("#bg-color-input").value;  
+      box.remove();  
+      await saveBg(sec, `color:${name || picked}`);  
+    }  
+    else if (act === "cancel") box.remove();  
   });  
 }  
   
@@ -972,8 +1017,10 @@ function setThemesMode(enabled) {
   editingThemes = enabled;  
   adminFloatBar.hidden = !enabled;  
   adminOpen.hidden = enabled;  
+  document.body.classList.toggle("themes-active", enabled);  
   document.querySelectorAll("[data-bg]").forEach((el) => el.classList.toggle("bg-editable", enabled));  
-  if (enabled) showToast("Toca una sección para cambiar su fondo (imagen o video).");  
+  if (!enabled) document.querySelector("#bg-chooser")?.remove();  
+  if (enabled) showToast("Toca una sección para cambiar su fondo.");  
 }  
   
 document.querySelector("#panel-themes").addEventListener("click", () => {  
@@ -983,28 +1030,25 @@ document.querySelector("#panel-themes").addEventListener("click", () => {
   
 document.addEventListener("click", (e) => {  
   if (!editingThemes) return;  
+  if (e.target.closest("#bg-chooser")) return;  
   const sec = e.target.closest("[data-bg]");  
   if (!sec) return;  
   e.preventDefault();  
   e.stopPropagation();  
   activeBg = sec;  
-  bgPicker.value = "";  
-  bgPicker.click();  
+  openBgChooser(sec);  
 }, true);  
   
 bgPicker.addEventListener("change", async () => {  
   const file = bgPicker.files?.[0];  
   if (!file || !activeBg) return;  
-  const key = `bg_${activeBg.dataset.bg}`;  
   showToast("Subiendo fondo…");  
   try {  
     const form = new FormData();  
     form.set("file", file);  
-    form.set("key", key);  
+    form.set("key", `bg_${activeBg.dataset.bg}`);  
     const { url } = await api("/api/upload", { method: "POST", body: form });  
-    applyBg(activeBg, url, file.type.startsWith("video/"));  
-    await api(`/api/content/${key}`, { method: "PUT", body: JSON.stringify({ type: "text", value: url }) });  
-    showToast("Fondo guardado.");  
+    await saveBg(activeBg, url);  
   } catch (error) {  
     showToast(error.message);  
   }  
