@@ -23,6 +23,8 @@ const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
 const MIME_EXTENSIONS: Record<string, string> = {  
   "image/avif": "avif",  
   "image/gif": "gif",  
+  "image/heic": "heic",  
+  "image/heif": "heif",  
   "image/jpeg": "jpg",  
   "image/png": "png",  
   "image/webp": "webp",  
