@@ -504,8 +504,9 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 .gift-section { padding: 44px 28px 46px; background: #506443; color: #fffaf4; text-align: center; }
 .gift-copy { max-width: 400px; margin: 18px auto 22px; font-family: 'Cormorant Garamond',serif; font-size: 16.5px; line-height: 1.5; letter-spacing: .04em; opacity: .95; }
 .gift-highlight { margin: 0; color: #e5cdb5; font-family: 'Cormorant Garamond',serif; font-size: 15px; letter-spacing: .1em; font-weight: 600; }
-.photo-album { margin-top: 36px; padding-top: 28px; border-top: 1px solid rgba(255,250,244,.3); }
-.photo-album p { margin: 0 auto 16px; max-width: 390px; font-size: 10.5px; line-height: 1.7; letter-spacing: .06em; opacity: .9; }
+.album-section { padding: 44px 28px 46px; background: #f3ece0; color: #4b4239; text-align: center; }  
+.photo-album { margin-top: 0; padding-top: 0; border-top: none; }  
+.photo-album p { margin: 0 auto 16px; max-width: 390px; font-size: 10.5px; line-height: 1.7; letter-spacing: .06em; color: #4b4239; opacity: .95; }
 .faq-section { padding: 44px 24px 40px; background: #fbf7f4; text-align: center; }
 .faq-intro { margin: 12px 0 22px; color: #5b5249; font-family: 'Cormorant Garamond',serif; font-size: 15px; line-height: 1.55; letter-spacing: .04em; }
 .faq-list { text-align: left; border-top: 1px solid rgba(199,188,174,.7); }
