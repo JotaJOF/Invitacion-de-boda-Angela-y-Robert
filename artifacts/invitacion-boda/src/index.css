@@ -535,6 +535,7 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 .closing-content { position: relative; z-index: 1; }  
 .closing-content p { max-width: 360px; margin: 0 auto 10px; font-size: 10.5px; line-height: 1.65; letter-spacing: .08em; color: #5b5249; opacity: .95; }  
 .closing-content .script { margin: 0 0 12px; font-size: 46px; color: #55663b; }
+.closing-content p[data-key="closing_text"] { min-height: 1.5em; }
 .footer-note { padding: 14px 20px; background: #fbf7f4; color: #766a60; text-align: center; font-family: 'Cormorant Garamond',serif; font-size: 12.5px; letter-spacing: .08em; }
 @media (max-width: 380px) { .cover { padding-inline: 12px; } .paper-section,.venue-section,.faq-section { padding-inline: 18px; } }
 
