@@ -928,8 +928,7 @@ const uploadToDrive = async () => {
           )}  
         </>  
       )}
-      <footer className="footer-note" data-key="footer_note">CON CARIÑO, ANGELA &amp; ROBERT · {fechaPunteada}</footer>  
-        </>)}
+      </>)}
       </main>  
   );  
 }  
