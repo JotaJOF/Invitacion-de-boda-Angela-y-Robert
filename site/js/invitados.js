@@ -2,6 +2,10 @@ const table = document.querySelector("#guest-table");
 const input = document.querySelector("#guest-input");  
 const message = document.querySelector("#panel-message");  
 const BASE = window.location.origin;  
+const WEDDING_ID = (() => {  
+  const id = new URLSearchParams(window.location.search).get("boda");  
+  return id && /^[a-z0-9-]+$/i.test(id) ? id.toLowerCase() : "angela-robert";  
+})();  
   
 async function api(path, options = {}) {  
   const res = await fetch(path, {  
@@ -22,9 +26,9 @@ function esc(text) {
   
 async function load() {  
   table.innerHTML = "";  
-  const { guests } = await api("/api/guests", { method: "GET" });  
+  const { guests } = await api(`/api/guests?boda=${encodeURIComponent(WEDDING_ID)}`, { method: "GET" });  
   for (const g of guests) {  
-    const link = g.code ? `${BASE}/?c=${g.code}` : "—";  
+    const link = g.code ? `${BASE}/?boda=${encodeURIComponent(WEDDING_ID)}&c=${g.code}` : "—";  
     const wa = g.phone  
       ? `https://wa.me/${g.phone}?text=${encodeURIComponent(  
           `Hola, aquí está tu invitación a nuestra boda: ${link}`,  
@@ -68,7 +72,7 @@ document.querySelector("#add-guests").addEventListener("click", async () => {
   try {  
     const { created } = await api("/api/invites", {  
       method: "POST",  
-      body: JSON.stringify({ guests }),  
+      body: JSON.stringify({ guests, boda: WEDDING_ID }),  
     });  
     input.value = "";  
     message.textContent = `${created?.length ?? 0} invitados agregados.`;  
