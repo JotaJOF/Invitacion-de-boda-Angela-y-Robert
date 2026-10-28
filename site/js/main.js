@@ -1,4 +1,13 @@
-const pendingChanges = new Map();
+// Identificador de boda: ?boda=maria-juan (por defecto "angela-robert")  
+const WEDDING_ID = (() => {  
+  const id = new URLSearchParams(window.location.search).get("boda");  
+  return id && /^[a-z0-9-]+$/i.test(id) ? id.toLowerCase() : "angela-robert";  
+})();  
+// Clave de contenido: la boda por defecto usa la clave tal cual;  
+// las demás bodas la prefijan con su id (ej. maria-juan_envelope_image)  
+const k = (key) => (WEDDING_ID === "angela-robert" ? key : `${WEDDING_ID}_${key}`);  
+  
+const pendingChanges = new Map();  
 const contentNodes = [...document.querySelectorAll("[data-key]")];
 const loginDialog = document.querySelector("#login-dialog");
 const loginForm = document.querySelector("#login-form");
@@ -8,7 +17,16 @@ const adminToolbar = document.querySelector("#admin-toolbar");
 const toolbarMessage = document.querySelector("#toolbar-message");
 const imagePicker = document.querySelector("#image-picker");
 const toast = document.querySelector("#toast");
-const countdown = document.querySelector("#countdown");
+// Configuración fija por boda: agrega una línea por cada pareja nueva  
+const WEDDINGS = {  
+  "angela-robert": { date: "2027-03-13T00:00:00-04:00", names: "Angela & Robert" },  
+  // "maria-juan": { date: "2027-06-20T00:00:00-05:00", names: "María & Juan" },  
+};  
+const WEDDING_CFG = WEDDINGS[WEDDING_ID] ?? WEDDINGS["angela-robert"];  
+  
+const countdown = document.querySelector("#countdown");  
+countdown.dataset.targetDate = WEDDING_CFG.date;  
+document.title = WEDDING_CFG.names;  
 const countdownTarget = Date.parse(countdown.dataset.targetDate);
 const countdownFields = {
   days: document.querySelector("#countdown-days"),
@@ -103,7 +121,7 @@ async function loadContent() {
     const imageLoads = [];
     for (const element of contentNodes) {
       const key = element.dataset.key;
-      const saved = key ? content[key] : null;
+      const saved = key ? content[k(key)] : null;
       if (saved && saved.type === "image" && element instanceof HTMLImageElement) {
         imageLoads.push(
           setElementValue(element, saved.type, saved.value,
@@ -228,7 +246,7 @@ function setEditingMode(enabled) {
 document.addEventListener("input", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement) || !target.matches("[data-key].is-editing")) return;
-  pendingChanges.set(target.dataset.key, {
+  pendingChanges.set(k(target.dataset.key), {
     element: target,
     type: "text",
     value: target.textContent ?? "",
@@ -245,7 +263,7 @@ imagePicker.addEventListener("change", async () => {
     form.set("file", file);
     const { url } = await api("/api/upload", { method: "POST", body: form });
     await setElementValue(activeImage, "image", url);
-    pendingChanges.set(activeImage.dataset.key, {
+    pendingChanges.set(k(activeImage.dataset.key), {
       element: activeImage,
       type: "image",
       value: url,
@@ -303,8 +321,8 @@ document.querySelector("#cancel-edit").addEventListener("click", async () => {
   if (pendingChanges.size && !window.confirm("¿Descartar los cambios que aún no guardaste?")) {
     return;
   }
-  pendingChanges.forEach(({ element }) => {
-    const key = element.dataset.key;
+  pendingChanges.forEach(({ element }) => {  
+    const key = k(element.dataset.key);
     if (element instanceof HTMLImageElement) {
       if (element.dataset.originalSrc) {
         element.src = element.dataset.originalSrc;
@@ -384,7 +402,7 @@ api("/api/me", { method: "GET" })
   const code = new URLSearchParams(window.location.search).get("c");  
   if (!code) return;  
   try {  
-    const { guest } = await api(`/api/invite/${encodeURIComponent(code)}`, {  
+    const { guest } = await api(`/api/invite/${encodeURIComponent(code)}?boda=${encodeURIComponent(WEDDING_ID)}`, {  
       method: "GET",  
     });  
     if (!guest) return;  
@@ -396,7 +414,7 @@ api("/api/me", { method: "GET" })
     passesEl.textContent =  
       guest.max_passes > 0 ? ` · Pases: ${guest.max_passes}` : "";  
     greeting.hidden = false;  
-    document.title = `${guest.name} — Angela & Robert`;  
+    document.title = `${guest.name} — ${WEDDING_CFG.names}`;  
   } catch {  
     /* sin invitado válido: la página sigue normal */  
   }  
