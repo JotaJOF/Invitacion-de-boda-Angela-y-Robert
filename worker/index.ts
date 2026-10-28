@@ -452,7 +452,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
           path,  
           new Blob([await file.arrayBuffer()], { type: file.type }),  
           {  
-            cacheControl: "60",  
+            cacheControl: "31536000",  
             contentType: file.type,  
             upsert: false,  
           },  
