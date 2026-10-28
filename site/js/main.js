@@ -19,7 +19,8 @@ const imagePicker = document.querySelector("#image-picker");
 const toast = document.querySelector("#toast");
 // Configuración fija por boda: agrega una línea por cada pareja nueva  
 const WEDDINGS = {  
-  "angela-robert": { date: "2027-03-13T00:00:00-04:00", names: "Angela & Robert" },  
+  "angela-robert": { date: "2027-03-13T00:00:00-04:00", names: "Angela & Robert" },
+  "erick-erika":   { date: "2027-06-20T17:00:00-04:00", names: "Erick & Erika" },
   // "maria-juan": { date: "2027-06-20T00:00:00-05:00", names: "María & Juan" },  
 };  
 const WEDDING_CFG = WEDDINGS[WEDDING_ID] ?? WEDDINGS["angela-robert"];  
