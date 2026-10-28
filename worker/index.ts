@@ -276,9 +276,11 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       const session = await getSession(request, env);  
       if (!session) return json({ error: "Inicia sesión." }, 401);  
   
-      const { data, error } = await supabase(env)  
-        .from("guests")  
-        .select("id,name,phone,attendance,passes,max_passes,message,source,code,opened_at,created_at,modified,modified_at")  
+      const boda = (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60);  
+      const { data, error } = await supabase(env)    
+        .from("guests")    
+        .select("id,name,phone,attendance,passes,max_passes,message,source,code,opened_at,created_at,modified,modified_at")    
+        .eq("wedding", boda)  
         .order("created_at");  
       if (error) return json({ error: "No se pudo cargar la lista." }, 502);  
       return json({ guests: data });  
@@ -302,11 +304,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       const code =  
         typeof body.code === "string" ? body.code.trim().slice(0, 20) : "";
   
-      const client = supabase(env);  
-      const { data: existing } = await client  
-        .from("guests")  
-        .select("id")  
-        .eq(code ? "code" : "name", code || name)  
+      const boda = (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60);  
+      const client = supabase(env);    
+      const { data: existing } = await client    
+        .from("guests")    
+        .select("id")    
+        .eq(code ? "code" : "name", code || name)    
+        .eq("wedding", boda)  
         .maybeSingle();  
   
       const row = existing  
@@ -319,7 +323,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
             modified: true,  
             modified_at: new Date().toISOString(),  
           }  
-        : { name, attendance, passes, message, phone, source };  
+        : { name, attendance, passes, message, phone, source, wedding: boda };  
   
       const { error } = existing  
         ? await client.from("guests").update(row).eq("id", existing.id)  
@@ -333,10 +337,11 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       const name = decodeURIComponent(  
         path.slice("/api/guests/check/".length),  
       ).slice(0, 200);  
-      const { data } = await supabase(env)  
-        .from("guests")  
-        .select("name,attendance,passes,message,phone")  
-        .eq("name", name)  
+      const { data } = await supabase(env)    
+        .from("guests")    
+        .select("name,attendance,passes,message,phone")    
+        .eq("name", name)    
+        .eq("wedding", (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60))  
         .maybeSingle();  
       return json({ guest: data ?? null });  
     }
@@ -351,7 +356,8 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       for (const g of list) {  
         const name = typeof g?.name === "string" ? g.name.trim().slice(0, 200) : "";  
         if (!name) continue;  
-        rows.push({  
+        rows.push({    
+          wedding: typeof body.boda === "string" && /^[a-z0-9-]+$/i.test(body.boda) ? body.boda.toLowerCase().slice(0, 60) : "angela-robert",  
           name,  
           phone: typeof g?.phone === "string" ? g.phone.trim().slice(0, 40) : "",  
           max_passes: Math.max(0, Math.min(20, Number(g?.max_passes) || 0)),  
@@ -369,13 +375,15 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path.startsWith("/api/invite/") && method === "GET") {  
       const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20);  
       const client = supabase(env);  
-      const { data } = await client  
-        .from("guests")  
-        .select("name,max_passes,attendance,opened_at")  
-        .eq("code", code)  
-        .maybeSingle();  
-      if (data && !data.opened_at) {  
-        await client.from("guests").update({ opened_at: new Date().toISOString() }).eq("code", code);  
+      const boda = (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60);  
+      const { data } = await client    
+        .from("guests")    
+        .select("name,max_passes,attendance,opened_at")    
+        .eq("code", code)    
+        .eq("wedding", boda)  
+        .maybeSingle();    
+      if (data && !data.opened_at) {    
+        await client.from("guests").update({ opened_at: new Date().toISOString() }).eq("code", code).eq("wedding", boda);    
       }  
       return json({ guest: data ?? null });  
     }
