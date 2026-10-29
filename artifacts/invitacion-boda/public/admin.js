@@ -759,92 +759,86 @@ function applyPermissionsAndNav() {
   }
 }
 
-async function renderSuperadminControls() {
-  const saBox = document.querySelector("#superadmin-box");
-  if (!saBox) return;
+async function initWeddingManagement() {
+  const selector = document.querySelector("#admin-wedding-selector");
+  const toggleBtn = document.querySelector("#btn-toggle-new-wedding");
+  const formBox = document.querySelector("#new-wedding-form");
+  const slugInput = document.querySelector("#nw-slug");
+  const previewBox = document.querySelector("#nw-link-preview");
+  const saveBtn = document.querySelector("#btn-save-new-wedding");
+  const homeBtn = document.querySelector("#panel-home-btn");
 
-  if (!currentSession || currentSession.role !== "superadmin") {
-    saBox.style.display = "none";
-    saBox.innerHTML = "";
-    return;
-  }
+  if (!selector) return;
 
+  // Cargar lista de bodas
   try {
     const { weddings = [] } = await api("/api/weddings");
-    let optionsHtml = weddings.map(w => `<option value="${w.id}" ${w.id === currentWedding ? "selected" : ""}>${w.names} (${w.id})</option>`).join("");
-    if (!weddings.some(w => w.id === "angela-robert")) {
-      optionsHtml = `<option value="angela-robert" ${currentWedding === "angela-robert" ? "selected" : ""}>Angela Palmerston y Robert Wilson (angela-robert)</option>` + optionsHtml;
+    let optionsHtml = '<option value="angela-robert">Angela Palmerston y Robert Wilson (Principal - /)</option>';
+    for (const w of weddings) {
+      if (w.id !== "angela-robert") {
+        optionsHtml += `<option value="${w.id}">${w.names} (/${w.id})</option>`;
+      }
     }
+    selector.innerHTML = optionsHtml;
+    selector.value = currentWedding;
+  } catch (err) {
+    console.warn("No se pudieron cargar bodas adicionales:", err);
+  }
 
-    saBox.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span style="font-size:11px; font-weight:700; color:#5c5040; text-transform:uppercase; letter-spacing:0.08em;">Control Maestro Superadmin</span>
-        <span style="font-size:10px; background:#4a5438; color:#fff; padding:2px 8px; border-radius:10px; font-weight:600;">Acceso Total</span>
-      </div>
-      <label style="font-size:12px; margin-bottom:4px; display:block; font-weight:600;">Boda activa en edición:</label>
-      <select id="sa-wedding-select" style="width:100%; min-height:40px; padding:8px 12px; border-radius:10px; border:1px solid #d4cbbd; background:#fff; font-size:13px; margin-bottom:12px; color:#2b241c;">
-        ${optionsHtml}
-      </select>
-      <div style="display:flex; gap:8px;">
-        <button id="sa-new-wedding-btn" type="button" class="button button-secondary" style="padding:8px 14px; font-size:11px; flex:1; min-height:36px; border-radius:8px;">+ NUEVA BODA / PAREJA</button>
-      </div>
-      <div id="sa-create-form" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed #dcd3c5;">
-        <p style="font-size:12px; font-weight:700; color:#3a3228; margin-bottom:10px;">Crear enlace y credenciales para nueva pareja:</p>
-        <input id="new-w-slug" type="text" placeholder="Slug / Terminación de URL (ej. carlos-maria)" style="width:100%; margin-bottom:8px;" />
-        <input id="new-w-names" type="text" placeholder="Nombres (ej. Carlos y María)" style="width:100%; margin-bottom:8px;" />
-        <input id="new-w-user" type="text" placeholder="Usuario para la pareja" style="width:100%; margin-bottom:8px;" />
-        <input id="new-w-pass" type="password" placeholder="Contraseña para la pareja" style="width:100%; margin-bottom:10px;" />
-        <p style="font-size:11px; color:#6b5f51; margin-bottom:8px; font-weight:600;">Permisos autorizados a la pareja:</p>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px; margin-bottom:12px;">
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-loc" checked /> Ubicación</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-ws" checked /> WhatsApp</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-date" checked /> Fecha</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-drive" checked /> Google Drive</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-music" checked /> Música</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-guests" checked /> Invitados</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-invites" checked /> Links</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-edit" checked /> Editar</label>
-          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-themes" checked /> Temas</label>
-        </div>
-        <button id="sa-save-client-btn" type="button" class="button button-primary button-olive" style="width:100%; font-size:11px; min-height:40px; border-radius:8px;">CREAR BODA Y USUARIO</button>
-      </div>
-    `;
+  // Cambio de boda activa
+  selector.onchange = () => {
+    currentWedding = selector.value;
+    if (homeBtn) {
+      homeBtn.href = currentWedding === "angela-robert" ? "/" : `/${currentWedding}`;
+    }
+    loadPanel();
+    applyPermissionsAndNav();
+    showToast(`Boda seleccionada: ${currentWedding}`);
+  };
 
-    saBox.style.display = "block";
+  // Botón mostrar/ocultar formulario nueva boda
+  if (toggleBtn && formBox) {
+    toggleBtn.onclick = () => {
+      const isHidden = formBox.style.display === "none";
+      formBox.style.display = isHidden ? "block" : "none";
+      toggleBtn.textContent = isHidden ? "✕ CERRAR" : "+ NUEVA BODA";
+    };
+  }
 
-    document.querySelector("#sa-wedding-select")?.addEventListener("change", (e) => {
-      currentWedding = e.target.value;
-      loadPanel();
-      applyPermissionsAndNav();
-      showToast(`Administrando: ${currentWedding}`);
-    });
+  // Vista previa en vivo del slug
+  if (slugInput && previewBox) {
+    slugInput.oninput = () => {
+      const cleanSlug = slugInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-");
+      previewBox.textContent = `https://invitacion.comutech.workers.dev/${cleanSlug || "nueva-boda"}`;
+    };
+  }
 
-    document.querySelector("#sa-new-wedding-btn")?.addEventListener("click", () => {
-      const form = document.querySelector("#sa-create-form");
-      if (form) form.style.display = form.style.display === "none" ? "block" : "none";
-    });
+  // Guardar nueva boda
+  if (saveBtn) {
+    saveBtn.onclick = async () => {
+      const names = document.querySelector("#nw-names")?.value.trim();
+      const rawSlug = document.querySelector("#nw-slug")?.value.trim().toLowerCase();
+      const slug = rawSlug ? rawSlug.replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-") : "";
+      const dateIso = document.querySelector("#nw-date")?.value;
+      const cUser = document.querySelector("#nw-user")?.value.trim();
+      const cPass = document.querySelector("#nw-pass")?.value;
 
-    document.querySelector("#sa-save-client-btn")?.addEventListener("click", async () => {
-      const slug = document.querySelector("#new-w-slug").value.trim().toLowerCase();
-      const names = document.querySelector("#new-w-names").value.trim();
-      const cUser = document.querySelector("#new-w-user").value.trim();
-      const cPass = document.querySelector("#new-w-pass").value;
-
-      if (!slug || !names) {
-        alert("El slug y nombres son obligatorios.");
+      if (!names || !slug) {
+        alert("Por favor ingresa los nombres de los novios y el slug del link.");
         return;
       }
 
+      saveBtn.disabled = true;
+      saveBtn.textContent = "CREANDO BODA...";
+
       const permissions = {
-        location: document.querySelector("#perm-loc").checked,
-        whatsapp: document.querySelector("#perm-ws").checked,
-        date: document.querySelector("#perm-date").checked,
-        drive: document.querySelector("#perm-drive").checked,
-        music: document.querySelector("#perm-music").checked,
-        guests: document.querySelector("#perm-guests").checked,
-        invites: document.querySelector("#perm-invites").checked,
-        edit: document.querySelector("#perm-edit").checked,
-        themes: document.querySelector("#perm-themes").checked,
+        location: document.querySelector("#perm-loc")?.checked ?? true,
+        whatsapp: document.querySelector("#perm-ws")?.checked ?? true,
+        date: document.querySelector("#perm-date")?.checked ?? true,
+        drive: document.querySelector("#perm-drive")?.checked ?? true,
+        music: document.querySelector("#perm-music")?.checked ?? true,
+        guests: document.querySelector("#perm-guests")?.checked ?? true,
+        invites: document.querySelector("#perm-invites")?.checked ?? true,
       };
 
       try {
@@ -853,26 +847,50 @@ async function renderSuperadminControls() {
           body: JSON.stringify({
             id: slug,
             names,
+            date_iso: dateIso,
             couple_username: cUser || null,
             couple_password: cPass || null,
             permissions
           })
         });
-        showToast(`Cliente ${names} creado.`);
+
+        showToast(`¡Boda ${names} creada! Link: /${slug}`);
+
+        // Agregar al selector y seleccionar
+        const opt = document.createElement("option");
+        opt.value = slug;
+        opt.textContent = `${names} (/${slug})`;
+        selector.appendChild(opt);
+        selector.value = slug;
+
         currentWedding = slug;
-        renderSuperadminControls();
+        if (homeBtn) homeBtn.href = `/${slug}`;
+
+        // Reset y ocultar formulario
+        if (formBox) formBox.style.display = "none";
+        if (toggleBtn) toggleBtn.textContent = "+ NUEVA BODA";
+        document.querySelector("#nw-names").value = "";
+        document.querySelector("#nw-slug").value = "";
+        document.querySelector("#nw-date").value = "";
+        if (document.querySelector("#nw-user")) document.querySelector("#nw-user").value = "";
+        if (document.querySelector("#nw-pass")) document.querySelector("#nw-pass").value = "";
+
         loadPanel();
         applyPermissionsAndNav();
       } catch (err) {
-        alert(err.message);
+        alert(`Error al crear boda: ${err.message}`);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "CREAR BODA Y ACTIVAR ENLACE";
       }
-    });
-  } catch (err) {
-    console.error("Error loading weddings for superadmin:", err);
-    saBox.style.display = "none";
+    };
   }
 }
-  
+
+function renderSuperadminControls() {
+  initWeddingManagement();
+}
+
 function showAdminPanel() {  
   adminPanel.hidden = false;  
   adminFloatBar.hidden = true;  
