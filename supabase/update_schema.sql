@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.wedding_content (
 );
 
 -- Migrar contenido global previo a angela-robert si existe
-DO 18057
+DO $$
 BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'site_content') THEN
         INSERT INTO public.wedding_content (wedding_id, key, type, value, updated_at)
@@ -41,10 +41,10 @@ BEGIN
             value = EXCLUDED.value,
             updated_at = EXCLUDED.updated_at;
     END IF;
-END 18057;
+END $$;
 
 -- 3. Vincular invitados a boda
-DO 18057
+DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
@@ -52,7 +52,7 @@ BEGIN
     ) THEN
         ALTER TABLE public.guests ADD COLUMN wedding TEXT NOT NULL DEFAULT 'angela-robert';
     END IF;
-END 18057;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_guests_wedding_code ON public.guests(wedding, code);
 CREATE INDEX IF NOT EXISTS idx_guests_wedding_name ON public.guests(wedding, name);
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS public.app_users (
 );
 
 -- Migrar admin previo a superadmin
-DO 18057
+DO $$
 BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'admin_users') THEN
         INSERT INTO public.app_users (username, password_hash, role, permissions)
@@ -77,7 +77,7 @@ BEGIN
         FROM public.admin_users
         ON CONFLICT (username) DO NOTHING;
     END IF;
-END 18057;
+END $$;
 
 -- 5. Función RPC de autenticación
 CREATE OR REPLACE FUNCTION public.authenticate_user(p_username TEXT, p_password TEXT)
@@ -91,7 +91,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS 18057
+AS $$
 DECLARE
     v_user app_users%ROWTYPE;
 BEGIN
@@ -110,7 +110,7 @@ BEGIN
         RETURN QUERY SELECT FALSE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::JSONB;
     END IF;
 END;
-18057;
+$$;
 
 -- 6. Función RPC para crear o actualizar usuario de pareja
 CREATE OR REPLACE FUNCTION public.create_or_update_couple_user(
@@ -123,7 +123,7 @@ RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS 18057
+AS $$
 BEGIN
     INSERT INTO public.app_users (username, password_hash, role, wedding_id, permissions)
     VALUES (p_username, crypt(p_password, gen_salt('bf')), 'couple', p_wedding_id, p_permissions)
@@ -132,4 +132,4 @@ BEGIN
         wedding_id = EXCLUDED.wedding_id,
         permissions = EXCLUDED.permissions;
 END;
-18057;
+$$;
