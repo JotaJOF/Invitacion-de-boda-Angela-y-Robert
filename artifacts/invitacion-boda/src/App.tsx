@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';  
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';  
 import {    
   CalendarDays,    
   ChevronDown,    
@@ -208,7 +208,34 @@ function displayGivenName(value: string | undefined, initial: string, fallback: 
 }
 
 function App() {  
-  const [envelopeOpen, setEnvelopeOpen] = useState(false);  
+  const [envelopeOpen, setEnvelopeOpen] = useState(false);
+  const dynamicCss = useMemo(() => {
+    let css = "";
+    for (const [k, v] of Object.entries(cfg)) {
+      if (k.endsWith("__style") && v) {
+        try {
+          const s = JSON.parse(v);
+          const baseKey = k.replace(/__style$/, "");
+          const rules: string[] = [];
+          if (s.fontFamily) rules.push(`font-family: ${s.fontFamily} !important;`);
+          if (s.fontSize) rules.push(`font-size: ${s.fontSize} !important;`);
+          if (s.maxWidth) rules.push(`max-width: ${s.maxWidth} !important;`);
+          if (s.width) rules.push(`width: ${s.width} !important;`);
+          if (s.display) rules.push(`display: ${s.display} !important;`);
+          if (s.whiteSpace) rules.push(`white-space: ${s.whiteSpace} !important;`);
+          if (s.transform) rules.push(`transform: ${s.transform} !important;`);
+          if (s.marginLeft) rules.push(`margin-left: ${s.marginLeft} !important;`);
+          if (s.marginRight) rules.push(`margin-right: ${s.marginRight} !important;`);
+          if (s.marginTop) rules.push(`margin-top: ${s.marginTop} !important;`);
+          if (s.marginBottom) rules.push(`margin-bottom: ${s.marginBottom} !important;`);
+          if (rules.length) {
+            css += `[data-key="${baseKey}"] { ${rules.join(" ")} }\n`;
+          }
+        } catch {}
+      }
+    }
+    return css;
+  }, [cfg]);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
   const [preview, setPreview] = useState('');  
   const [albumQueue, setAlbumQueue] = useState<{ id: string; f: File; status: 'pendiente' | 'subiendo' | 'listo' | 'error'; progress: number }[]>([]);  
@@ -400,7 +427,8 @@ const uploadToDrive = async () => {
   if (!contentReady) return null;
 
   return (  
-    <main className="invite-shell" data-testid="page-wedding-invitation">  
+    <main className="invite-shell" data-testid="page-wedding-invitation">
+      {dynamicCss ? <style id="dynamic-content-styles" dangerouslySetInnerHTML={{ __html: dynamicCss }} /> : null}  
       <section className="cover" aria-label="Invitación personalizada" data-bg="cover">  
         <div className="cover-names">  
           <div className="cover-name" data-testid="text-bride-name">  

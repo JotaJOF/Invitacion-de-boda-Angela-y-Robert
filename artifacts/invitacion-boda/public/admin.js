@@ -262,59 +262,101 @@ function currentFontLabel(element) {
   return match ? match.label : family.split(",")[0].replace(/["']/g, "").trim();  
 }  
   
+function toKebabCase(str) {
+  return str.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+}
+
+function updateDynamicCssRule(key, s) {
+  let styleTag = document.getElementById("dynamic-content-styles");
+  if (!styleTag) {
+    styleTag = document.createElement("style");
+    styleTag.id = "dynamic-content-styles";
+    document.head.appendChild(styleTag);
+  }
+  const rules = [];
+  if (s.fontFamily) rules.push(`font-family: ${s.fontFamily} !important;`);
+  if (s.fontSize) rules.push(`font-size: ${s.fontSize} !important;`);
+  if (s.maxWidth) rules.push(`max-width: ${s.maxWidth} !important;`);
+  if (s.width) rules.push(`width: ${s.width} !important;`);
+  if (s.display) rules.push(`display: ${s.display} !important;`);
+  if (s.whiteSpace) rules.push(`white-space: ${s.whiteSpace} !important;`);
+  if (s.transform) rules.push(`transform: ${s.transform} !important;`);
+  if (s.marginLeft) rules.push(`margin-left: ${s.marginLeft} !important;`);
+  if (s.marginRight) rules.push(`margin-right: ${s.marginRight} !important;`);
+  if (s.marginTop) rules.push(`margin-top: ${s.marginTop} !important;`);
+  if (s.marginBottom) rules.push(`margin-bottom: ${s.marginBottom} !important;`);
+
+  const rulePattern = new RegExp(`\[data-key="${key}"\]\s*\{[^}]*\}`, "g");
+  const newRule = rules.length ? `[data-key="${key}"] { ${rules.join(" ")} }` : "";
+  let currentCss = styleTag.textContent || "";
+  if (rulePattern.test(currentCss)) {
+    styleTag.textContent = currentCss.replace(rulePattern, newRule);
+  } else if (newRule) {
+    styleTag.textContent = currentCss + "\n" + newRule;
+  }
+}
+
+function applyStyleToElement(el, s) {
+  const map = {
+    fontFamily: "font-family",
+    fontSize: "font-size",
+    maxWidth: "max-width",
+    width: "width",
+    display: "display",
+    whiteSpace: "white-space",
+    transform: "transform",
+    marginLeft: "margin-left",
+    marginRight: "margin-right",
+    marginTop: "margin-top",
+    marginBottom: "margin-bottom",
+  };
+  for (const [prop, cssProp] of Object.entries(map)) {
+    const val = s[prop];
+    if (val) {
+      el.style.setProperty(cssProp, val, "important");
+    } else {
+      el.style.removeProperty(cssProp);
+    }
+  }
+}
+
 function markStyleChange(element) {  
+  const styleObj = {  
+    fontFamily: element.style.fontFamily || "",  
+    fontSize: element.style.fontSize || "",  
+    maxWidth: element.style.maxWidth || "",
+    width: element.style.width || "",  
+    display: element.style.display || "inline-block",  
+    whiteSpace: element.style.whiteSpace || "",
+    transform: element.style.transform || "",  
+    marginLeft: element.style.marginLeft || "",  
+    marginRight: element.style.marginRight || "",  
+    marginTop: element.style.marginTop || "",  
+    marginBottom: element.style.marginBottom || "",  
+  };
   pendingChanges.set(`${element.dataset.key}__style`, {  
     element,  
     type: "style",  
-    value: JSON.stringify({  
-      fontFamily: element.style.fontFamily || "",  
-      fontSize: element.style.fontSize || "",  
-      maxWidth: element.style.maxWidth || "",
-      width: element.style.width || "",  
-      display: element.style.display || "",  
-      whiteSpace: element.style.whiteSpace || "",
-      transform: element.style.transform || "",  
-      marginLeft: element.style.marginLeft || "",  
-      marginRight: element.style.marginRight || "",  
-      marginTop: element.style.marginTop || "",  
-      marginBottom: element.style.marginBottom || "",  
-    }),  
+    value: JSON.stringify(styleObj),  
   });  
   toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`; 
+
+  updateDynamicCssRule(element.dataset.key, styleObj);
+
   document.querySelectorAll(`[data-key="${element.dataset.key}"]`).forEach((el) => {  
-    if (el === element) return;  
-    ["fontFamily", "fontSize", "maxWidth", "width", "display", "whiteSpace", "transform", "marginLeft", "marginRight", "marginTop", "marginBottom"].forEach((p) => {  
-      el.style[p] = element.style[p];  
-    });  
+    applyStyleToElement(el, styleObj);
   });
 }  
   
 let resizeHandles = [];  
 let resizeRaf = 0;  
-  
 function removeResizeHandles() {  
   resizeHandles.forEach((h) => h.remove());  
   resizeHandles = [];  
-  if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = 0; }  
-}  
-  
-function positionResizeHandles() {  
-  if (!styleBarFor || !resizeHandles.length) {  
-    if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = 0; }  
-    return;  
+  if (resizeRaf) {  
+    cancelAnimationFrame(resizeRaf);  
+    resizeRaf = 0;  
   }  
-  const r = styleBarFor.getBoundingClientRect();  
-  const vv = window.visualViewport;  
-  const offX = vv ? vv.offsetLeft : 0;  
-  const offY = vv ? vv.offsetTop : 0;  
-  resizeHandles.forEach((h) => {  
-    const top = offY + r.top + r.height / 2 - 14;  
-    h.style.top = `${top}px`;  
-    h.style.left = h.dataset.side === "left"  
-      ? `${offX + r.left - 18}px`  
-      : `${offX + r.right + 4}px`;  
-  });  
-  resizeRaf = requestAnimationFrame(positionResizeHandles);  
 }  
   
 function addResizeHandles(element) {  
@@ -328,34 +370,67 @@ function addResizeHandles(element) {
     h.addEventListener("pointerdown", (e) => {  
       e.preventDefault();  
       e.stopPropagation();  
+      try { h.setPointerCapture(e.pointerId); } catch {}
+      const startX = e.clientX;  
       const rect = element.getBoundingClientRect();  
-const startX = e.clientX;  
-const startW = rect.width;  
-const cs = getComputedStyle(element);  
-const startML = parseFloat(cs.marginLeft) || 0;  
-const startMR = parseFloat(cs.marginRight) || 0;  
-const onMove = (ev) => {  
-  const dx = ev.clientX - startX;  
-  element.style.display = "inline-block";  
-  element.style.whiteSpace = "normal";  
-  if (side === "right") {  
-    // fija el borde IZQUIERDO, solo crece a la derecha  
-    element.style.marginLeft = `${startML}px`;  
-    element.style.marginRight = "auto";  
-    element.style.width = `${Math.max(60, startW + dx)}px`;  
-  } else {  
-    // fija el borde DERECHO, solo crece a la izquierda  
-    element.style.marginRight = `${startMR}px`;  
-    element.style.marginLeft = "auto";  
-    element.style.width = `${Math.max(60, startW - dx)}px`;  
-  }  
-  positionResizeHandles();  
-};  
-      const onUp = () => {  
+      const startW = rect.width;  
+
+      let curX = Number(element.dataset.shiftX);
+      let curY = Number(element.dataset.shiftY);
+      if (isNaN(curX) || isNaN(curY) || (!element.dataset.shiftX && !element.dataset.shiftY)) {
+        const existing = element.style.transform || "";
+        let sumX = 0, sumY = 0;
+        const re = /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/g;
+        let match;
+        while ((match = re.exec(existing)) !== null) {
+          sumX += parseFloat(match[1]) || 0;
+          sumY += parseFloat(match[2]) || 0;
+        }
+        curX = sumX;
+        curY = sumY;
+      }
+      const startShiftX = curX;
+      const startShiftY = curY;
+
+      const onMove = (ev) => {  
+        ev.preventDefault();
+        const dx = ev.clientX - startX;  
+        element.style.setProperty("display", "inline-block", "important");  
+        element.style.setProperty("white-space", "normal", "important");  
+        if (side === "right") {  
+          // Ancla borde izquierdo, estira lado derecho
+          const newW = Math.max(30, Math.round(startW + dx));  
+          element.style.setProperty("width", `${newW}px`, "important");  
+          element.style.setProperty("max-width", `${newW}px`, "important");  
+        } else {  
+          // Ancla borde derecho, estira lado izquierdo
+          const newW = Math.max(30, Math.round(startW - dx));  
+          const effectiveDx = startW - newW;
+          const newShiftX = Math.round(startShiftX + effectiveDx);
+          element.dataset.shiftX = String(newShiftX);
+          element.dataset.shiftY = String(startShiftY);
+          element.style.setProperty("transform", `translate(${newShiftX}px, ${startShiftY}px)`, "important");  
+          element.style.setProperty("width", `${newW}px`, "important");  
+          element.style.setProperty("max-width", `${newW}px`, "important");  
+        }  
+        markStyleChange(element);
+        positionResizeHandles();  
+        positionStyleBar();
+      };  
+
+      const onUp = (ev) => {  
+        try { h.releasePointerCapture(ev.pointerId); } catch {}
+        h.removeEventListener("pointermove", onMove);  
+        h.removeEventListener("pointerup", onUp);  
+        h.removeEventListener("pointercancel", onUp);  
         window.removeEventListener("pointermove", onMove);  
         window.removeEventListener("pointerup", onUp);  
         markStyleChange(element);  
       };  
+
+      h.addEventListener("pointermove", onMove);  
+      h.addEventListener("pointerup", onUp);  
+      h.addEventListener("pointercancel", onUp);  
       window.addEventListener("pointermove", onMove);  
       window.addEventListener("pointerup", onUp);  
     });  
@@ -378,50 +453,161 @@ function showStyleBar(element) {
   const move = document.createElement("div");
   move.className = "style-move";
   const moveBy = (dx, dy) => {
-    const cs = getComputedStyle(element);
-    if (cs.display === "inline") element.style.display = "inline-block";
-    let x = Number(element.dataset.shiftX || 0) + dx;
-    let y = Number(element.dataset.shiftY || 0) + dy;
-    element.dataset.shiftX = String(x); element.dataset.shiftY = String(y);
-    const raw = element.style.transform || "";
-    const base = raw.replace(/translate\([^)]*\)/g, "").trim();
-    element.style.transform = `${base ? base + " " : ""}translate(${x}px, ${y}px)`;
+    let curX = Number(element.dataset.shiftX);
+    let curY = Number(element.dataset.shiftY);
+    if (isNaN(curX) || isNaN(curY) || (!element.dataset.shiftX && !element.dataset.shiftY)) {
+      const existing = element.style.transform || "";
+      let sumX = 0, sumY = 0;
+      const re = /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/g;
+      let match;
+      while ((match = re.exec(existing)) !== null) {
+        sumX += parseFloat(match[1]) || 0;
+        sumY += parseFloat(match[2]) || 0;
+      }
+      curX = sumX;
+      curY = sumY;
+    }
+    const nextX = Math.round(curX + dx);
+    const nextY = Math.round(curY + dy);
+    element.dataset.shiftX = String(nextX);
+    element.dataset.shiftY = String(nextY);
+    element.style.setProperty("display", "inline-block", "important");
+    element.style.setProperty("transform", `translate(${nextX}px, ${nextY}px)`, "important");
     markStyleChange(element);
     positionStyleBar();
+    positionResizeHandles();
   };
-  [["◀",-5,0],["▲",0,-5],["▼",0,5],["▶",5,0]].forEach(([label,dx,dy]) => {
-    const b=document.createElement("button"); b.type="button"; b.className="style-btn style-btn-mini"; b.textContent=label;
-    b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); moveBy(dx,dy); }); move.append(b);
+  [["◀", -5, 0], ["▲", 0, -5], ["▼", 0, 5], ["▶", 5, 0]].forEach(([label, dx, dy]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "style-btn style-btn-mini";
+    b.textContent = label;
+    b.addEventListener("pointerdown", (e) => e.stopPropagation());
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      moveBy(dx, dy);
+    });
+    move.append(b);
   });
 
   if (media) {
-    const replace=document.createElement("button"); replace.type="button"; replace.className="style-btn"; replace.textContent="Cambiar imagen";
-    replace.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); activeImage=element; imagePicker.value=""; imagePicker.click(); });
-    const smaller=document.createElement("button"); smaller.type="button"; smaller.className="style-btn style-btn-mini"; smaller.textContent="−"; smaller.title="Reducir";
-    smaller.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); const w=element.offsetWidth||80; if(w>24){element.style.width=`${w-8}px`; element.style.maxWidth=`${w-8}px`; markStyleChange(element); positionStyleBar();} });
-    const larger=document.createElement("button"); larger.type="button"; larger.className="style-btn style-btn-mini"; larger.textContent="+"; larger.title="Aumentar";
-    larger.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); const w=element.offsetWidth||80; element.style.width=`${w+8}px`; element.style.maxWidth=`${w+8}px`; markStyleChange(element); positionStyleBar(); });
+    const replace = document.createElement("button");
+    replace.type = "button";
+    replace.className = "style-btn";
+    replace.textContent = "Cambiar imagen";
+    replace.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      activeImage = element;
+      imagePicker.value = "";
+      imagePicker.click();
+    });
+    const smaller = document.createElement("button");
+    smaller.type = "button";
+    smaller.className = "style-btn style-btn-mini";
+    smaller.textContent = "−";
+    smaller.title = "Reducir";
+    smaller.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const w = element.offsetWidth || 80;
+      if (w > 24) {
+        element.style.setProperty("width", `${w - 8}px`, "important");
+        element.style.setProperty("max-width", `${w - 8}px`, "important");
+        markStyleChange(element);
+        positionStyleBar();
+        positionResizeHandles();
+      }
+    });
+    const larger = document.createElement("button");
+    larger.type = "button";
+    larger.className = "style-btn style-btn-mini";
+    larger.textContent = "+";
+    larger.title = "Aumentar";
+    larger.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const w = element.offsetWidth || 80;
+      element.style.setProperty("width", `${w + 8}px`, "important");
+      element.style.setProperty("max-width", `${w + 8}px`, "important");
+      markStyleChange(element);
+      positionStyleBar();
+      positionResizeHandles();
+    });
     styleBar.append(replace, smaller, larger, move);
   } else {
-    const fontBtn=document.createElement("button"); fontBtn.type="button"; fontBtn.className="style-btn style-btn-font"; fontBtn.textContent=currentFontLabel(element);
-    fontBtn.addEventListener("click", e => {
-      e.preventDefault(); e.stopPropagation();
-      styleBar.querySelectorAll(".style-menu").forEach(m=>m.remove());
-      const menu=document.createElement("div"); menu.className="style-menu";
-      FONTS.forEach(f=>{const opt=document.createElement("button"); opt.type="button"; opt.className="style-menu-item"; opt.textContent=f.label; opt.style.fontFamily=f.value;
-        opt.addEventListener("click", ev=>{ev.preventDefault();ev.stopPropagation();element.style.fontFamily=f.value;fontBtn.textContent=f.label;markStyleChange(element);menu.remove();}); menu.append(opt);});
+    const fontBtn = document.createElement("button");
+    fontBtn.type = "button";
+    fontBtn.className = "style-btn style-btn-font";
+    fontBtn.textContent = currentFontLabel(element);
+    fontBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      styleBar.querySelectorAll(".style-menu").forEach((m) => m.remove());
+      const menu = document.createElement("div");
+      menu.className = "style-menu";
+      FONTS.forEach((f) => {
+        const opt = document.createElement("button");
+        opt.type = "button";
+        opt.className = "style-menu-item";
+        opt.textContent = f.label;
+        opt.style.fontFamily = f.value;
+        opt.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          element.style.setProperty("font-family", f.value, "important");
+          fontBtn.textContent = f.label;
+          markStyleChange(element);
+          menu.remove();
+          positionStyleBar();
+          positionResizeHandles();
+        });
+        menu.append(opt);
+      });
       styleBar.append(menu);
     });
-    const sizeWrap=document.createElement("div"); sizeWrap.className="style-size";
-    const down=document.createElement("button"); down.type="button"; down.className="style-btn style-btn-mini"; down.textContent="−";
-    const value=document.createElement("span"); value.className="style-size-num"; value.textContent=String(Math.round(parseFloat(getComputedStyle(element).fontSize))||0);
-    const up=document.createElement("button"); up.type="button"; up.className="style-btn style-btn-mini"; up.textContent="+";
-    const bump=d=>{const n=Math.max(6,(Math.round(parseFloat(getComputedStyle(element).fontSize))||0)+d);element.style.fontSize=`${n}px`;value.textContent=String(n);markStyleChange(element);};
-    down.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();bump(-1);}); up.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();bump(1);});
-    sizeWrap.append(down,value,up); styleBar.append(fontBtn,sizeWrap,move);
+
+    const sizeWrap = document.createElement("div");
+    sizeWrap.className = "style-size";
+    const down = document.createElement("button");
+    down.type = "button";
+    down.className = "style-btn style-btn-mini";
+    down.textContent = "−";
+    const value = document.createElement("span");
+    value.className = "style-size-num";
+    value.textContent = String(Math.round(parseFloat(getComputedStyle(element).fontSize)) || 16);
+    const up = document.createElement("button");
+    up.type = "button";
+    up.className = "style-btn style-btn-mini";
+    up.textContent = "+";
+    const bump = (d) => {
+      const cur = parseFloat(getComputedStyle(element).fontSize) || 16;
+      const n = Math.max(8, Math.min(120, Math.round(cur + d)));
+      element.style.setProperty("font-size", `${n}px`, "important");
+      value.textContent = String(n);
+      markStyleChange(element);
+      positionStyleBar();
+      positionResizeHandles();
+    };
+    down.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      bump(-1);
+    });
+    up.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      bump(1);
+    });
+    sizeWrap.append(down, value, up);
+    styleBar.append(fontBtn, sizeWrap, move);
   }
-  document.body.append(styleBar); positionStyleBar(); addResizeHandles(element);
-}  
+  document.body.append(styleBar);
+  positionStyleBar();
+  addResizeHandles(element);
+}
+
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
   const vv = window.visualViewport;  
@@ -434,7 +620,25 @@ function positionStyleBar() {
 if (window.visualViewport) {    
   window.visualViewport.addEventListener("resize", positionStyleBar);    
   window.visualViewport.addEventListener("scroll", positionStyleBar);    
-} 
+}
+function positionResizeHandles() {
+  if (!styleBarFor || !resizeHandles.length) {
+    if (resizeRaf) { cancelAnimationFrame(resizeRaf); resizeRaf = 0; }
+    return;
+  }
+  const r = styleBarFor.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const offX = vv ? vv.offsetLeft : 0;
+  const offY = vv ? vv.offsetTop : 0;
+  resizeHandles.forEach((h) => {
+    const top = offY + r.top + r.height / 2 - 16;
+    h.style.top = `${top}px`;
+    h.style.left = h.dataset.side === "left"
+      ? `${offX + r.left - 18}px`
+      : `${offX + r.right + 4}px`;
+  });
+}
+
 function beginTextEdit(element) {  
   document.querySelectorAll('[data-key].is-editing').forEach(stopInlineEditing);  
   element.contentEditable = "true";  
@@ -485,9 +689,11 @@ document.addEventListener("click", (e) => {
     if (btn) { e.preventDefault(); e.stopPropagation(); }  
     return;  
   }  
+  if (keyEl.classList.contains("is-editing")) {
+    return;
+  }
   if (btn) e.preventDefault();
-  e.stopPropagation();
-  if (keyEl.classList.contains("is-editing")) return;  
+  e.stopPropagation();  
   if (isMediaElement(keyEl)) {
     showStyleBar(keyEl);
   } else if (keyEl.dataset.styleOnly) {  

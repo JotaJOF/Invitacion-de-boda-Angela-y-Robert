@@ -697,3 +697,10 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
   opacity: 1;  
   transform: translateY(0);  
 }
+
+
+/* Prevenir saltos o animaciones no deseadas en textos editables */
+[data-key] {
+  transition: none !important;
+  animation: none !important;
+}

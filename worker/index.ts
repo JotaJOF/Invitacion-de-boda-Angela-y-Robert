@@ -466,14 +466,29 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         }
       }
 
-            if (weddingParam === "angela-robert") {
-        contentMap["bride_first_name"] = { type: "text", value: "ANGELA" };
-        contentMap["bride_last_name"] = { type: "text", value: "PALMERSTON" };
-        contentMap["groom_first_name"] = { type: "text", value: "ROBERT" };
-        contentMap["groom_last_name"] = { type: "text", value: "WILSON" };
-        contentMap["couple_heading"] = { type: "text", value: "Angela Palmerston y Robert Wilson" };
-        contentMap["couple_names"] = { type: "text", value: "Angela y Robert" };
-        contentMap["closing_names"] = { type: "text", value: "Angela y Robert" };
+      if (weddingParam === "angela-robert") {
+        contentMap["bride_first_name"] = contentMap["bride_first_name"] || { type: "text", value: "ANGELA" };
+        contentMap["bride_last_name"] = contentMap["bride_last_name"] || { type: "text", value: "PALMERSTON" };
+        contentMap["groom_first_name"] = contentMap["groom_first_name"] || { type: "text", value: "ROBERT" };
+        contentMap["groom_last_name"] = contentMap["groom_last_name"] || { type: "text", value: "WILSON" };
+        contentMap["couple_heading"] = contentMap["couple_heading"] || { type: "text", value: "Angela Palmerston y Robert Wilson" };
+        contentMap["couple_names"] = contentMap["couple_names"] || { type: "text", value: "Angela y Robert" };
+        contentMap["closing_names"] = contentMap["closing_names"] || { type: "text", value: "Angela y Robert" };
+
+        for (const corruptKey of ["groom_first_name__style", "groom_last_name__style", "groom_initial__style", "cover_date_fmt__style"]) {
+          if (contentMap[corruptKey]?.value) {
+            try {
+              const s = JSON.parse(contentMap[corruptKey].value);
+              if (s.transform && (s.transform.match(/translate/g) || []).length > 1) {
+                delete s.transform;
+              }
+              if (s.marginLeft === "auto") {
+                delete s.marginLeft;
+              }
+              contentMap[corruptKey].value = JSON.stringify(s);
+            } catch {}
+          }
+        }
       }
 if (weddingParam !== "angela-robert") {
         const { data: wRow } = await supabase(env)

@@ -257,7 +257,7 @@ html.is-loading-content video[data-key] {
 .guests-totals { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }  
 .guests-totals div { border: 1px solid #d9cec4; padding: 10px 16px; font-size: 12px; }  
 .guests-totals strong { font-size: 20px; display: block; }  
-.style-bar { position: fixed; z-index: 55; left: 8px; top: 8px; transform: none; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; gap: 6px; max-width: 94vw; }  
+.style-bar { position: fixed; z-index: 10000; left: 8px; top: 8px; transform: none; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-start; gap: 6px; max-width: 94vw; }  
 .style-btn { height: 36px; padding: 0 9px; border: 1px solid #d9cec4; background: #fffdfa; color: #4d473e; font: 600 13px var(--sans); border-radius: 10px; box-shadow: 0 2px 6px #0002; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }  
 .style-btn-font { width: 112px; }  
 .style-btn-size { width: 50px; text-align: center; }  
@@ -368,14 +368,20 @@ html.is-loading-content video[data-key] {
 }
 .rs-handle {  
   position: fixed;  
-  width: 12px;  
-  height: 28px;  
+  width: 14px;  
+  height: 32px;  
   border-radius: 7px;  
-  background: #fff;  
+  background: #ffffff;  
   border: 2px solid #b9932f;  
-  z-index: 60;  
+  z-index: 9999;  
   cursor: ew-resize;  
-  touch-action: none;  
+  touch-action: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+}
+.rs-handle::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
 }
 @media (max-width: 640px) {  
   .admin-panel-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }  
