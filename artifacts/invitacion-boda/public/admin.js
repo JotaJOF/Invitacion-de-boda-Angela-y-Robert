@@ -635,7 +635,7 @@ loginForm.addEventListener("submit", async (event) => {
   submit.disabled = true;  
   const form = new FormData(loginForm);  
   try {  
-    await api("/api/login", {  
+    const loginRes = await api("/api/login", {  
       method: "POST",  
       body: JSON.stringify({  
         username: form.get("username"),  
@@ -643,6 +643,10 @@ loginForm.addEventListener("submit", async (event) => {
       }),  
     });  
     authenticated = true;  
+    currentSession = loginRes;
+    if (loginRes.wedding_id) {
+      currentWedding = loginRes.wedding_id;
+    }
     loginDialog.close();  
     loginForm.reset();  
     showAdminPanel();  
@@ -677,12 +681,20 @@ if (inviteRoot) {
 }  
 refreshNodes();  
   
+let currentSession = null;
+let currentWedding = "angela-robert";
+
 api("/api/me", { method: "GET" })  
   .then((session) => {  
     authenticated = session.authenticated === true;  
+    currentSession = session.authenticated ? session : null;
+    if (currentSession && currentSession.wedding_id) {
+      currentWedding = currentSession.wedding_id;
+    }
   })  
   .catch(() => {  
     authenticated = false;  
+    currentSession = null;
   });
 const adminPanel = document.querySelector("#admin-panel");  
 const panelMessage = document.querySelector("#panel-message");  
@@ -696,28 +708,187 @@ const PANEL_KEYS = {
   
 async function loadPanel() {  
   try {  
-    const { content = {} } = await api("/api/content", { method: "GET" });  
+    const target = (currentSession?.role === "superadmin" && currentWedding) ? currentWedding : (currentSession?.wedding_id || "angela-robert");
+    const { content = {} } = await api(`/api/content?wedding=${encodeURIComponent(target)}`, { method: "GET" });  
     for (const [key, sel] of Object.entries(PANEL_KEYS)) {  
       const input = document.querySelector(sel);  
-      if (input && content[key]) input.value = content[key].value;  
+      if (input) input.value = content[key] ? content[key].value : "";  
     }  
   } catch { /* sin datos previos */ }  
 }  
+
+function applyPermissionsAndNav() {
+  const homeBtn = document.querySelector(".panel-home");
+  if (homeBtn) {
+    const targetSlug = currentSession?.role === "superadmin" ? currentWedding : (currentSession?.wedding_id || "angela-robert");
+    homeBtn.href = (targetSlug === "angela-robert" ? "/" : `/${targetSlug}`);
+    homeBtn.target = "_self";
+  }
+
+  const isCouple = currentSession?.role === "couple";
+  const perms = currentSession?.permissions || {};
+
+  const toggleControl = (selector, allowed) => {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    el.style.display = allowed ? "" : "none";
+    const label = document.querySelector(`label[for="${el.id}"]`);
+    if (label) label.style.display = allowed ? "" : "none";
+  };
+
+  if (isCouple) {
+    toggleControl("#cfg-location", perms.location !== false);
+    toggleControl("#cfg-whatsapp", perms.whatsapp !== false);
+    toggleControl("#cfg-date", perms.date !== false);
+    toggleControl("#cfg-drive", perms.drive !== false);
+    toggleControl("#music-upload", perms.music !== false);
+    toggleControl("#music-test", perms.music !== false);
+    toggleControl("#guests-list", perms.guests !== false);
+    toggleControl("#invites-open", perms.invites !== false);
+    toggleControl("#panel-edit", perms.edit !== false);
+    toggleControl("#panel-themes", perms.themes !== false);
+    
+    const saBox = document.querySelector("#superadmin-box");
+    if (saBox) saBox.style.display = "none";
+  } else {
+    // Superadmin: todo visible
+    document.querySelectorAll("#admin-panel input, #admin-panel label, #admin-panel .button").forEach(el => {
+      if (el.id !== "music-file" && el.id !== "music-test") el.style.display = "";
+    });
+    renderSuperadminControls();
+  }
+}
+
+async function renderSuperadminControls() {
+  let saBox = document.querySelector("#superadmin-box");
+  if (!saBox) {
+    saBox = document.createElement("div");
+    saBox.id = "superadmin-box";
+    saBox.style.cssText = "background: rgba(138, 118, 92, 0.08); border-radius: 12px; padding: 14px; margin-bottom: 20px; border: 1px solid rgba(138, 118, 92, 0.2);";
+    const title = adminPanel.querySelector("h2");
+    if (title) title.parentNode.insertBefore(saBox, title.nextSibling);
+  }
+  saBox.style.display = "block";
+
+  try {
+    const { weddings = [] } = await api("/api/weddings");
+    let optionsHtml = weddings.map(w => `<option value="${w.id}" ${w.id === currentWedding ? "selected" : ""}>${w.names} (${w.id})</option>`).join("");
+    if (!weddings.some(w => w.id === "angela-robert")) {
+      optionsHtml = `<option value="angela-robert" ${currentWedding === "angela-robert" ? "selected" : ""}>Angela y Robert (angela-robert)</option>` + optionsHtml;
+    }
+
+    saBox.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong style="font-size:13px; color:#8a765c; text-transform:uppercase; letter-spacing:0.05em;">Panel Superadmin</strong>
+        <span style="font-size:11px; background:#8a765c; color:#fff; padding:2px 8px; border-radius:10px;">Control Universal</span>
+      </div>
+      <label style="font-size:12px; margin-bottom:4px; display:block;">Boda / Cliente que estás administrando:</label>
+      <select id="sa-wedding-select" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(138, 118, 92, 0.3); background:#fff; font-size:14px; margin-bottom:10px;">
+        ${optionsHtml}
+      </select>
+      <div style="display:flex; gap:8px;">
+        <button id="sa-new-wedding-btn" type="button" class="button" style="padding:6px 12px; font-size:12px; flex:1;">+ NUEVO CLIENTE NOVIOS</button>
+      </div>
+      <div id="sa-create-form" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed rgba(138, 118, 92, 0.25);">
+        <p style="font-size:12px; font-weight:600; margin-bottom:8px;">Registrar nueva pareja:</p>
+        <input id="new-w-slug" type="text" placeholder="Slug (ej. carlos-maria)" style="width:100%; margin-bottom:6px;" />
+        <input id="new-w-names" type="text" placeholder="Nombres (ej. Carlos y María)" style="width:100%; margin-bottom:6px;" />
+        <input id="new-w-user" type="text" placeholder="Usuario para la pareja" style="width:100%; margin-bottom:6px;" />
+        <input id="new-w-pass" type="password" placeholder="Contraseña para la pareja" style="width:100%; margin-bottom:10px;" />
+        <p style="font-size:11px; color:#666; margin-bottom:6px;">Permisos concedidos a la pareja:</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:12px; margin-bottom:10px;">
+          <label><input type="checkbox" id="perm-loc" checked /> Ubicación</label>
+          <label><input type="checkbox" id="perm-ws" checked /> WhatsApp</label>
+          <label><input type="checkbox" id="perm-date" checked /> Fecha</label>
+          <label><input type="checkbox" id="perm-drive" checked /> Google Drive</label>
+          <label><input type="checkbox" id="perm-music" checked /> Música</label>
+          <label><input type="checkbox" id="perm-guests" checked /> Invitados</label>
+          <label><input type="checkbox" id="perm-invites" checked /> Links</label>
+          <label><input type="checkbox" id="perm-edit" checked /> Editar</label>
+          <label><input type="checkbox" id="perm-themes" checked /> Temas</label>
+        </div>
+        <button id="sa-save-client-btn" type="button" class="button button-olive" style="width:100%; font-size:12px;">CREAR CLIENTE</button>
+      </div>
+    `;
+
+    document.querySelector("#sa-wedding-select")?.addEventListener("change", (e) => {
+      currentWedding = e.target.value;
+      loadPanel();
+      applyPermissionsAndNav();
+      showToast(`Administrando: ${currentWedding}`);
+    });
+
+    document.querySelector("#sa-new-wedding-btn")?.addEventListener("click", () => {
+      const form = document.querySelector("#sa-create-form");
+      if (form) form.style.display = form.style.display === "none" ? "block" : "none";
+    });
+
+    document.querySelector("#sa-save-client-btn")?.addEventListener("click", async () => {
+      const slug = document.querySelector("#new-w-slug").value.trim().toLowerCase();
+      const names = document.querySelector("#new-w-names").value.trim();
+      const cUser = document.querySelector("#new-w-user").value.trim();
+      const cPass = document.querySelector("#new-w-pass").value;
+
+      if (!slug || !names) {
+        alert("El slug y nombres son obligatorios.");
+        return;
+      }
+
+      const permissions = {
+        location: document.querySelector("#perm-loc").checked,
+        whatsapp: document.querySelector("#perm-ws").checked,
+        date: document.querySelector("#perm-date").checked,
+        drive: document.querySelector("#perm-drive").checked,
+        music: document.querySelector("#perm-music").checked,
+        guests: document.querySelector("#perm-guests").checked,
+        invites: document.querySelector("#perm-invites").checked,
+        edit: document.querySelector("#perm-edit").checked,
+        themes: document.querySelector("#perm-themes").checked,
+      };
+
+      try {
+        await api("/api/weddings", {
+          method: "POST",
+          body: JSON.stringify({
+            id: slug,
+            names,
+            couple_username: cUser || null,
+            couple_password: cPass || null,
+            permissions
+          })
+        });
+        showToast(`Cliente ${names} creado con éxito.`);
+        currentWedding = slug;
+        renderSuperadminControls();
+        loadPanel();
+        applyPermissionsAndNav();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  } catch (err) {
+    console.error("Error loading weddings for superadmin:", err);
+  }
+}
   
 function showAdminPanel() {  
   adminPanel.hidden = false;  
   adminFloatBar.hidden = true;  
   adminToolbar.hidden = true;  
+  applyPermissionsAndNav();
   loadPanel();  
 }  
   
 document.querySelector("#panel-save").addEventListener("click", async () => {  
   panelMessage.textContent = "";  
   try {  
+    const targetSlug = currentSession?.role === "superadmin" ? currentWedding : (currentSession?.wedding_id || "angela-robert");
     for (const [key, sel] of Object.entries(PANEL_KEYS)) {  
-      const value = document.querySelector(sel).value.trim();  
+      const input = document.querySelector(sel);
+      if (!input || input.style.display === "none") continue;  
+      const value = input.value.trim();  
       if (!value) continue;  
-      await api(`/api/content/${key}`, {  
+      await api(`/api/content/${key}?wedding=${encodeURIComponent(targetSlug)}`, {  
         method: "PUT",  
         body: JSON.stringify({ type: "text", value }),  
       });  

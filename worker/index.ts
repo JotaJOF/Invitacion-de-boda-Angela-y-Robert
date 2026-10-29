@@ -14,6 +14,9 @@ interface ContentRow {
   
 interface SessionPayload {  
   username: string;  
+  role: 'superadmin' | 'couple';  
+  wedding_id: string | null;  
+  permissions: Record<string, boolean>;  
   expiresAt: number;  
 }  
   
@@ -94,22 +97,31 @@ async function signingKey(env: Env): Promise<CryptoKey> {
   );  
 }  
   
-async function createSession(username: string, env: Env): Promise<string> {  
-  const payload: SessionPayload = {  
-    username,  
-    expiresAt: Date.now() + SESSION_SECONDS * 1000,  
-  };  
-  const encodedPayload = encodeBase64Url(  
-    new TextEncoder().encode(JSON.stringify(payload)),  
-  );  
-  const signature = await crypto.subtle.sign(  
-    "HMAC",  
-    await signingKey(env),  
-    new TextEncoder().encode(encodedPayload),  
-  );  
-  return `${encodedPayload}.${encodeBase64Url(new Uint8Array(signature))}`;  
-}  
-  
+async function createSession(
+  username: string,
+  env: Env,
+  role: 'superadmin' | 'couple' = 'superadmin',
+  wedding_id: string | null = null,
+  permissions: Record<string, boolean> = {
+    location: true, whatsapp: true, date: true, drive: true,
+    music: true, guests: true, invites: true, edit: true, themes: true
+  }
+): Promise<string> {
+  const payload: SessionPayload = {
+    username, role, wedding_id, permissions,
+    expiresAt: Date.now() + SESSION_SECONDS * 1000,
+  };
+  const encodedPayload = encodeBase64Url(
+    new TextEncoder().encode(JSON.stringify(payload)),
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    await signingKey(env),
+    new TextEncoder().encode(encodedPayload),
+  );
+  return `${encodedPayload}.${encodeBase64Url(new Uint8Array(signature))}`;
+}
+
 async function getSession(request: Request, env: Env): Promise<SessionPayload | null> {  
   const cookie = request.headers.get("cookie");  
   const token = cookie  
@@ -192,17 +204,24 @@ function validImageUrl(value: string, request: Request): boolean {
   }  
 }  
   
-async function saveContent(  
-  client: SupabaseClient,  
-  row: ContentRow,  
-): Promise<boolean> {  
-  const { error } = await client.from("site_content").upsert(  
-    { ...row, updated_at: new Date().toISOString() },  
-    { onConflict: "key" },  
-  );  
-  return !error;  
-}  
-  
+async function saveContent(
+  client: SupabaseClient,
+  row: ContentRow,
+  weddingId: string = "angela-robert"
+): Promise<boolean> {
+  const { error } = await client.from("wedding_content").upsert(
+    { wedding_id: weddingId, ...row, updated_at: new Date().toISOString() },
+    { onConflict: "wedding_id,key" },
+  );
+  if (weddingId === "angela-robert") {
+    await client.from("site_content").upsert(
+      { ...row, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+  }
+  return !error;
+}
+
 async function handleApi(request: Request, env: Env): Promise<Response> {  
   const url = new URL(request.url);  
   const path = url.pathname;  
@@ -213,6 +232,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }  
   
   try {  
+    // ==========================================
+    // 1. AUTENTICACIÓN (SUPERADMIN & PAREJAS)
+    // ==========================================
     if (path === "/api/login" && method === "POST") {  
       const body = (await request.json()) as Record<string, unknown>;  
       const username =  
@@ -222,20 +244,69 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         return json({ error: "Usuario o contraseña incorrectos." }, 401);  
       }  
   
-      const { data: passwordMatches, error } = await supabase(env).rpc(  
-        "verify_admin_login",  
-        { p_username: username, p_password: password },  
-      );  
-      if (error || passwordMatches !== true) {  
-        return json({ error: "Usuario o contraseña incorrectos." }, 401);  
-      }  
-  
-      const token = await createSession(username, env);  
-      return json(  
-        { authenticated: true, username },  
-        200,  
-        { "set-cookie": cookieHeader(token) },  
-      );  
+      let authUser: {
+        username: string;
+        role: "superadmin" | "couple";
+        wedding_id: string | null;
+        permissions: Record<string, boolean>;
+      } | null = null;
+
+      const { data: authData, error: authError } = await supabase(env).rpc(
+        "authenticate_user",
+        { p_username: username, p_password: password },
+      );
+
+      if (!authError && Array.isArray(authData) && authData.length > 0 && authData[0].valid === true) {
+        const u = authData[0];
+        authUser = {
+          username: u.username,
+          role: (u.role === "couple" ? "couple" : "superadmin"),
+          wedding_id: u.wedding_id || null,
+          permissions: (typeof u.permissions === "object" && u.permissions) ? u.permissions : {
+            location: true, whatsapp: true, date: true, drive: true,
+            music: true, guests: true, invites: true, edit: true, themes: true
+          }
+        };
+      } else {
+        const { data: passwordMatches, error: legacyError } = await supabase(env).rpc(
+          "verify_admin_login",
+          { p_username: username, p_password: password },
+        );
+        if (!legacyError && passwordMatches === true) {
+          authUser = {
+            username,
+            role: "superadmin",
+            wedding_id: null,
+            permissions: {
+              location: true, whatsapp: true, date: true, drive: true,
+              music: true, guests: true, invites: true, edit: true, themes: true
+            }
+          };
+        }
+      }
+
+      if (!authUser) {
+        return json({ error: "Usuario o contraseña incorrectos." }, 401);
+      }
+
+      const token = await createSession(
+        authUser.username,
+        env,
+        authUser.role,
+        authUser.wedding_id,
+        authUser.permissions
+      );
+      return json(
+        {
+          authenticated: true,
+          username: authUser.username,
+          role: authUser.role,
+          wedding_id: authUser.wedding_id,
+          permissions: authUser.permissions,
+        },
+        200,
+        { "set-cookie": cookieHeader(token) },
+      );
     }  
   
     if (path === "/api/logout" && method === "POST") {  
@@ -248,209 +319,333 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   
     if (path === "/api/me" && method === "GET") {  
       const session = await getSession(request, env);  
-      return json(  
-        session  
-          ? { authenticated: true, username: session.username }  
-          : { authenticated: false },  
-      );  
+      if (!session) {  
+        return json({ authenticated: false }, 200);  
+      }  
+      return json({
+        authenticated: true,
+        username: session.username,
+        role: session.role || "superadmin",
+        wedding_id: session.wedding_id || null,
+        permissions: session.permissions || {
+          location: true, whatsapp: true, date: true, drive: true,
+          music: true, guests: true, invites: true, edit: true, themes: true
+        }
+      }, 200);  
     }  
-  
+
+    // ==========================================
+    // 2. GESTIÓN DE BODAS (SUPERADMIN & PÚBLICO)
+    // ==========================================
+    if (path === "/api/weddings" && method === "GET") {
+      const session = await getSession(request, env);
+      if (!session || session.role !== "superadmin") {
+        return json({ error: "Acceso no autorizado." }, 403);
+      }
+      const { data, error } = await supabase(env)
+        .from("weddings")
+        .select("id,names,date_iso,created_at")
+        .order("created_at", { ascending: false });
+      if (error) return json({ error: "Error al cargar bodas." }, 502);
+      return json({ weddings: data || [] }, 200);
+    }
+
+    if (path === "/api/weddings" && method === "POST") {
+      const session = await getSession(request, env);
+      if (!session || session.role !== "superadmin") {
+        return json({ error: "Acceso no autorizado." }, 403);
+      }
+      const body = (await request.json()) as Record<string, unknown>;
+      const rawId = typeof body.id === "string" ? body.id.trim().toLowerCase() : "";
+      const id = rawId.replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-");
+      const names = typeof body.names === "string" ? body.names.trim() : "";
+      const date_iso = typeof body.date_iso === "string" ? body.date_iso.trim() : "";
+
+      if (!id || !names) {
+        return json({ error: "El slug y los nombres son obligatorios." }, 400);
+      }
+
+      const { error: wErr } = await supabase(env)
+        .from("weddings")
+        .upsert({ id, names, date_iso }, { onConflict: "id" });
+      if (wErr) return json({ error: "No se pudo guardar la boda." }, 502);
+
+      if (typeof body.couple_username === "string" && body.couple_username.trim()) {
+        const cUser = body.couple_username.trim();
+        const cPass = typeof body.couple_password === "string" ? body.couple_password : "";
+        const cPerms = (typeof body.permissions === "object" && body.permissions) ? body.permissions : {
+          location: true, whatsapp: true, date: true, drive: true,
+          music: true, guests: true, invites: true, edit: true, themes: true
+        };
+
+        if (cPass) {
+          await supabase(env).rpc("create_or_update_couple_user", {
+            p_username: cUser,
+            p_password: cPass,
+            p_wedding_id: id,
+            p_permissions: cPerms
+          });
+        }
+      }
+
+      return json({ ok: true, id, names, date_iso }, 200);
+    }
+
+    if (path.startsWith("/api/wedding/") && method === "GET") {  
+      const id = decodeURIComponent(path.slice("/api/wedding/".length)).toLowerCase();  
+      const { data } = await supabase(env)  
+        .from("weddings")  
+        .select("id,names,date_iso")  
+        .eq("id", id)  
+        .maybeSingle();  
+      if (!data) return json({ error: "Boda no encontrada." }, 404);  
+      return json({ wedding: data });  
+    }  
+
+    // ==========================================
+    // 3. CONTENIDO DE LA BODA (AISLADO)
+    // ==========================================
     if (path === "/api/content" && method === "GET") {  
-      const { data, error } = await supabase(env)  
-        .from("site_content")  
+      const weddingParam = url.searchParams.get("wedding") || "angela-robert";
+
+      let contentMap: Record<string, { type: string; value: string }> = {};
+
+      const { data: wData, error: wError } = await supabase(env)  
+        .from("wedding_content")  
         .select("key,type,value")  
+        .eq("wedding_id", weddingParam)
         .order("key");  
-      if (error) return json({ error: "No se pudo cargar el contenido." }, 502);  
-  
-      const content = Object.fromEntries(  
-        (data as ContentRow[]).map(({ key, type, value }) => [  
-          key,  
-          { type, value },  
-        ]),  
-      );  
-      return json({ content });  
+
+      if (!wError && wData && wData.length > 0) {
+        contentMap = Object.fromEntries(
+          (wData as ContentRow[]).map(({ key, type, value }) => [
+            key,
+            { type, value },
+          ]),
+        );
+      } else {
+        const { data, error } = await supabase(env)  
+          .from("site_content")  
+          .select("key,type,value")  
+          .order("key");  
+        if (!error && data) {
+          contentMap = Object.fromEntries(
+            (data as ContentRow[]).map(({ key, type, value }) => [
+              key,
+              { type, value },
+            ]),
+          );
+        }
+      }
+
+      if (weddingParam !== "angela-robert") {
+        const { data: wRow } = await supabase(env)
+          .from("weddings")
+          .select("names,date_iso")
+          .eq("id", weddingParam)
+          .maybeSingle();
+        if (wRow?.names && !contentMap["couple_heading"]) {
+          contentMap["couple_heading"] = { type: "text", value: wRow.names };
+        }
+        if (wRow?.date_iso && !contentMap["cfg_date"]) {
+          contentMap["cfg_date"] = { type: "text", value: wRow.date_iso };
+        }
+      }
+
+      return json({ content: contentMap, wedding: weddingParam });  
     }  
-  
-    // ===== Datos de una boda por su slug (público) =====    
-    // /api/wedding/erick-erika → devuelve nombres y fecha de esa boda    
-    if (path.startsWith("/api/wedding/") && method === "GET") {    
-      const id = decodeURIComponent(path.slice("/api/wedding/".length)).toLowerCase();    
-      const { data } = await supabase(env)    
-        .from("weddings")    
-        .select("id,names,date_iso")    
-        .eq("id", id)    
-        .maybeSingle();    
-      if (!data) return json({ error: "Boda no encontrada." }, 404);    
-      return json({ wedding: data });    
-    }    
-    
-    // ===== Lista de invitados (solo admin) =====    
+
+    // ==========================================
+    // 4. INVITADOS & CONFIRMACIONES (AISLADO POR BODA)
+    // ==========================================
     if (path === "/api/guests" && method === "GET") {  
       const session = await getSession(request, env);  
-      if (!session) return json({ error: "Inicia sesión." }, 401);  
-  
-      const boda = (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60);  
-      const { data, error } = await supabase(env)    
-        .from("guests")    
-        .select("id,name,phone,attendance,passes,max_passes,message,source,code,opened_at,created_at,modified,modified_at")    
-        .eq("wedding", boda)  
-        .order("created_at");  
+      if (!session) {  
+        return json({ error: "Inicia sesión para ver invitados." }, 401);  
+      }  
+
+      let targetWedding = "angela-robert";
+      if (session.role === "couple") {
+        targetWedding = session.wedding_id || "angela-robert";
+        if (session.permissions && session.permissions.guests === false) {
+          return json({ error: "No tienes permiso para ver la lista de invitados." }, 403);
+        }
+      } else {
+        targetWedding = url.searchParams.get("wedding") || "angela-robert";
+      }
+
+      const { data, error } = await supabase(env)  
+        .from("guests")  
+        .select("id,code,name,phone,max_passes,confirmed_passes,attendance,attendance_notes,created_at,wedding")  
+        .eq("wedding", targetWedding)
+        .order("created_at", { ascending: false });  
       if (error) return json({ error: "No se pudo cargar la lista." }, 502);  
-      return json({ guests: data });  
+      return json({ guests: data ?? [], wedding: targetWedding });  
     }  
   
-    // ===== Confirmación de invitado (público) =====  
     if (path === "/api/guests" && method === "POST") {  
       const body = (await request.json()) as Record<string, unknown>;  
-      const name = typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";  
-      if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
+      const wedding = (typeof body.wedding === "string" && body.wedding.trim()) ? body.wedding.trim().toLowerCase() : "angela-robert";
+      const name = typeof body.name === "string" ? body.name.trim() : "";  
+      const phone = typeof body.phone === "string" ? body.phone.trim() : "";  
+      const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";  
       const attendance =  
         body.attendance === "yes" || body.attendance === "no"  
           ? body.attendance  
-          : "";  
-      const passes = Math.max(0, Math.min(20, Number(body.passes) || 0));  
-      const message =  
-        typeof body.message === "string" ? body.message.slice(0, 1000) : "";  
-      const phone =  
-        typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : "";  
-      const source = body.source === "whatsapp" ? "whatsapp" : "form";
-      const code =  
-        typeof body.code === "string" ? body.code.trim().slice(0, 20) : "";
+          : null;  
+      const confirmed_passes =  
+        typeof body.confirmed_passes === "number" && body.confirmed_passes >= 0  
+          ? Math.floor(body.confirmed_passes)  
+          : 0;  
+      const attendance_notes =  
+        typeof body.attendance_notes === "string" ? body.attendance_notes.trim() : "";  
   
-      const boda = (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60);  
-      const client = supabase(env);    
-      const { data: existing } = await client    
-        .from("guests")    
-        .select("id")    
-        .eq(code ? "code" : "name", code || name)    
-        .eq("wedding", boda)  
-        .maybeSingle();  
-  
-      const row = existing  
-        ? {  
+      if (code) {  
+        const { error } = await supabase(env)  
+          .from("guests")  
+          .update({  
             attendance,  
-            passes,  
-            message,  
-            phone,  
-            source,  
-            modified: true,  
-            modified_at: new Date().toISOString(),  
-          }  
-        : { name, attendance, passes, message, phone, source, wedding: boda };  
+            confirmed_passes,  
+            attendance_notes,  
+          })  
+          .eq("code", code)
+          .eq("wedding", wedding);  
+        if (error) return json({ error: "No se pudo actualizar el invitado." }, 502);  
+        return json({ ok: true });  
+      }  
   
-      const { error } = existing  
-        ? await client.from("guests").update(row).eq("id", existing.id)  
-        : await client.from("guests").insert(row);  
-      if (error) return json({ error: "No se pudo guardar la confirmación." }, 502);  
-      return json({ saved: true, modified: !!existing });  
+      if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
+      const newCode = (await generateUniqueCode(supabase(env))).toUpperCase();  
+      const { error } = await supabase(env).from("guests").insert({  
+        name,  
+        phone: phone || null,  
+        code: newCode,  
+        attendance,  
+        confirmed_passes,  
+        attendance_notes,  
+        wedding,
+      });  
+      if (error) return json({ error: "No se pudo registrar el invitado." }, 502);  
+      return json({ ok: true, code: newCode });  
     }  
   
-    // ===== Consultar si un nombre ya confirmó (público) =====  
     if (path.startsWith("/api/guests/check/") && method === "GET") {  
-      const name = decodeURIComponent(  
+      const phone = decodeURIComponent(  
         path.slice("/api/guests/check/".length),  
-      ).slice(0, 200);  
-      const { data } = await supabase(env)    
-        .from("guests")    
-        .select("name,attendance,passes,message,phone")    
-        .eq("name", name)    
-        .eq("wedding", (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60))  
+      ).replace(/\D/g, "");  
+      const wedding = url.searchParams.get("wedding") || "angela-robert";
+      if (!phone) return json({ guest: null }, 200);  
+      const { data } = await supabase(env)  
+        .from("guests")  
+        .select("id,code,name,phone,max_passes,confirmed_passes,attendance,attendance_notes")  
+        .eq("wedding", wedding)
+        .ilike("phone", `%${phone.slice(-10)}%`)  
+        .limit(1)  
         .maybeSingle();  
       return json({ guest: data ?? null });  
-    }
-    // ===== Crear invitados con código (solo admin, acepta 1 o arreglo) =====  
+    }  
+  
     if (path === "/api/invites" && method === "POST") {  
       const session = await getSession(request, env);  
-      if (!session) return json({ error: "Inicia sesión." }, 401);  
-  
-      const body = (await request.json()) as Record<string, unknown>;  
-      const list = Array.isArray(body.guests) ? body.guests : [body];  
-      const rows = [];  
-      for (const g of list) {  
-        const name = typeof g?.name === "string" ? g.name.trim().slice(0, 200) : "";  
-        if (!name) continue;  
-        rows.push({    
-          wedding: typeof body.boda === "string" && /^[a-z0-9-]+$/i.test(body.boda) ? body.boda.toLowerCase().slice(0, 60) : "angela-robert",  
-          name,  
-          phone: typeof g?.phone === "string" ? g.phone.trim().slice(0, 40) : "",  
-          max_passes: Math.max(0, Math.min(20, Number(g?.max_passes) || 0)),  
-          message: typeof g?.message === "string" ? g.message.slice(0, 1000) : "",  
-          code: crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase(),  
-        });  
+      if (!session) {  
+        return json({ error: "Inicia sesión para generar links." }, 401);  
       }  
-      if (rows.length === 0) return json({ error: "Lista vacía." }, 400);  
-      const { data, error } = await supabase(env).from("guests").insert(rows).select("id,name,code,max_passes,phone");  
-      if (error) return json({ error: "No se pudieron crear los invitados." }, 502);  
-      return json({ created: data }, 201);  
-    }  
+
+      let targetWedding = "angela-robert";
+      if (session.role === "couple") {
+        targetWedding = session.wedding_id || "angela-robert";
+        if (session.permissions && session.permissions.invites === false) {
+          return json({ error: "No tienes permiso para generar links." }, 403);
+        }
+      } else {
+        targetWedding = url.searchParams.get("wedding") || "angela-robert";
+      }
+
+      const body = (await request.json()) as Record<string, unknown>;  
+      const name = typeof body.name === "string" ? body.name.trim() : "";  
+      const phone = typeof body.phone === "string" ? body.phone.trim() : "";  
+      const max_passes =  
+        typeof body.max_passes === "number" && body.max_passes > 0  
+          ? Math.floor(body.max_passes)  
+          : 1;  
+      if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
   
-    // ===== Datos del invitado por código (público) =====  
-    if (path.startsWith("/api/invite/") && method === "GET") {  
-      const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20);  
       const client = supabase(env);  
-      const boda = (url.searchParams.get("boda") ?? "angela-robert").slice(0, 60);  
-      const { data } = await client    
-        .from("guests")    
-        .select("name,max_passes,attendance,opened_at")    
-        .eq("code", code)    
-        .eq("wedding", boda)  
-        .maybeSingle();    
-      if (data && !data.opened_at) {    
-        await client.from("guests").update({ opened_at: new Date().toISOString() }).eq("code", code).eq("wedding", boda);    
-      }  
-      return json({ guest: data ?? null });  
-    }
-  
-    // ===== Editar invitado manualmente (solo admin) =====  
-    if (/^\/api\/guests\/[0-9a-f-]{36}$/iu.test(path) && method === "PUT") {  
-      const session = await getSession(request, env);  
-      if (!session) return json({ error: "Inicia sesión." }, 401);  
-  
-      const id = path.slice("/api/guests/".length);  
-      const body = (await request.json()) as Record<string, unknown>;  
-      const attendance =  
-        body.attendance === "yes" || body.attendance === "no"  
-          ? body.attendance  
-          : "";  
-      const passes = Math.max(0, Math.min(20, Number(body.passes) || 0));
-      const maxPasses = Math.max(0, Math.min(20, Number(body.max_passes) || 0));
-      const name =  
-        typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";  
-      const phone =  
-        typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : "";  
-      const message =  
-        typeof body.message === "string" ? body.message.slice(0, 1000) : "";  
-  
-      const { error } = await supabase(env)  
-        .from("guests")  
-        .update({ attendance, passes, max_passes: maxPasses, name, phone, message })  
-        .eq("id", id);  
-      if (error) return json({ error: "No se pudo actualizar." }, 502);  
-      return json({ saved: true });  
+      const code = (await generateUniqueCode(client)).toUpperCase();  
+      const { error } = await client.from("guests").insert({  
+        name,  
+        phone: phone || null,  
+        max_passes,  
+        code,  
+        wedding: targetWedding,
+      });  
+      if (error) return json({ error: "No se pudo generar el enlace." }, 502);  
+      return json({ code, wedding: targetWedding });  
     }  
   
+    if (path.startsWith("/api/invite/") && method === "GET") {  
+      const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20).toUpperCase();  
+      const { data } = await supabase(env)  
+        .from("guests")  
+        .select("name,max_passes,confirmed_passes,attendance,attendance_notes,wedding")  
+        .eq("code", code)  
+        .maybeSingle();  
+      return json({ guest: data ?? null });  
+    }  
+  
+    if (path.startsWith("/api/guests/") && method === "DELETE") {  
+      const session = await getSession(request, env);  
+      if (!session) {  
+        return json({ error: "Inicia sesión para eliminar invitados." }, 401);  
+      }  
+      if (session.role === "couple" && session.permissions?.guests === false) {
+        return json({ error: "No tienes permiso para modificar invitados." }, 403);
+      }
+      const id = path.slice("/api/guests/".length);  
+      const { error } = await supabase(env).from("guests").delete().eq("id", id);  
+      if (error) return json({ error: "No se pudo eliminar el invitado." }, 502);  
+      return json({ ok: true });  
+    }  
+  
+    // ==========================================
+    // 5. EDICIÓN DE CONTENIDO Y SUBIDA DE ARCHIVOS
+    // ==========================================
     if (  
       (path === "/api/content" && method === "POST") ||  
-      (/^\/api\/content\/[^/]+$/u.test(path) && method === "PUT") ||  
+      (path.startsWith("/api/content/") && method === "PUT") ||  
       (path === "/api/upload" && method === "POST")  
     ) {  
       const session = await getSession(request, env);  
-      if (!session) return json({ error: "Inicia sesión como administrador." }, 401);  
+      if (!session) {  
+        return json({ error: "Inicia sesión para guardar cambios." }, 401);  
+      }  
+  
+      let targetWedding = "angela-robert";
+      if (session.role === "couple") {
+        targetWedding = session.wedding_id || "angela-robert";
+      } else {
+        targetWedding = url.searchParams.get("wedding") || session.wedding_id || "angela-robert";
+      }
+
       const client = supabase(env);  
   
       if (path === "/api/upload") {  
+        if (session.role === "couple" && session.permissions?.music === false && session.permissions?.edit === false) {
+          return json({ error: "No tienes permiso para subir archivos." }, 403);
+        }
+
         const contentLength = Number(request.headers.get("content-length") ?? 0);  
         if (contentLength > MAX_IMAGE_BYTES + 128 * 1024) {  
-          return json({ error: "La imagen supera el límite de 50 MB." }, 413);  
+          return json({ error: "El archivo supera el límite de 50 MB." }, 413);  
         }  
   
         const form = await request.formData();  
         const file = form.get("file");  
         if (!(file instanceof File) || file.size === 0) {  
-          return json({ error: "Selecciona una imagen." }, 400);  
+          return json({ error: "Selecciona un archivo." }, 400);  
         }  
         if (file.size > MAX_IMAGE_BYTES) {  
-          return json({ error: "La imagen supera el límite de 50 MB." }, 413);  
+          return json({ error: "El archivo supera el límite de 50 MB." }, 413);  
         }  
         const extension = MIME_EXTENSIONS[file.type];  
         if (!extension) {  
@@ -460,9 +655,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
           );  
         }  
   
-        const path = `media/${crypto.randomUUID()}.${extension}`;  
+        const storagePath = `media/${targetWedding}/${crypto.randomUUID()}.${extension}`;  
         const { error } = await client.storage.from("media").upload(  
-          path,  
+          storagePath,  
           new Blob([await file.arrayBuffer()], { type: file.type }),  
           {  
             cacheControl: "31536000",  
@@ -470,72 +665,68 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
             upsert: false,  
           },  
         );  
-        if (error) return json({ error: `No se pudo subir el archivo: ${error.message}` }, 502);  
+        if (error) {  
+          return json({ error: "No se pudo subir el archivo." }, 502);  
+        }  
   
-        const { data } = client.storage.from("media").getPublicUrl(path);  
-        return json({ url: data.publicUrl, path }, 201);  
+        const { data } = client.storage.from("media").getPublicUrl(storagePath);  
+        return json({ url: data.publicUrl }, 201);  
       }  
   
-      let input: unknown;  
-      try {  
-        input = await request.json();  
-      } catch {  
-        return json({ error: "El cuerpo de la solicitud no es válido." }, 400);  
-      }  
-  
+      let row: ContentRow | null = null;  
       if (path === "/api/content" && method === "POST") {  
-        const row = parseContent(input);  
-        if (!row) return json({ error: "El contenido no es válido." }, 400);  
-        if (row.type === "image" && !validImageUrl(row.value, request)) {  
-          return json({ error: "La dirección de la imagen no es válida." }, 400);  
-        }  
-        if (!(await saveContent(client, row))) {  
-          return json({ error: "No se pudo guardar el contenido." }, 502);  
-        }  
-        return json({ saved: true, key: row.key });  
+        row = parseContentRow((await request.json()) as Record<string, unknown>);  
+      } else {  
+        const key = decodeURIComponent(path.slice("/api/content/".length));  
+        row = parseContentRow({  
+          key,  
+          ...((await request.json()) as Record<string, unknown>),  
+        });  
       }  
   
-      const key = decodeURIComponent(path.slice("/api/content/".length));  
-      const row = parseContent(  
-        input && typeof input === "object"  
-          ? { ...(input as Record<string, unknown>), key }  
-          : input,  
-      );  
-      if (!row) return json({ error: "El contenido no es válido." }, 400);  
-      if (row.type === "image" && !validImageUrl(row.value, request)) {  
-        return json({ error: "La dirección de la imagen no es válida." }, 400);  
+      if (!row) {  
+        return json({ error: "Clave, tipo o valor no válidos." }, 400);  
       }  
-      if (!(await saveContent(client, row))) {  
+
+      if (session.role === "couple") {
+        const rawKey = row.key.replace(/^cfg_/, "");
+        if (session.permissions && rawKey in session.permissions && !session.permissions[rawKey]) {
+          return json({ error: "No tienes permiso para modificar esta sección." }, 403);
+        }
+      }
+
+      if (!(await saveContent(client, row, targetWedding))) {  
         return json({ error: "No se pudo guardar el contenido." }, 502);  
       }  
-      return json({ saved: true, key: row.key });  
+      return json({ saved: true, key: row.key, wedding: targetWedding });  
     }  
   
-    if (path.startsWith("/api/")) {    
-      return json({ error: "Ruta no encontrada." }, 404);    
-    }    
-    
-    // ===== Rutas limpias de bodas: /erick-erika sirve la misma index.html =====    
-    // Solo rutas de una sola palabra, sin punto (para no afectar /assets, /css, /js ni archivos)    
-    if (path !== "/" && !path.includes(".") && path.split("/").filter(Boolean).length === 1) {    
-      const slug = decodeURIComponent(path.slice(1)).toLowerCase();    
-      const { data: wedding } = await supabase(env)    
-        .from("weddings")    
-        .select("id")    
-        .eq("id", slug)    
-        .maybeSingle();    
-      if (!wedding) {    
-        return new Response("Invitación no encontrada", { status: 404 });    
-      }    
-      return env.ASSETS.fetch(new URL("/index.html", url).toString(), { headers: request.headers });    
-    }    
-    
+    if (path.startsWith("/api/")) {  
+      return json({ error: "Ruta no encontrada." }, 404);  
+    }  
+  
+    // ==========================================
+    // 6. RUTAS LIMPIAS SPA (SLUGS DE BODA)
+    // ==========================================
+    if (path !== "/" && !path.includes(".") && path.split("/").filter(Boolean).length === 1) {  
+      const slug = decodeURIComponent(path.slice(1)).toLowerCase();  
+      const { data: wedding } = await supabase(env)  
+        .from("weddings")  
+        .select("id")  
+        .eq("id", slug)  
+        .maybeSingle();  
+      if (!wedding) {  
+        return new Response("Invitación no encontrada", { status: 404 });  
+      }  
+      return env.ASSETS.fetch(new URL("/index.html", url).toString(), { headers: request.headers });  
+    }  
+  
     return env.ASSETS.fetch(request);  
   } catch {  
     return json({ error: "No se pudo completar la solicitud." }, 500);  
   }  
 }  
-  
+
 export default {  
   fetch(request: Request, env: Env): Promise<Response> {  
     return handleApi(request, env);  
