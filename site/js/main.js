@@ -1,7 +1,13 @@
-// Identificador de boda: ?boda=maria-juan (por defecto "angela-robert")  
+// Identificador de boda: la ruta /erick-erika (la raíz "/" es la demo "angela-robert")  
+// También acepta ?boda= por compatibilidad  
 const WEDDING_ID = (() => {  
-  const id = new URLSearchParams(window.location.search).get("boda");  
-  return id && /^[a-z0-9-]+$/i.test(id) ? id.toLowerCase() : "angela-robert";  
+  const param = new URLSearchParams(window.location.search).get("boda");  
+  if (param && /^[a-z0-9-]+$/i.test(param)) return param.toLowerCase();  
+  const path = window.location.pathname.replace(/\/+$/, "");  
+  if (path && path !== "/" && !path.includes(".") && path.split("/").filter(Boolean).length === 1) {  
+    return decodeURIComponent(path.slice(1)).toLowerCase();  
+  }  
+  return "angela-robert";  
 })();  
 // Clave de contenido: la boda por defecto usa la clave tal cual;  
 // las demás bodas la prefijan con su id (ej. maria-juan_envelope_image)  
@@ -17,18 +23,25 @@ const adminToolbar = document.querySelector("#admin-toolbar");
 const toolbarMessage = document.querySelector("#toolbar-message");
 const imagePicker = document.querySelector("#image-picker");
 const toast = document.querySelector("#toast");
-// Configuración fija por boda: agrega una línea por cada pareja nueva  
-const WEDDINGS = {  
-  "angela-robert": { date: "2027-03-13T00:00:00-04:00", names: "Angela & Robert" },
-  "erick-erika":   { date: "2027-06-20T17:00:00-04:00", names: "Erick & Erika" },
-  // "maria-juan": { date: "2027-06-20T00:00:00-05:00", names: "María & Juan" },  
-};  
-const WEDDING_CFG = WEDDINGS[WEDDING_ID] ?? WEDDINGS["angela-robert"];  
-  
 const countdown = document.querySelector("#countdown");  
-countdown.dataset.targetDate = WEDDING_CFG.date;  
-document.title = WEDDING_CFG.names;  
-const countdownTarget = Date.parse(countdown.dataset.targetDate);
+// Configuración de la boda: se trae de Supabase (/api/wedding/<id>)  
+let WEDDING_CFG = { date: countdown.dataset.targetDate, names: document.title };  
+let countdownTarget = Date.parse(countdown.dataset.targetDate);  
+  
+async function loadWeddingConfig() {  
+  try {  
+    const { wedding } = await api(`/api/wedding/${encodeURIComponent(WEDDING_ID)}`, { method: "GET" });  
+    if (wedding) {  
+      WEDDING_CFG = { date: wedding.date_iso, names: wedding.names };  
+      countdown.dataset.targetDate = WEDDING_CFG.date;  
+      document.title = WEDDING_CFG.names;  
+      countdownTarget = Date.parse(WEDDING_CFG.date);  
+      updateCountdown();  
+    }  
+  } catch {  
+    /* boda no existe en la tabla: se queda con los valores del HTML */  
+  }  
+}
 const countdownFields = {
   days: document.querySelector("#countdown-days"),
   hours: document.querySelector("#countdown-hours"),
@@ -389,6 +402,7 @@ window.addEventListener("resize", positionPencils);
 
 for (const element of contentNodes) recordBaseline(element);
 
+loadWeddingConfig();  
 loadContent();
 api("/api/me", { method: "GET" })
   .then((session) => {
