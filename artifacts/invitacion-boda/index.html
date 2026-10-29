@@ -64,7 +64,66 @@
           <button class="panel-close-btn" id="panel-close-btn" type="button" aria-label="Cerrar panel">✕</button>
         </header>
 
-        <div id="superadmin-box" class="superadmin-box" style="display: none;"></div>
+                <!-- GESTIÓN DE CLIENTES / NOVIOS (NUEVAS INVITACIONES) -->
+        <section class="admin-clients-card" id="admin-clients-card">
+          <div class="clients-card-header">
+            <div>
+              <span class="clients-card-badge">CLIENTES NOVIOS</span>
+              <h3 class="clients-card-title">Gestión de Parejas e Invitaciones</h3>
+            </div>
+            <button type="button" class="button button-primary btn-new-wedding" id="btn-toggle-new-wedding">+ NUEVA BODA</button>
+          </div>
+
+          <div class="wedding-select-wrap">
+            <label for="admin-wedding-selector" class="field-micro-label">Selecciona la boda a editar:</label>
+            <select id="admin-wedding-selector" class="styled-wedding-select">
+              <option value="angela-robert">Angela Palmerston y Robert Wilson (Principal - /)</option>
+            </select>
+          </div>
+
+          <!-- Formulario para crear nueva boda -->
+          <div id="new-wedding-form" class="new-wedding-form" style="display: none;">
+            <div class="form-title-badge">Crear Nueva Pareja / Boda</div>
+            
+            <label for="nw-names" class="field-micro-label">Nombres de los Novios (ej. Erick y Erika):</label>
+            <input id="nw-names" type="text" placeholder="Erick y Erika" />
+
+            <label for="nw-slug" class="field-micro-label">Terminación del Link (Slug):</label>
+            <input id="nw-slug" type="text" placeholder="erick-erika" />
+            <div class="slug-preview-box">
+              Link de la boda: <strong id="nw-link-preview">https://invitacion.comutech.workers.dev/erick-erika</strong>
+            </div>
+
+            <label for="nw-date" class="field-micro-label">Fecha del evento:</label>
+            <input id="nw-date" type="datetime-local" />
+
+            <div class="form-cols-2">
+              <div>
+                <label for="nw-user" class="field-micro-label">Usuario pareja:</label>
+                <input id="nw-user" type="text" placeholder="erick_erika" />
+              </div>
+              <div>
+                <label for="nw-pass" class="field-micro-label">Contraseña pareja:</label>
+                <input id="nw-pass" type="password" placeholder="••••••••" />
+              </div>
+            </div>
+
+            <div class="perms-wrapper">
+              <span class="field-micro-label">Permisos autorizados a la pareja:</span>
+              <div class="perms-grid">
+                <label><input type="checkbox" id="perm-loc" checked /> Ubicación</label>
+                <label><input type="checkbox" id="perm-ws" checked /> WhatsApp</label>
+                <label><input type="checkbox" id="perm-date" checked /> Fecha</label>
+                <label><input type="checkbox" id="perm-drive" checked /> Drive</label>
+                <label><input type="checkbox" id="perm-music" checked /> Música</label>
+                <label><input type="checkbox" id="perm-guests" checked /> Invitados</label>
+                <label><input type="checkbox" id="perm-invites" checked /> Links</label>
+              </div>
+            </div>
+
+            <button id="btn-save-new-wedding" type="button" class="button button-primary button-olive btn-create-wedding">CREAR BODA Y ACTIVAR ENLACE</button>
+          </div>
+        </section>
 
         <h2 class="panel-main-title">Datos del evento</h2>  
         <label for="cfg-location">Ubicación del lugar (URL de Google Maps)</label>  
@@ -138,7 +197,7 @@
     <input id="bg-picker" type="file" accept="image/*,video/*" hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>  
     <script type="module" src="/src/main.tsx"></script>  
-   <link rel="stylesheet" href="/admin.css?v=48" />  
-<script src="/admin.js?v=48" defer></script>  
+   <link rel="stylesheet" href="/admin.css?v=49" />  
+<script src="/admin.js?v=49" defer></script>  
   </body>  
 </html>
