@@ -636,3 +636,161 @@ body.themes-active [data-bg] { cursor: pointer; }
   padding: 16px !important;
   margin-bottom: 20px !important;
 }
+
+/* ==========================================
+   GESTIÓN DE CLIENTES / NOVIOS (NUEVAS BODAS)
+   ========================================== */
+.admin-clients-card {
+  background: #fdfaf6;
+  border: 1px solid #e5dccf;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.clients-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.clients-card-badge {
+  display: inline-block;
+  background: #4a5438;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.clients-card-title {
+  font-family: "Cormorant Garamond", Georgia, serif !important;
+  font-size: 19px !important;
+  font-weight: 600 !important;
+  color: #2b241c !important;
+  margin: 4px 0 0 !important;
+}
+
+.btn-new-wedding {
+  min-height: 34px !important;
+  padding: 6px 14px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  background: #4a5438 !important;
+  color: #ffffff !important;
+}
+
+.wedding-select-wrap {
+  margin-bottom: 8px;
+}
+
+.field-micro-label {
+  display: block;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #635747 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+
+.styled-wedding-select {
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #d4cbbd !important;
+  background: #ffffff !important;
+  font-size: 13px !important;
+  color: #2b241c !important;
+  font-weight: 500 !important;
+  outline: none;
+  cursor: pointer;
+}
+
+.styled-wedding-select:focus {
+  border-color: #4a5438 !important;
+  box-shadow: 0 0 0 3px rgba(74, 84, 56, 0.15) !important;
+}
+
+.new-wedding-form {
+  margin-top: 14px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px dashed #cfc2ae;
+  border-radius: 12px;
+}
+
+.form-title-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a5438;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0e9df;
+}
+
+.slug-preview-box {
+  background: #f7f3ee;
+  border: 1px solid #e3d9cb;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #4c4132;
+  margin-top: -4px;
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+.slug-preview-box strong {
+  color: #2d5a27;
+}
+
+.form-cols-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.perms-wrapper {
+  margin-top: 10px;
+  margin-bottom: 14px;
+}
+
+.perms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 11px;
+  color: #3b3226;
+  background: #faf7f2;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ebd4c0;
+}
+
+.perms-grid label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-create-wedding {
+  width: 100% !important;
+  min-height: 42px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 10px !important;
+}
