@@ -12,7 +12,7 @@ import {
 const asset = (filename: string) => `${import.meta.env.BASE_URL}assets/${filename}`;  
   
 // ===== FECHA DE LA BODA — cambia SOLO aquí y se actualiza todo =====  
-const WEDDING = { year: 2027, month: 3, day: 13, hour: 19 }; // month: 3 = Marzo, hour: 19 = 7 PM  
+const WEDDING = { year: 2027, month: 3, day: 1, hour: 18 }; // month: 3 = Marzo, hour: 19 = 7 PM  
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];  
 const dos = (n: number) => String(n).padStart(2, '0');  
 const WEDDING_DATE = new Date(WEDDING.year, WEDDING.month - 1, WEDDING.day, WEDDING.hour);  
@@ -206,7 +206,14 @@ function App() {
   const [albumQueue, setAlbumQueue] = useState<{ id: string; f: File; status: 'pendiente' | 'subiendo' | 'listo' | 'error'; progress: number }[]>([]);  
   const [uploading, setUploading] = useState(false);  
   const albumInput = useRef<HTMLInputElement>(null);
-  const [cfg, setCfg] = useState<Record<string, string>>({});
+  const [cfg, setCfg] = useState<Record<string, string>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = localStorage.getItem('wedding_content_' + getWeddingSlug());
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return {};
+  });
   const inviteCode = new URLSearchParams(window.location.search).get('c') || '';  
   const [invitee, setInvitee] = useState<{ name: string; max_passes: number } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);  
@@ -229,6 +236,7 @@ function App() {
       .then(({ content = {} }) => {  
         const flat: Record<string, string> = {};  
         for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
+        try { localStorage.setItem("wedding_content_" + slug, JSON.stringify(flat)); } catch {}  
         setCfg(flat);  
         // setLoading(false)
       })
@@ -387,14 +395,14 @@ const uploadToDrive = async () => {
             <span className="script" data-key="bride_initial">{isMain ? 'A' : (cfg['bride_initial'] || (slug.split('-')[1] ? slug.split('-')[1].charAt(0).toUpperCase() : 'A'))}</span>  
             <span className="cover-name-text">  
               <span className="given-name" data-key="bride_first_name">{isMain ? 'NGELA' : (cfg['bride_first_name'] || (slug.split('-')[1] ? slug.split('-')[1].slice(1).toUpperCase() : 'NGELA'))}</span>  
-              <span className="surname" data-key="bride_last_name">{isMain ? 'PALMERSTON' : (cfg['bride_last_name'] || '')}</span>  
+              <span className="surname" data-key="bride_last_name">{cfg['bride_last_name'] ?? (isMain ? 'PALMERSTON' : '')}</span>  
             </span>  
           </div>  
           <div className="cover-name" data-testid="text-groom-name">  
             <span className="script" data-key="groom_initial">{isMain ? 'R' : (cfg['groom_initial'] || (slug.split('-')[0] ? slug.split('-')[0].charAt(0).toUpperCase() : 'R'))}</span>  
             <span className="cover-name-text">  
               <span className="given-name" data-key="groom_first_name">{isMain ? 'OBERT' : (cfg['groom_first_name'] || (slug.split('-')[0] ? slug.split('-')[0].slice(1).toUpperCase() : 'OBERT'))}</span>  
-              <span className="surname" data-key="groom_last_name">{isMain ? 'WILSON' : (cfg['groom_last_name'] || '')}</span>  
+              <span className="surname" data-key="groom_last_name">{cfg['groom_last_name'] ?? (isMain ? 'WILSON' : '')}</span>  
             </span>  
           </div>  
         </div>  
@@ -402,7 +410,7 @@ const uploadToDrive = async () => {
         <div className="ornament-rule cover-separator" aria-hidden="true">  
           <span>✤</span>  
         </div>  
-        <p className="cover-date serif"><span data-key="cover_place">MONTERREY, NL</span> | <span data-key="cover_date_fmt" data-style-only="1">{eFechaPunteada}</span></p>  
+        <p className="cover-date serif"><span data-key="cover_place">{cfg['cover_place'] || 'Casa Jardín Eventos'}</span> | <span data-key="cover_date_fmt" data-style-only="1">{eFechaPunteada}</span></p>  
   
         <button  
           className={`envelope-button${envelopeOpen ? ' is-open' : ''}`}  
@@ -411,9 +419,9 @@ const uploadToDrive = async () => {
           aria-label="Abrir invitación"  
           data-testid="button-open-invitation"  
         >  
-          <img className="envelope-base" data-key="envelope_base_img" src={asset('envelope-base.png')} alt="" />  
-          <img className="envelope-flower top" data-key="envelope_flower_top" src={asset('florals-sprig.png')} alt="" />  
-          <img className="envelope-flower bottom" data-key="envelope_flower_bottom" src={asset('florals-bouquet.png')} alt="" />  
+          <img className="envelope-base" data-key="envelope_base_img" src={cfg['envelope_base_img'] || asset('sobre.png')} alt="" />  
+          <img className="envelope-flower top" data-key="envelope_flower_top" src={cfg['envelope_flower_top'] || asset('florals-sprig.png')} alt="" />  
+          <img className="envelope-flower bottom" data-key="envelope_flower_bottom" src={cfg['envelope_flower_bottom'] || asset('florals-bouquet.png')} alt="" />  
         </button>  
         <div className="envelope-hint" data-key="envelope_hint">CLIC EN EL SOBRE PARA ABRIR INVITACIÓN</div>  
         <div className="ornament-rule" aria-hidden="true" style={{ marginTop: 8 }}>  

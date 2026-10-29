@@ -35,7 +35,19 @@ function showToast(message) {
 }  
   
 async function api(path, options = {}) {  
-  const response = await fetch(path, {  
+  let url = path;
+  if (
+    currentWedding &&
+    !url.includes("wedding=") &&
+    (url.startsWith("/api/content") ||
+      url.startsWith("/api/upload") ||
+      url.startsWith("/api/guests") ||
+      url.startsWith("/api/invites"))
+  ) {
+    url += (url.includes("?") ? "&" : "?") + `wedding=${encodeURIComponent(currentWedding)}`;
+  }
+
+  const response = await fetch(url, {  
     credentials: "same-origin",  
     ...options,  
     headers: {  
@@ -169,7 +181,44 @@ async function loadContent() {
       } 
     }  
     await Promise.all(imageLoads);  
-    applySavedBackgrounds(content);  
+    applySavedBackgrounds(content);
+
+    let dynamicCss = "";
+    for (const [k, item] of Object.entries(content)) {
+      if (k.endsWith("__style") && item && item.value) {
+        try {
+          const s = JSON.parse(item.value);
+          const baseKey = k.replace(/__style$/, "");
+          let rules = [];
+          if (s.fontFamily) rules.push(`font-family: ${s.fontFamily} !important;`);
+          if (s.fontSize) rules.push(`font-size: ${s.fontSize} !important;`);
+          if (s.maxWidth) rules.push(`max-width: ${s.maxWidth} !important;`);
+          if (s.width) rules.push(`width: ${s.width} !important;`);
+          if (s.display) rules.push(`display: ${s.display} !important;`);
+          if (s.whiteSpace) rules.push(`white-space: ${s.whiteSpace} !important;`);
+          if (s.transform) rules.push(`transform: ${s.transform} !important;`);
+          if (s.marginLeft) rules.push(`margin-left: ${s.marginLeft} !important;`);
+          if (s.marginRight) rules.push(`margin-right: ${s.marginRight} !important;`);
+          if (s.marginTop) rules.push(`margin-top: ${s.marginTop} !important;`);
+          if (s.marginBottom) rules.push(`margin-bottom: ${s.marginBottom} !important;`);
+          if (rules.length) {
+            dynamicCss += `[data-key="${baseKey}"] { ${rules.join(" ")} }\n`;
+          }
+        } catch {}
+      }
+    }
+    if (dynamicCss) {
+      try {
+        localStorage.setItem("wedding_styles_" + currentWedding, dynamicCss);
+      } catch {}
+      let styleTag = document.getElementById("wedding-pre-styles");
+      if (!styleTag) {
+        styleTag = document.createElement("style");
+        styleTag.id = "wedding-pre-styles";
+        document.head.appendChild(styleTag);
+      }
+      styleTag.textContent = dynamicCss;
+    }  
     for (const element of contentNodes) recordBaseline(element);  
     if (failedImages) {  
       showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");  
@@ -681,8 +730,17 @@ if (inviteRoot) {
 }  
 refreshNodes();  
   
+function getActiveWeddingSlug() {
+  const parts = window.location.pathname.replace(/^\/+|\/+$/g, "").split("/");
+  const first = parts[0] || "";
+  if (!first || first === "index.html" || first === "admin.html" || first === "invitados.html") {
+    return "angela-robert";
+  }
+  return first.toLowerCase();
+}
+
 let currentSession = null;
-let currentWedding = "angela-robert";
+let currentWedding = getActiveWeddingSlug();
 
 api("/api/me", { method: "GET" })  
   .then((session) => {  
@@ -690,6 +748,13 @@ api("/api/me", { method: "GET" })
     currentSession = session.authenticated ? session : null;
     if (currentSession && currentSession.wedding_id) {
       currentWedding = currentSession.wedding_id;
+    }
+    if (authenticated && new URLSearchParams(window.location.search).get("edit") === "1") {
+      setTimeout(() => {
+        if (adminPanel) adminPanel.hidden = true;
+        if (adminFloatBar) adminFloatBar.hidden = false;
+        setEditingMode(true);
+      }, 300);
     }
   })  
   .catch(() => {  
@@ -785,12 +850,59 @@ async function initWeddingManagement() {
     console.warn("No se pudieron cargar bodas adicionales:", err);
   }
 
+  function updateSelectedWeddingUI(slug) {
+    const isMain = slug === "angela-robert";
+    const urlPath = isMain ? "/" : `/${slug}`;
+    const fullUrl = `${window.location.origin}${urlPath}`;
+
+    const linkEl = document.querySelector("#link-active-wedding");
+    if (linkEl) {
+      linkEl.href = urlPath;
+      linkEl.textContent = fullUrl;
+    }
+
+    const openBtn = document.querySelector("#btn-open-active-tab");
+    if (openBtn) {
+      openBtn.href = urlPath;
+    }
+
+    const editBtn = document.querySelector("#btn-edit-active-direct");
+    if (editBtn) {
+      editBtn.onclick = () => {
+        const currentActive = getActiveWeddingSlug();
+        if (currentActive === slug) {
+          adminPanel.hidden = true;
+          adminFloatBar.hidden = false;
+          setEditingMode(true);
+        } else {
+          const targetEditUrl = `${urlPath}${urlPath.includes("?") ? "&" : "?"}edit=1`;
+          window.open(targetEditUrl, "_blank");
+        }
+      };
+    }
+
+    const copyBtn = document.querySelector("#btn-copy-wedding-link");
+    if (copyBtn) {
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(fullUrl);
+          showToast("Enlace copiado al portapapeles");
+        } catch {
+          showToast(fullUrl);
+        }
+      };
+    }
+  }
+
+  updateSelectedWeddingUI(currentWedding);
+
   // Cambio de boda activa
   selector.onchange = () => {
     currentWedding = selector.value;
     if (homeBtn) {
       homeBtn.href = currentWedding === "angela-robert" ? "/" : `/${currentWedding}`;
     }
+    updateSelectedWeddingUI(currentWedding);
     loadPanel();
     applyPermissionsAndNav();
     showToast(`Boda seleccionada: ${currentWedding}`);
@@ -854,7 +966,7 @@ async function initWeddingManagement() {
           })
         });
 
-        showToast(`¡Boda ${names} creada! Link: /${slug}`);
+        showToast(`¡Boda ${names} creada exitosamente! Link: /${slug}`);
 
         // Agregar al selector y seleccionar
         const opt = document.createElement("option");
@@ -865,6 +977,7 @@ async function initWeddingManagement() {
 
         currentWedding = slug;
         if (homeBtn) homeBtn.href = `/${slug}`;
+        updateSelectedWeddingUI(slug);
 
         // Reset y ocultar formulario
         if (formBox) formBox.style.display = "none";

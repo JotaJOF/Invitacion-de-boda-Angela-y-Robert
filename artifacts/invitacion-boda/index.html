@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="es" class="is-loading-content">
   <head>
+    <script>
+      (function() {
+        try {
+          var slug = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || 'angela-robert';
+          if (slug === 'index.html' || slug === 'admin.html' || slug === 'invitados.html') slug = 'angela-robert';
+          var cached = localStorage.getItem('wedding_styles_' + slug);
+          if (cached) {
+            var s = document.createElement('style');
+            s.id = 'wedding-pre-styles';
+            s.textContent = cached;
+            document.head.appendChild(s);
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="UTF-8" />
     <style>html.is-loading-content img[data-key] { visibility: hidden; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
@@ -75,10 +90,29 @@
           </div>
 
           <div class="wedding-select-wrap">
-            <label for="admin-wedding-selector" class="field-micro-label">Selecciona la boda a editar:</label>
+            <label for="admin-wedding-selector" class="field-micro-label">Selecciona la boda a gestionar:</label>
             <select id="admin-wedding-selector" class="styled-wedding-select">
               <option value="angela-robert">Angela Palmerston y Robert Wilson (Principal - /)</option>
             </select>
+          </div>
+
+          <!-- Acciones directas para la boda seleccionada -->
+          <div id="wedding-selected-actions" class="wedding-selected-actions">
+            <div class="active-wedding-info">
+              <span class="field-micro-label">Enlace único de esta boda:</span>
+              <div class="active-wedding-link-row">
+                <a id="link-active-wedding" href="/" target="_blank" class="active-wedding-url">https://invitacion.comutech.workers.dev/</a>
+                <button type="button" id="btn-copy-wedding-link" class="btn-copy-link" title="Copiar enlace">Copiar</button>
+              </div>
+            </div>
+            <div class="wedding-actions-buttons">
+              <a id="btn-open-active-tab" href="/" target="_blank" class="button button-secondary btn-full-action">
+                🔗 ABRIR INVITACIÓN EN OTRA PESTAÑA
+              </a>
+              <button type="button" id="btn-edit-active-direct" class="button button-primary button-olive btn-full-action">
+                ✏️ EDITAR ESTA INVITACIÓN EN VIVO
+              </button>
+            </div>
           </div>
 
           <!-- Formulario para crear nueva boda -->
@@ -197,7 +231,7 @@
     <input id="bg-picker" type="file" accept="image/*,video/*" hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>  
     <script type="module" src="/src/main.tsx"></script>  
-   <link rel="stylesheet" href="/admin.css?v=49" />  
-<script src="/admin.js?v=49" defer></script>  
+   <link rel="stylesheet" href="/admin.css?v=50" />  
+<script src="/admin.js?v=50" defer></script>  
   </body>  
 </html>

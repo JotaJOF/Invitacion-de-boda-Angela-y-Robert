@@ -794,3 +794,91 @@ body.themes-active [data-bg] { cursor: pointer; }
   letter-spacing: 0.08em !important;
   border-radius: 10px !important;
 }
+
+/* Acciones directas para la boda seleccionada */
+.wedding-selected-actions {
+  margin-top: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.active-wedding-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.active-wedding-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fa;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.active-wedding-url {
+  font-family: monospace;
+  font-size: 13px;
+  color: #2c5e3b;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.active-wedding-url:hover {
+  text-decoration: underline;
+}
+
+.btn-copy-link {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-copy-link:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.wedding-actions-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .wedding-actions-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn-full-action {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  border-radius: 8px;
+  text-decoration: none;
+}

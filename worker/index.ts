@@ -679,10 +679,10 @@ if (weddingParam !== "angela-robert") {
   
       let row: ContentRow | null = null;  
       if (path === "/api/content" && method === "POST") {  
-        row = parseContentRow((await request.json()) as Record<string, unknown>);  
+        row = parseContent((await request.json()) as Record<string, unknown>);  
       } else {  
         const key = decodeURIComponent(path.slice("/api/content/".length));  
-        row = parseContentRow({  
+        row = parseContent({  
           key,  
           ...((await request.json()) as Record<string, unknown>),  
         });  
@@ -726,8 +726,9 @@ if (weddingParam !== "angela-robert") {
     }  
   
     return env.ASSETS.fetch(request);  
-  } catch {  
-    return json({ error: "No se pudo completar la solicitud." }, 500);  
+  } catch (err: any) {  
+    console.error("Worker API error:", err);  
+    return json({ error: err?.message || "No se pudo completar la solicitud." }, 500);  
   }  
 }  
 
