@@ -53,13 +53,20 @@
       </button>
       <button class="toolbar-text" id="cancel-edit" type="button">Salir</button>
     </aside>
-    <aside class="admin-panel" id="admin-panel" aria-label="Panel de administración" hidden>  
+        <aside class="admin-panel" id="admin-panel" aria-label="Panel de administración" hidden>  
       <div class="admin-panel-card">
-        <a class="panel-home" href="/" aria-label="Volver a la invitación pública" title="Volver a la invitación pública">
-          <span aria-hidden="true">✉</span><span class="panel-home-label">Ver invitación</span>
-        </a>
-        <p class="eyebrow">ADMINISTRACIÓN</p>  
-        <h2>Datos del evento</h2>  
+        <header class="panel-header-bar">
+          <a class="panel-home" id="panel-home-btn" href="/" aria-label="Volver a la invitación pública" title="Volver a la invitación pública">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span class="panel-home-label">Ver invitación</span>
+          </a>
+          <span class="panel-badge-pill">ADMINISTRACIÓN</span>
+          <button class="panel-close-btn" id="panel-close-btn" type="button" aria-label="Cerrar panel">✕</button>
+        </header>
+
+        <div id="superadmin-box" class="superadmin-box" style="display: none;"></div>
+
+        <h2 class="panel-main-title">Datos del evento</h2>  
         <label for="cfg-location">Ubicación del lugar (URL de Google Maps)</label>  
         <input id="cfg-location" type="url" placeholder="https://maps.google.com/..." />  
         <label for="cfg-whatsapp">WhatsApp (número con código de país)</label>  
@@ -71,17 +78,17 @@
         <label for="music-upload">Canción de fondo (suena al abrir el sobre)</label>  
         <input id="music-file" type="file" accept="audio/mpeg,audio/mp4,audio/ogg" hidden />  
         <div class="admin-panel-actions">  
-          <button class="button" id="music-upload" type="button">SUBIR CANCIÓN (MP3)</button>  
-          <button class="button" id="music-test" type="button" hidden>▶ PROBAR CANCIÓN</button>  
-          <button class="button" id="guests-list" type="button">VER LISTA DE INVITADOS</button>  
-          <button class="button" id="invites-open" type="button">GENERAR LINKS</button>  
-          <button class="button" id="panel-edit" type="button">EDITAR TU INVITACIÓN</button>  
-          <button class="button" id="panel-themes" type="button">TEMAS</button>  
-          <button class="button button-olive" id="panel-save" type="button">GUARDAR DATOS</button>  
+          <button class="button button-secondary" id="music-upload" type="button">Subir canción</button>  
+          <button class="button button-secondary" id="music-test" type="button" hidden>▶ Probar canción</button>  
+          <button class="button button-secondary" id="guests-list" type="button">Lista de invitados</button>  
+          <button class="button button-secondary" id="invites-open" type="button">Generar links</button>  
+          <button class="button button-secondary" id="panel-edit" type="button">Editar invitación</button>  
+          <button class="button button-secondary" id="panel-themes" type="button">Temas visuales</button>  
+          <button class="button button-primary button-olive" id="panel-save" type="button">GUARDAR DATOS</button>  
         </div>  
         <p class="form-message" id="music-status" role="status"></p>  
         <p class="form-message" id="panel-message" role="status"></p>  
-        <p class="panel-note">Los cambios de texto e imágenes se hacen desde "Editar tu invitación".</p>  
+        <p class="panel-note">Los cambios de texto e imágenes se hacen desde "Editar invitación".</p>  
       </div>  
     </aside>  
     <aside class="admin-float-bar" id="admin-float-bar" hidden>  
