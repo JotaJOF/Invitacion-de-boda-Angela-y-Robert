@@ -511,9 +511,25 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       return json({ saved: true, key: row.key });  
     }  
   
-    if (path.startsWith("/api/")) {  
-      return json({ error: "Ruta no encontrada." }, 404);  
-    }  
+    if (path.startsWith("/api/")) {    
+      return json({ error: "Ruta no encontrada." }, 404);    
+    }    
+    
+    // ===== Rutas limpias de bodas: /erick-erika sirve la misma index.html =====    
+    // Solo rutas de una sola palabra, sin punto (para no afectar /assets, /css, /js ni archivos)    
+    if (path !== "/" && !path.includes(".") && path.split("/").filter(Boolean).length === 1) {    
+      const slug = decodeURIComponent(path.slice(1)).toLowerCase();    
+      const { data: wedding } = await supabase(env)    
+        .from("weddings")    
+        .select("id")    
+        .eq("id", slug)    
+        .maybeSingle();    
+      if (!wedding) {    
+        return new Response("Invitación no encontrada", { status: 404 });    
+      }    
+      return env.ASSETS.fetch(new URL("/index.html", url).toString(), { headers: request.headers });    
+    }    
+    
     return env.ASSETS.fetch(request);  
   } catch {  
     return json({ error: "No se pudo completar la solicitud." }, 500);  
