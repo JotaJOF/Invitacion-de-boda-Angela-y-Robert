@@ -189,6 +189,16 @@ function PhotoCarousel({ slides }: { slides: Slide[] }) {
   );
 }
 
+
+function getWeddingSlug(): string {
+  if (typeof window === 'undefined') return 'angela-robert';
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  if (!path || path === 'index.html' || path === 'admin.html' || path === 'invitados.html') {
+    return 'angela-robert';
+  }
+  return path.toLowerCase();
+}
+
 function App() {  
   const [envelopeOpen, setEnvelopeOpen] = useState(false);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
@@ -206,13 +216,22 @@ function App() {
   const pendingForm = useRef<FormData | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);  
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [loading, setLoading] = useState(true);
    
   useEffect(() => {  
-    fetch('/api/content').then((r) => r.json()).then(({ content = {} }) => {  
-      const flat: Record<string, string> = {};  
-      for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
-      setCfg(flat);  
-    }).catch(() => {});  
+    const slug = getWeddingSlug();
+    fetch(`/api/content?wedding=${encodeURIComponent(slug)}`)
+      .then((r) => r.json())
+      .then(({ content = {} }) => {  
+        const flat: Record<string, string> = {};  
+        for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
+        setCfg(flat);  
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });  
+
     if (inviteCode) {  
       fetch(`/api/invite/${encodeURIComponent(inviteCode)}`).then((r) => r.json())  
         .then(({ guest }) => {  
@@ -354,6 +373,48 @@ const uploadToDrive = async () => {
     setConfirmOpen(true);  
   };  
   
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          backgroundColor: '#faf8f5',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          color: '#65635e',
+        }}
+      >
+        <div
+          style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            border: '2px solid rgba(138, 118, 92, 0.2)',
+            borderTopColor: '#8a765c',
+            animation: 'appSpin 0.8s linear infinite',
+            marginBottom: '16px',
+          }}
+        />
+        <style>{`@keyframes appSpin { to { transform: rotate(360deg); } }`}</style>
+        <p
+          style={{
+            fontSize: '12px',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            fontWeight: 500,
+            color: '#8a765c',
+            margin: 0,
+          }}
+        >
+          Cargando invitación...
+        </p>
+      </div>
+    );
+  }
+
   return (  
     <main className="invite-shell" data-testid="page-wedding-invitation">  
       <section className="cover" aria-label="Invitación personalizada" data-bg="cover">  
@@ -439,7 +500,13 @@ const uploadToDrive = async () => {
   
       <section className="paper-section" data-bg="portada">  
         <h1 className="couple-heading script" data-key="couple_heading" data-testid="text-couple-names">  
-          Angela Palmerston <small>y</small> Robert Wilson  
+          {cfg['couple_heading'] ? (
+            cfg['couple_heading']
+          ) : getWeddingSlug() === 'angela-robert' ? (
+            <>Angela Palmerston <small>y</small> Robert Wilson</>
+          ) : (
+            getWeddingSlug().split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' y ')
+          )}
         </h1>  
         <p className="section-copy" data-key="invite_intro">  
           QUEREMOS COMPARTIR CONTIGO LA ALEGRÍA DE CELEBRAR NUESTRA BODA  
@@ -869,7 +936,9 @@ const uploadToDrive = async () => {
         <img src={asset('pdfimg-003.jpg')} data-key="closing_img" alt="" />  
         <div className="closing-footer" data-bg="closing">  
           <div className="closing-content">  
-            <p className="script" data-key="closing_names">Angela y Robert</p>  
+            <p className="script" data-key="closing_names">
+              {cfg['closing_names'] || (cfg['couple_heading'] || (getWeddingSlug() === 'angela-robert' ? 'Angela y Robert' : getWeddingSlug().split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' y ')))}
+            </p>  
             <p data-key="closing_text">Gracias por acompañarnos en un día que llevaremos siempre en el corazón.</p>  
           </div>  
         </div>  
