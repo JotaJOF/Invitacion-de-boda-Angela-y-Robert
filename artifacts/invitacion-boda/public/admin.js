@@ -760,56 +760,57 @@ function applyPermissionsAndNav() {
 }
 
 async function renderSuperadminControls() {
-  let saBox = document.querySelector("#superadmin-box");
-  if (!saBox) {
-    saBox = document.createElement("div");
-    saBox.id = "superadmin-box";
-    saBox.style.cssText = "background: rgba(138, 118, 92, 0.08); border-radius: 12px; padding: 14px; margin-bottom: 20px; border: 1px solid rgba(138, 118, 92, 0.2);";
-    const title = adminPanel.querySelector("h2");
-    if (title) title.parentNode.insertBefore(saBox, title.nextSibling);
+  const saBox = document.querySelector("#superadmin-box");
+  if (!saBox) return;
+
+  if (!currentSession || currentSession.role !== "superadmin") {
+    saBox.style.display = "none";
+    saBox.innerHTML = "";
+    return;
   }
-  saBox.style.display = "block";
 
   try {
     const { weddings = [] } = await api("/api/weddings");
     let optionsHtml = weddings.map(w => `<option value="${w.id}" ${w.id === currentWedding ? "selected" : ""}>${w.names} (${w.id})</option>`).join("");
     if (!weddings.some(w => w.id === "angela-robert")) {
-      optionsHtml = `<option value="angela-robert" ${currentWedding === "angela-robert" ? "selected" : ""}>Angela y Robert (angela-robert)</option>` + optionsHtml;
+      optionsHtml = `<option value="angela-robert" ${currentWedding === "angela-robert" ? "selected" : ""}>Angela Palmerston y Robert Wilson (angela-robert)</option>` + optionsHtml;
     }
 
     saBox.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <strong style="font-size:13px; color:#8a765c; text-transform:uppercase; letter-spacing:0.05em;">Panel Superadmin</strong>
-        <span style="font-size:11px; background:#8a765c; color:#fff; padding:2px 8px; border-radius:10px;">Control Universal</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span style="font-size:11px; font-weight:700; color:#5c5040; text-transform:uppercase; letter-spacing:0.08em;">Control Maestro Superadmin</span>
+        <span style="font-size:10px; background:#4a5438; color:#fff; padding:2px 8px; border-radius:10px; font-weight:600;">Acceso Total</span>
       </div>
-      <label style="font-size:12px; margin-bottom:4px; display:block;">Boda / Cliente que estás administrando:</label>
-      <select id="sa-wedding-select" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(138, 118, 92, 0.3); background:#fff; font-size:14px; margin-bottom:10px;">
+      <label style="font-size:12px; margin-bottom:4px; display:block; font-weight:600;">Boda activa en edición:</label>
+      <select id="sa-wedding-select" style="width:100%; min-height:40px; padding:8px 12px; border-radius:10px; border:1px solid #d4cbbd; background:#fff; font-size:13px; margin-bottom:12px; color:#2b241c;">
         ${optionsHtml}
       </select>
       <div style="display:flex; gap:8px;">
-        <button id="sa-new-wedding-btn" type="button" class="button" style="padding:6px 12px; font-size:12px; flex:1;">+ NUEVO CLIENTE NOVIOS</button>
+        <button id="sa-new-wedding-btn" type="button" class="button button-secondary" style="padding:8px 14px; font-size:11px; flex:1; min-height:36px; border-radius:8px;">+ NUEVA BODA / PAREJA</button>
       </div>
-      <div id="sa-create-form" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed rgba(138, 118, 92, 0.25);">
-        <p style="font-size:12px; font-weight:600; margin-bottom:8px;">Registrar nueva pareja:</p>
-        <input id="new-w-slug" type="text" placeholder="Slug (ej. carlos-maria)" style="width:100%; margin-bottom:6px;" />
-        <input id="new-w-names" type="text" placeholder="Nombres (ej. Carlos y María)" style="width:100%; margin-bottom:6px;" />
-        <input id="new-w-user" type="text" placeholder="Usuario para la pareja" style="width:100%; margin-bottom:6px;" />
+      <div id="sa-create-form" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed #dcd3c5;">
+        <p style="font-size:12px; font-weight:700; color:#3a3228; margin-bottom:10px;">Crear enlace y credenciales para nueva pareja:</p>
+        <input id="new-w-slug" type="text" placeholder="Slug / Terminación de URL (ej. carlos-maria)" style="width:100%; margin-bottom:8px;" />
+        <input id="new-w-names" type="text" placeholder="Nombres (ej. Carlos y María)" style="width:100%; margin-bottom:8px;" />
+        <input id="new-w-user" type="text" placeholder="Usuario para la pareja" style="width:100%; margin-bottom:8px;" />
         <input id="new-w-pass" type="password" placeholder="Contraseña para la pareja" style="width:100%; margin-bottom:10px;" />
-        <p style="font-size:11px; color:#666; margin-bottom:6px;">Permisos concedidos a la pareja:</p>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:12px; margin-bottom:10px;">
-          <label><input type="checkbox" id="perm-loc" checked /> Ubicación</label>
-          <label><input type="checkbox" id="perm-ws" checked /> WhatsApp</label>
-          <label><input type="checkbox" id="perm-date" checked /> Fecha</label>
-          <label><input type="checkbox" id="perm-drive" checked /> Google Drive</label>
-          <label><input type="checkbox" id="perm-music" checked /> Música</label>
-          <label><input type="checkbox" id="perm-guests" checked /> Invitados</label>
-          <label><input type="checkbox" id="perm-invites" checked /> Links</label>
-          <label><input type="checkbox" id="perm-edit" checked /> Editar</label>
-          <label><input type="checkbox" id="perm-themes" checked /> Temas</label>
+        <p style="font-size:11px; color:#6b5f51; margin-bottom:8px; font-weight:600;">Permisos autorizados a la pareja:</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px; margin-bottom:12px;">
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-loc" checked /> Ubicación</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-ws" checked /> WhatsApp</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-date" checked /> Fecha</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-drive" checked /> Google Drive</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-music" checked /> Música</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-guests" checked /> Invitados</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-invites" checked /> Links</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-edit" checked /> Editar</label>
+          <label style="font-weight:normal; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="perm-themes" checked /> Temas</label>
         </div>
-        <button id="sa-save-client-btn" type="button" class="button button-olive" style="width:100%; font-size:12px;">CREAR CLIENTE</button>
+        <button id="sa-save-client-btn" type="button" class="button button-primary button-olive" style="width:100%; font-size:11px; min-height:40px; border-radius:8px;">CREAR BODA Y USUARIO</button>
       </div>
     `;
+
+    saBox.style.display = "block";
 
     document.querySelector("#sa-wedding-select")?.addEventListener("change", (e) => {
       currentWedding = e.target.value;
@@ -857,7 +858,7 @@ async function renderSuperadminControls() {
             permissions
           })
         });
-        showToast(`Cliente ${names} creado con éxito.`);
+        showToast(`Cliente ${names} creado.`);
         currentWedding = slug;
         renderSuperadminControls();
         loadPanel();
@@ -868,6 +869,7 @@ async function renderSuperadminControls() {
     });
   } catch (err) {
     console.error("Error loading weddings for superadmin:", err);
+    saBox.style.display = "none";
   }
 }
   
@@ -1223,4 +1225,8 @@ bgPicker.addEventListener("change", async () => {
   } catch (error) {  
     showToast(error.message);  
   }  
+});
+
+document.querySelector("#panel-close-btn")?.addEventListener("click", () => {
+  adminPanel.hidden = true;
 });
