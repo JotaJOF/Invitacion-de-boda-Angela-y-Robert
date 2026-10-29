@@ -1,0 +1,111 @@
+-- ============================================================
+-- Migración Multi-Bodas y Control de Acceso por Pareja
+-- ============================================================
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- 1. Tabla de bodas
+CREATE TABLE IF NOT EXISTS public.weddings (
+    id TEXT PRIMARY KEY,
+    names TEXT NOT NULL,
+    date_iso TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- Asegurar boda base Angela y Robert
+INSERT INTO public.weddings (id, names, date_iso)
+VALUES ('angela-robert', 'Angela Palmerston y Robert Wilson', '2027-03-13T19:00:00')
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Tabla de contenido por boda
+CREATE TABLE IF NOT EXISTS public.wedding_content (
+    wedding_id TEXT NOT NULL REFERENCES public.weddings(id) ON DELETE CASCADE,
+    key TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('text', 'image')),
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    PRIMARY KEY (wedding_id, key)
+);
+
+-- Migrar contenido global previo a angela-robert si existe
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'site_content') THEN
+        INSERT INTO public.wedding_content (wedding_id, key, type, value, updated_at)
+        SELECT 'angela-robert', key, type, value, updated_at
+        FROM public.site_content
+        ON CONFLICT (wedding_id, key) DO UPDATE
+        SET type = EXCLUDED.type,
+            value = EXCLUDED.value,
+            updated_at = EXCLUDED.updated_at;
+    END IF;
+END $$;
+
+-- 3. Vincular invitados a boda
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'guests' AND column_name = 'wedding'
+    ) THEN
+        ALTER TABLE public.guests ADD COLUMN wedding TEXT NOT NULL DEFAULT 'angela-robert';
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_guests_wedding_code ON public.guests(wedding, code);
+CREATE INDEX IF NOT EXISTS idx_guests_wedding_name ON public.guests(wedding, name);
+
+-- 4. Tabla de usuarios del sistema (Superadmin y Parejas)
+CREATE TABLE IF NOT EXISTS public.app_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('superadmin', 'couple')),
+    wedding_id TEXT REFERENCES public.weddings(id) ON DELETE SET NULL,
+    permissions JSONB NOT NULL DEFAULT '{"location": true, "whatsapp": true, "date": true, "drive": true, "music": true, "guests": true, "invites": true, "edit": true, "themes": true}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- Migrar admin previo a superadmin
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'admin_users') THEN
+        INSERT INTO public.app_users (username, password_hash, role, permissions)
+        SELECT username, password_hash, 'superadmin', '{"location": true, "whatsapp": true, "date": true, "drive": true, "music": true, "guests": true, "invites": true, "edit": true, "themes": true}'::jsonb
+        FROM public.admin_users
+        ON CONFLICT (username) DO NOTHING;
+    END IF;
+END $$;
+
+-- 5. Función RPC de autenticación
+CREATE OR REPLACE FUNCTION public.authenticate_user(p_username TEXT, p_password TEXT)
+RETURNS TABLE (
+    valid BOOLEAN,
+    username TEXT,
+    role TEXT,
+    wedding_id TEXT,
+    permissions JSONB
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_user app_users%ROWTYPE;
+BEGIN
+    SELECT * INTO v_user
+    FROM public.app_users
+    WHERE app_users.username = p_username;
+
+    IF NOT FOUND THEN
+        RETURN QUERY SELECT FALSE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::JSONB;
+        RETURN;
+    END IF;
+
+    IF v_user.password_hash = crypt(p_password, v_user.password_hash) THEN
+        RETURN QUERY SELECT TRUE, v_user.username, v_user.role, v_user.wedding_id, v_user.permissions;
+    ELSE
+        RETURN QUERY SELECT FALSE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::JSONB;
+    END IF;
+END;
+$$;
