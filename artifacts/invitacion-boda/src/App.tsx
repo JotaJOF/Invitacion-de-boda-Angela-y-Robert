@@ -209,6 +209,15 @@ function displayGivenName(value: string | undefined, initial: string, fallback: 
 
 function App() {  
   const [envelopeOpen, setEnvelopeOpen] = useState(false);
+  
+  const [openFaq, setOpenFaq] = useState<number | null>(null);  
+  const [preview, setPreview] = useState('');  
+  const [albumQueue, setAlbumQueue] = useState<{ id: string; f: File; status: 'pendiente' | 'subiendo' | 'listo' | 'error'; progress: number }[]>([]);  
+  const [uploading, setUploading] = useState(false);  
+  const albumInput = useRef<HTMLInputElement>(null);
+  // Never paint stale cached names/styles before the server returns this wedding's content.
+  const [cfg, setCfg] = useState<Record<string, string>>({});
+
   const dynamicCss = useMemo(() => {
     let css = "";
     for (const [k, v] of Object.entries(cfg)) {
@@ -235,14 +244,7 @@ function App() {
       }
     }
     return css;
-  }, [cfg]);  
-  const [openFaq, setOpenFaq] = useState<number | null>(null);  
-  const [preview, setPreview] = useState('');  
-  const [albumQueue, setAlbumQueue] = useState<{ id: string; f: File; status: 'pendiente' | 'subiendo' | 'listo' | 'error'; progress: number }[]>([]);  
-  const [uploading, setUploading] = useState(false);  
-  const albumInput = useRef<HTMLInputElement>(null);
-  // Never paint stale cached names/styles before the server returns this wedding's content.
-  const [cfg, setCfg] = useState<Record<string, string>>({});
+  }, [cfg]);
   const [contentReady, setContentReady] = useState(false);
   const inviteCode = new URLSearchParams(window.location.search).get('c') || '';  
   const [invitee, setInvitee] = useState<{ name: string; max_passes: number } | null>(null);
