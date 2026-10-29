@@ -28,7 +28,7 @@ async function load() {
   table.innerHTML = "";  
   const { guests } = await api(`/api/guests?boda=${encodeURIComponent(WEDDING_ID)}`, { method: "GET" });  
   for (const g of guests) {  
-    const link = g.code ? `${BASE}/?boda=${encodeURIComponent(WEDDING_ID)}&c=${g.code}` : "—";  
+    const link = g.code ? `${BASE}/${encodeURIComponent(WEDDING_ID)}?c=${g.code}` : "—";  
     const wa = g.phone  
       ? `https://wa.me/${g.phone}?text=${encodeURIComponent(  
           `Hola, aquí está tu invitación a nuestra boda: ${link}`,  
