@@ -12,10 +12,12 @@ CREATE TABLE IF NOT EXISTS public.weddings (
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Asegurar boda base Angela y Robert
+-- Asegurar bodas iniciales
 INSERT INTO public.weddings (id, names, date_iso)
-VALUES ('angela-robert', 'Angela Palmerston y Robert Wilson', '2027-03-13T19:00:00')
-ON CONFLICT (id) DO NOTHING;
+VALUES 
+    ('angela-robert', 'Angela Palmerston y Robert Wilson', '2027-03-13T19:00:00'),
+    ('erick-erika', 'Erick y Erika', '2027-05-20T18:00:00')
+ON CONFLICT (id) DO UPDATE SET names = EXCLUDED.names, date_iso = EXCLUDED.date_iso;
 
 -- 2. Tabla de contenido por boda
 CREATE TABLE IF NOT EXISTS public.wedding_content (
@@ -28,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.wedding_content (
 );
 
 -- Migrar contenido global previo a angela-robert si existe
-DO $$
+DO 18057
 BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'site_content') THEN
         INSERT INTO public.wedding_content (wedding_id, key, type, value, updated_at)
@@ -39,10 +41,10 @@ BEGIN
             value = EXCLUDED.value,
             updated_at = EXCLUDED.updated_at;
     END IF;
-END $$;
+END 18057;
 
 -- 3. Vincular invitados a boda
-DO $$
+DO 18057
 BEGIN
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
@@ -50,7 +52,7 @@ BEGIN
     ) THEN
         ALTER TABLE public.guests ADD COLUMN wedding TEXT NOT NULL DEFAULT 'angela-robert';
     END IF;
-END $$;
+END 18057;
 
 CREATE INDEX IF NOT EXISTS idx_guests_wedding_code ON public.guests(wedding, code);
 CREATE INDEX IF NOT EXISTS idx_guests_wedding_name ON public.guests(wedding, name);
@@ -67,7 +69,7 @@ CREATE TABLE IF NOT EXISTS public.app_users (
 );
 
 -- Migrar admin previo a superadmin
-DO $$
+DO 18057
 BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'admin_users') THEN
         INSERT INTO public.app_users (username, password_hash, role, permissions)
@@ -75,7 +77,7 @@ BEGIN
         FROM public.admin_users
         ON CONFLICT (username) DO NOTHING;
     END IF;
-END $$;
+END 18057;
 
 -- 5. Función RPC de autenticación
 CREATE OR REPLACE FUNCTION public.authenticate_user(p_username TEXT, p_password TEXT)
@@ -89,7 +91,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS 18057
 DECLARE
     v_user app_users%ROWTYPE;
 BEGIN
@@ -108,4 +110,26 @@ BEGIN
         RETURN QUERY SELECT FALSE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::JSONB;
     END IF;
 END;
-$$;
+18057;
+
+-- 6. Función RPC para crear o actualizar usuario de pareja
+CREATE OR REPLACE FUNCTION public.create_or_update_couple_user(
+    p_username TEXT,
+    p_password TEXT,
+    p_wedding_id TEXT,
+    p_permissions JSONB
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS 18057
+BEGIN
+    INSERT INTO public.app_users (username, password_hash, role, wedding_id, permissions)
+    VALUES (p_username, crypt(p_password, gen_salt('bf')), 'couple', p_wedding_id, p_permissions)
+    ON CONFLICT (username) DO UPDATE
+    SET password_hash = CASE WHEN p_password <> '' THEN crypt(p_password, gen_salt('bf')) ELSE app_users.password_hash END,
+        wedding_id = EXCLUDED.wedding_id,
+        permissions = EXCLUDED.permissions;
+END;
+18057;
