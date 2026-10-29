@@ -402,8 +402,14 @@ window.addEventListener("resize", positionPencils);
 
 for (const element of contentNodes) recordBaseline(element);
 
-loadWeddingConfig();  
-loadContent();
+if (WEDDING_ID === "angela-robert") {  
+  // Raíz = previa FIJA: siempre muestra Angela & Robert (el HTML).  
+  // No carga ni aplica contenido guardado, así nunca cambia.  
+  document.documentElement.classList.remove("is-loading-content");  
+} else {  
+  loadWeddingConfig();  
+  loadContent();  
+}
 api("/api/me", { method: "GET" })
   .then((session) => {
     authenticated = session.authenticated === true;
