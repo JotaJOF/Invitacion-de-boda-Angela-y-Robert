@@ -216,7 +216,11 @@ function App() {
   const pendingForm = useRef<FormData | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);  
   const [musicPlaying, setMusicPlaying] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const slug = getWeddingSlug();
+  const isMain = slug === 'angela-robert';
+
+  // No loading state
+  const [loading] = useState(false);
    
   useEffect(() => {  
     const slug = getWeddingSlug();
@@ -226,10 +230,10 @@ function App() {
         const flat: Record<string, string> = {};  
         for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
         setCfg(flat);  
-        setLoading(false);
+        // setLoading(false)
       })
       .catch(() => {
-        setLoading(false);
+        // setLoading(false)
       });  
 
     if (inviteCode) {  
@@ -373,64 +377,24 @@ const uploadToDrive = async () => {
     setConfirmOpen(true);  
   };  
   
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          backgroundColor: '#faf8f5',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          color: '#65635e',
-        }}
-      >
-        <div
-          style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            border: '2px solid rgba(138, 118, 92, 0.2)',
-            borderTopColor: '#8a765c',
-            animation: 'appSpin 0.8s linear infinite',
-            marginBottom: '16px',
-          }}
-        />
-        <style>{`@keyframes appSpin { to { transform: rotate(360deg); } }`}</style>
-        <p
-          style={{
-            fontSize: '12px',
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            fontWeight: 500,
-            color: '#8a765c',
-            margin: 0,
-          }}
-        >
-          Cargando invitación...
-        </p>
-      </div>
-    );
-  }
+  
 
   return (  
     <main className="invite-shell" data-testid="page-wedding-invitation">  
       <section className="cover" aria-label="Invitación personalizada" data-bg="cover">  
         <div className="cover-names">  
           <div className="cover-name" data-testid="text-bride-name">  
-            <span className="script" data-key="bride_initial">A</span>  
+            <span className="script" data-key="bride_initial">{isMain ? 'A' : (cfg['bride_initial'] || (slug.split('-')[1] ? slug.split('-')[1].charAt(0).toUpperCase() : 'A'))}</span>  
             <span className="cover-name-text">  
-              <span className="given-name" data-key="bride_first_name">NGELA</span>  
-              <span className="surname" data-key="bride_last_name">PALMERSTON</span>  
+              <span className="given-name" data-key="bride_first_name">{isMain ? 'NGELA' : (cfg['bride_first_name'] || (slug.split('-')[1] ? slug.split('-')[1].slice(1).toUpperCase() : 'NGELA'))}</span>  
+              <span className="surname" data-key="bride_last_name">{isMain ? 'PALMERSTON' : (cfg['bride_last_name'] || '')}</span>  
             </span>  
           </div>  
           <div className="cover-name" data-testid="text-groom-name">  
-            <span className="script" data-key="groom_initial">R</span>  
+            <span className="script" data-key="groom_initial">{isMain ? 'R' : (cfg['groom_initial'] || (slug.split('-')[0] ? slug.split('-')[0].charAt(0).toUpperCase() : 'R'))}</span>  
             <span className="cover-name-text">  
-              <span className="given-name" data-key="groom_first_name">OBERT</span>  
-              <span className="surname" data-key="groom_last_name">WILSON</span>  
+              <span className="given-name" data-key="groom_first_name">{isMain ? 'OBERT' : (cfg['groom_first_name'] || (slug.split('-')[0] ? slug.split('-')[0].slice(1).toUpperCase() : 'OBERT'))}</span>  
+              <span className="surname" data-key="groom_last_name">{isMain ? 'WILSON' : (cfg['groom_last_name'] || '')}</span>  
             </span>  
           </div>  
         </div>  
