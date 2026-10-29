@@ -1,23 +1,7 @@
 <!DOCTYPE html>
-<html lang="es" class="is-loading-content">
+<html lang="es">
   <head>
-    <script>
-      (function() {
-        try {
-          var slug = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || 'angela-robert';
-          if (slug === 'index.html' || slug === 'admin.html' || slug === 'invitados.html') slug = 'angela-robert';
-          var cached = localStorage.getItem('wedding_styles_' + slug);
-          if (cached) {
-            var s = document.createElement('style');
-            s.id = 'wedding-pre-styles';
-            s.textContent = cached;
-            document.head.appendChild(s);
-          }
-        } catch (e) {}
-      })();
-    </script>
     <meta charset="UTF-8" />
-    <style>html.is-loading-content img[data-key] { visibility: hidden; }</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Invitación Angela y Robert</title>
     <meta name="description" content="Acompaña a Angela Palmerston y Robert Wilson en la celebración de su boda en Monterrey, Nuevo León." />
@@ -96,67 +80,37 @@
             </select>
           </div>
 
-          <!-- Acciones directas para la boda seleccionada -->
-          <div id="wedding-selected-actions" class="wedding-selected-actions">
-            <div class="active-wedding-info">
-              <span class="field-micro-label">Enlace único de esta boda:</span>
-              <div class="active-wedding-link-row">
-                <a id="link-active-wedding" href="/" target="_blank" class="active-wedding-url">https://invitacion.comutech.workers.dev/</a>
-                <button type="button" id="btn-copy-wedding-link" class="btn-copy-link" title="Copiar enlace">Copiar</button>
-              </div>
-            </div>
-            <div class="wedding-actions-buttons">
-              <a id="btn-open-active-tab" href="/" target="_blank" class="button button-secondary btn-full-action">
-                🔗 ABRIR INVITACIÓN EN OTRA PESTAÑA
-              </a>
-              <button type="button" id="btn-edit-active-direct" class="button button-primary button-olive btn-full-action">
-                ✏️ EDITAR ESTA INVITACIÓN EN VIVO
-              </button>
-            </div>
+          <div id="wedding-selected-indicator" class="wedding-selected-indicator" role="status" aria-live="polite">
+            <span class="indicator-icon" aria-hidden="true">✓</span>
+            <span>Seleccionada: <strong id="wedding-selected-name-label">Angela Palmerston y Robert Wilson</strong></span>
           </div>
 
-          <!-- Formulario para crear nueva boda -->
-          <div id="new-wedding-form" class="new-wedding-form" style="display: none;">
-            <div class="form-title-badge">Crear Nueva Pareja / Boda</div>
-            
-            <label for="nw-names" class="field-micro-label">Nombres de los Novios (ej. Erick y Erika):</label>
-            <input id="nw-names" type="text" placeholder="Erick y Erika" />
-
-            <label for="nw-slug" class="field-micro-label">Terminación del Link (Slug):</label>
-            <input id="nw-slug" type="text" placeholder="erick-erika" />
-            <div class="slug-preview-box">
-              Link de la boda: <strong id="nw-link-preview">https://invitacion.comutech.workers.dev/erick-erika</strong>
-            </div>
-
-            <label for="nw-date" class="field-micro-label">Fecha del evento:</label>
+          <div id="new-wedding-form" class="new-wedding-form" style="display:none">
+            <h4>Crear copia de Angela y Robert</h4>
+            <label for="nw-names">Nombres de la pareja</label>
+            <input id="nw-names" type="text" placeholder="Erick y Erika" autocomplete="off" />
+            <label for="nw-slug">Terminación del enlace</label>
+            <input id="nw-slug" type="text" placeholder="erick-erika" autocomplete="off" />
+            <p class="wedding-link-preview" id="nw-link-preview">El enlace aparecerá aquí</p>
+            <label for="nw-date">Fecha del evento</label>
             <input id="nw-date" type="datetime-local" />
-
-            <div class="form-cols-2">
-              <div>
-                <label for="nw-user" class="field-micro-label">Usuario pareja:</label>
-                <input id="nw-user" type="text" placeholder="erick_erika" />
-              </div>
-              <div>
-                <label for="nw-pass" class="field-micro-label">Contraseña pareja:</label>
-                <input id="nw-pass" type="password" placeholder="••••••••" />
-              </div>
-            </div>
-
-            <div class="perms-wrapper">
-              <span class="field-micro-label">Permisos autorizados a la pareja:</span>
-              <div class="perms-grid">
-                <label><input type="checkbox" id="perm-loc" checked /> Ubicación</label>
-                <label><input type="checkbox" id="perm-ws" checked /> WhatsApp</label>
-                <label><input type="checkbox" id="perm-date" checked /> Fecha</label>
-                <label><input type="checkbox" id="perm-drive" checked /> Drive</label>
-                <label><input type="checkbox" id="perm-music" checked /> Música</label>
-                <label><input type="checkbox" id="perm-guests" checked /> Invitados</label>
-                <label><input type="checkbox" id="perm-invites" checked /> Links</label>
-              </div>
-            </div>
-
-            <button id="btn-save-new-wedding" type="button" class="button button-primary button-olive btn-create-wedding">CREAR BODA Y ACTIVAR ENLACE</button>
+            <label for="nw-user">Usuario de la pareja (opcional)</label>
+            <input id="nw-user" type="text" autocomplete="off" />
+            <label for="nw-pass">Contraseña (opcional)</label>
+            <input id="nw-pass" type="password" autocomplete="new-password" />
+            <fieldset class="wedding-permissions">
+              <legend>Permisos de la pareja</legend>
+              <label><input id="perm-loc" type="checkbox" checked /> Ubicación</label>
+              <label><input id="perm-ws" type="checkbox" checked /> WhatsApp</label>
+              <label><input id="perm-date" type="checkbox" checked /> Fecha</label>
+              <label><input id="perm-drive" type="checkbox" checked /> Google Drive</label>
+              <label><input id="perm-music" type="checkbox" checked /> Canción</label>
+              <label><input id="perm-guests" type="checkbox" checked /> Lista de invitados</label>
+              <label><input id="perm-invites" type="checkbox" checked /> Generar enlaces</label>
+            </fieldset>
+            <button type="button" class="button button-primary button-olive" id="btn-save-new-wedding">CREAR BODA Y ACTIVAR ENLACE</button>
           </div>
+
         </section>
 
         <h2 class="panel-main-title">Datos del evento</h2>  
@@ -231,7 +185,7 @@
     <input id="bg-picker" type="file" accept="image/*,video/*" hidden />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>  
     <script type="module" src="/src/main.tsx"></script>  
-   <link rel="stylesheet" href="/admin.css?v=50" />  
-<script src="/admin.js?v=50" defer></script>  
+   <link rel="stylesheet" href="/admin.css?v=51" />  
+<script src="/admin.js?v=51" defer></script>  
   </body>  
 </html>

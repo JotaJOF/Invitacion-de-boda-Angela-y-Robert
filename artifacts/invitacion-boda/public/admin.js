@@ -163,7 +163,7 @@ async function loadContent() {
         setElementValue(element, saved.type, saved.value, () => loadVersion === contentLoadVersion);  
       }  
       const styleSaved = key ? content[`${key}__style`] : null;  
-      if (styleSaved && !isMediaElement(element)) {  
+      if (styleSaved) {  
         try {  
           const style = JSON.parse(styleSaved.value);  
           if (style.fontFamily) element.style.fontFamily = style.fontFamily;  
@@ -367,101 +367,60 @@ const onMove = (ev) => {
   loop();    
 }  
   
-function showStyleBar(element) {  
-  hideStyleBar();  
-  styleBarFor = element;  
-  styleBar = document.createElement("div");  
-  styleBar.className = "style-bar";  
-  styleBar.addEventListener("pointerdown", (e) => e.preventDefault());  
-  
-  const fontBtn = document.createElement("button");  
-  fontBtn.type = "button";  
-  fontBtn.className = "style-btn style-btn-font";  
-  fontBtn.textContent = currentFontLabel(element);  
-  
-  fontBtn.addEventListener("click", () => {  
-    styleBar.querySelectorAll(".style-menu").forEach((m) => m.remove());  
-    const menu = document.createElement("div");  
-    menu.className = "style-menu";  
-    FONTS.forEach((f) => {  
-      const opt = document.createElement("button");  
-      opt.type = "button";  
-      opt.className = "style-menu-item";  
-      opt.textContent = f.label;  
-      opt.style.fontFamily = f.value;  
-      opt.addEventListener("click", () => {  
-        element.style.fontFamily = f.value;  
-        fontBtn.textContent = f.label;  
-        markStyleChange(element);  
-        menu.remove();  
-      });  
-      menu.append(opt);  
-    });  
-    styleBar.append(menu);  
-  });  
-  
-  const sizeWrap = document.createElement("div");  
-  sizeWrap.className = "style-size";  
-  
-  const sizeDown = document.createElement("button");  
-  sizeDown.type = "button";  
-  sizeDown.className = "style-btn style-btn-mini";  
-  sizeDown.textContent = "−";  
-  
-  const sizeNum = document.createElement("span");  
-  sizeNum.className = "style-size-num";  
-  sizeNum.textContent = `${Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0}`;  
-  
-  const sizeUp = document.createElement("button");  
-  sizeUp.type = "button";  
-  sizeUp.className = "style-btn style-btn-mini";  
-  sizeUp.textContent = "+";  
-  
-  const bumpSize = (delta) => {  
-    const actual = Math.round(parseFloat(getComputedStyle(element).fontSize)) || 0;  
-    const next = Math.max(6, actual + delta);  
-    element.style.fontSize = `${next}px`;  
-    sizeNum.textContent = `${next}`;  
-    markStyleChange(element);  
-  };  
-  sizeDown.addEventListener("click", () => bumpSize(-1));  
-  sizeUp.addEventListener("click", () => bumpSize(1));  
-  
-  sizeWrap.append(sizeDown, sizeNum, sizeUp);  
-  
-  const moveWrap = document.createElement("div");  
-  moveWrap.className = "style-move";  
-  
-  if (!element.dataset.baseTransform) {  
-    element.dataset.baseTransform = element.style.transform || "";  
-  }  
-  
-  const mkArrow = (txt, dx, dy) => {  
-    const b = document.createElement("button");  
-    b.type = "button";  
-    b.className = "style-btn style-btn-mini";  
-    b.textContent = txt;  
-    b.addEventListener("click", () => {  
-      const x = (parseFloat(element.dataset.shiftX || "0") || 0) + dx;  
-      const y = (parseFloat(element.dataset.shiftY || "0") || 0) + dy;  
-      element.dataset.shiftX = String(x);  
-      element.dataset.shiftY = String(y);  
-      element.style.transform = `${element.dataset.baseTransform} translate(${x}px, ${y}px)`;  
-      markStyleChange(element);  
-    });  
-    return b;  
-  };  
-  moveWrap.append(  
-  mkArrow("◀", -5, 0),  
-  mkArrow("▲", 0, -5),  
-  mkArrow("▼", 0, 5),  
-  mkArrow("▶", 5, 0),  
-);  
-  
-  styleBar.append(fontBtn, sizeWrap, moveWrap);  
-  document.body.append(styleBar);  
-  positionStyleBar();  
-  addResizeHandles(element);  
+function showStyleBar(element) {
+  hideStyleBar();
+  styleBarFor = element;
+  styleBar = document.createElement("div");
+  styleBar.className = "style-bar";
+  styleBar.addEventListener("pointerdown", (e) => e.stopPropagation());
+  const media = isMediaElement(element);
+
+  const move = document.createElement("div");
+  move.className = "style-move";
+  const moveBy = (dx, dy) => {
+    const cs = getComputedStyle(element);
+    if (cs.display === "inline") element.style.display = "inline-block";
+    let x = Number(element.dataset.shiftX || 0) + dx;
+    let y = Number(element.dataset.shiftY || 0) + dy;
+    element.dataset.shiftX = String(x); element.dataset.shiftY = String(y);
+    const raw = element.style.transform || "";
+    const base = raw.replace(/translate\([^)]*\)/g, "").trim();
+    element.style.transform = `${base ? base + " " : ""}translate(${x}px, ${y}px)`;
+    markStyleChange(element);
+    positionStyleBar();
+  };
+  [["◀",-5,0],["▲",0,-5],["▼",0,5],["▶",5,0]].forEach(([label,dx,dy]) => {
+    const b=document.createElement("button"); b.type="button"; b.className="style-btn style-btn-mini"; b.textContent=label;
+    b.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); moveBy(dx,dy); }); move.append(b);
+  });
+
+  if (media) {
+    const replace=document.createElement("button"); replace.type="button"; replace.className="style-btn"; replace.textContent="Cambiar imagen";
+    replace.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); activeImage=element; imagePicker.value=""; imagePicker.click(); });
+    const smaller=document.createElement("button"); smaller.type="button"; smaller.className="style-btn style-btn-mini"; smaller.textContent="−"; smaller.title="Reducir";
+    smaller.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); const w=element.offsetWidth||80; if(w>24){element.style.width=`${w-8}px`; element.style.maxWidth=`${w-8}px`; markStyleChange(element); positionStyleBar();} });
+    const larger=document.createElement("button"); larger.type="button"; larger.className="style-btn style-btn-mini"; larger.textContent="+"; larger.title="Aumentar";
+    larger.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); const w=element.offsetWidth||80; element.style.width=`${w+8}px`; element.style.maxWidth=`${w+8}px`; markStyleChange(element); positionStyleBar(); });
+    styleBar.append(replace, smaller, larger, move);
+  } else {
+    const fontBtn=document.createElement("button"); fontBtn.type="button"; fontBtn.className="style-btn style-btn-font"; fontBtn.textContent=currentFontLabel(element);
+    fontBtn.addEventListener("click", e => {
+      e.preventDefault(); e.stopPropagation();
+      styleBar.querySelectorAll(".style-menu").forEach(m=>m.remove());
+      const menu=document.createElement("div"); menu.className="style-menu";
+      FONTS.forEach(f=>{const opt=document.createElement("button"); opt.type="button"; opt.className="style-menu-item"; opt.textContent=f.label; opt.style.fontFamily=f.value;
+        opt.addEventListener("click", ev=>{ev.preventDefault();ev.stopPropagation();element.style.fontFamily=f.value;fontBtn.textContent=f.label;markStyleChange(element);menu.remove();}); menu.append(opt);});
+      styleBar.append(menu);
+    });
+    const sizeWrap=document.createElement("div"); sizeWrap.className="style-size";
+    const down=document.createElement("button"); down.type="button"; down.className="style-btn style-btn-mini"; down.textContent="−";
+    const value=document.createElement("span"); value.className="style-size-num"; value.textContent=String(Math.round(parseFloat(getComputedStyle(element).fontSize))||0);
+    const up=document.createElement("button"); up.type="button"; up.className="style-btn style-btn-mini"; up.textContent="+";
+    const bump=d=>{const n=Math.max(6,(Math.round(parseFloat(getComputedStyle(element).fontSize))||0)+d);element.style.fontSize=`${n}px`;value.textContent=String(n);markStyleChange(element);};
+    down.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();bump(-1);}); up.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();bump(1);});
+    sizeWrap.append(down,value,up); styleBar.append(fontBtn,sizeWrap,move);
+  }
+  document.body.append(styleBar); positionStyleBar(); addResizeHandles(element);
 }  
 function positionStyleBar() {  
   if (!styleBar || !styleBarFor) return;  
@@ -514,11 +473,11 @@ function addPencils() {
     });  
   });  
 }  
-document.addEventListener("click", (e) => {  
-  if (!editing) return;  
-  // No bloquear la barra de estilo, los tiradores de tamaño ni el panel admin:  
-  if (!e.target.closest("#root")) return;  
-  const keyEl = e.target.closest("[data-key]");  
+document.addEventListener("click", (e) => {
+  if (!editing) return;
+  if (!e.target.closest("#root")) return;
+  const envelope = e.target.closest(".envelope-button");
+  const keyEl = e.target.closest("[data-key]") || (envelope && envelope.querySelector('[data-key="envelope_base_img"]'));
   const btn = e.target.closest("button, a");  
   // FAQ: dejar que se despliegue  
   if (btn && (btn.classList.contains("faq-question") || btn.querySelector('[data-key^="faq_question"]'))) return;  
@@ -526,12 +485,11 @@ document.addEventListener("click", (e) => {
     if (btn) { e.preventDefault(); e.stopPropagation(); }  
     return;  
   }  
-  if (btn) { e.preventDefault(); e.stopPropagation(); }  
+  if (btn) e.preventDefault();
+  e.stopPropagation();
   if (keyEl.classList.contains("is-editing")) return;  
-  if (isMediaElement(keyEl)) {  
-    activeImage = keyEl;  
-    imagePicker.value = "";  
-    imagePicker.click();  
+  if (isMediaElement(keyEl)) {
+    showStyleBar(keyEl);
   } else if (keyEl.dataset.styleOnly) {  
     showStyleBar(keyEl);  
   } else {  
@@ -825,179 +783,45 @@ function applyPermissionsAndNav() {
 }
 
 async function initWeddingManagement() {
-  const selector = document.querySelector("#admin-wedding-selector");
-  const toggleBtn = document.querySelector("#btn-toggle-new-wedding");
-  const formBox = document.querySelector("#new-wedding-form");
-  const slugInput = document.querySelector("#nw-slug");
-  const previewBox = document.querySelector("#nw-link-preview");
-  const saveBtn = document.querySelector("#btn-save-new-wedding");
-  const homeBtn = document.querySelector("#panel-home-btn");
-
-  if (!selector) return;
-
-  // Cargar lista de bodas
-  try {
-    const { weddings = [] } = await api("/api/weddings");
-    let optionsHtml = '<option value="angela-robert">Angela Palmerston y Robert Wilson (Principal - /)</option>';
-    for (const w of weddings) {
-      if (w.id !== "angela-robert") {
-        optionsHtml += `<option value="${w.id}">${w.names} (/${w.id})</option>`;
-      }
-    }
-    selector.innerHTML = optionsHtml;
-    selector.value = currentWedding;
-  } catch (err) {
-    console.warn("No se pudieron cargar bodas adicionales:", err);
-  }
-
-  function updateSelectedWeddingUI(slug) {
-    const isMain = slug === "angela-robert";
-    const urlPath = isMain ? "/" : `/${slug}`;
-    const fullUrl = `${window.location.origin}${urlPath}`;
-
-    const linkEl = document.querySelector("#link-active-wedding");
-    if (linkEl) {
-      linkEl.href = urlPath;
-      linkEl.textContent = fullUrl;
-    }
-
-    const openBtn = document.querySelector("#btn-open-active-tab");
-    if (openBtn) {
-      openBtn.href = urlPath;
-    }
-
-    const editBtn = document.querySelector("#btn-edit-active-direct");
-    if (editBtn) {
-      editBtn.onclick = () => {
-        const currentActive = getActiveWeddingSlug();
-        if (currentActive === slug) {
-          adminPanel.hidden = true;
-          adminFloatBar.hidden = false;
-          setEditingMode(true);
-        } else {
-          const targetEditUrl = `${urlPath}${urlPath.includes("?") ? "&" : "?"}edit=1`;
-          window.open(targetEditUrl, "_blank");
-        }
-      };
-    }
-
-    const copyBtn = document.querySelector("#btn-copy-wedding-link");
-    if (copyBtn) {
-      copyBtn.onclick = async () => {
-        try {
-          await navigator.clipboard.writeText(fullUrl);
-          showToast("Enlace copiado al portapapeles");
-        } catch {
-          showToast(fullUrl);
-        }
-      };
-    }
-  }
-
-  updateSelectedWeddingUI(currentWedding);
-
-  // Cambio de boda activa
-  selector.onchange = () => {
-    currentWedding = selector.value;
-    if (homeBtn) {
-      homeBtn.href = currentWedding === "angela-robert" ? "/" : `/${currentWedding}`;
-    }
-    updateSelectedWeddingUI(currentWedding);
-    loadPanel();
-    applyPermissionsAndNav();
-    showToast(`Boda seleccionada: ${currentWedding}`);
+  const selector=document.querySelector("#admin-wedding-selector");
+  const toggleBtn=document.querySelector("#btn-toggle-new-wedding");
+  const formBox=document.querySelector("#new-wedding-form");
+  const slugInput=document.querySelector("#nw-slug");
+  const namesInput=document.querySelector("#nw-names");
+  const preview=document.querySelector("#nw-link-preview");
+  const saveBtn=document.querySelector("#btn-save-new-wedding");
+  const homeBtn=document.querySelector("#panel-home-btn");
+  const label=document.querySelector("#wedding-selected-name-label");
+  if(!selector) return;
+  const update=()=>{
+    const opt=selector.options[selector.selectedIndex];
+    if(label) label.textContent=opt?.textContent || currentWedding;
+    if(homeBtn){homeBtn.href=currentWedding==="angela-robert"?"/":`/${currentWedding}`;homeBtn.target="_self";}
   };
-
-  // Botón mostrar/ocultar formulario nueva boda
-  if (toggleBtn && formBox) {
-    toggleBtn.onclick = () => {
-      const isHidden = formBox.style.display === "none";
-      formBox.style.display = isHidden ? "block" : "none";
-      toggleBtn.textContent = isHidden ? "✕ CERRAR" : "+ NUEVA BODA";
-    };
-  }
-
-  // Vista previa en vivo del slug
-  if (slugInput && previewBox) {
-    slugInput.oninput = () => {
-      const cleanSlug = slugInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-");
-      previewBox.textContent = `https://invitacion.comutech.workers.dev/${cleanSlug || "nueva-boda"}`;
-    };
-  }
-
-  // Guardar nueva boda
-  if (saveBtn) {
-    saveBtn.onclick = async () => {
-      const names = document.querySelector("#nw-names")?.value.trim();
-      const rawSlug = document.querySelector("#nw-slug")?.value.trim().toLowerCase();
-      const slug = rawSlug ? rawSlug.replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-") : "";
-      const dateIso = document.querySelector("#nw-date")?.value;
-      const cUser = document.querySelector("#nw-user")?.value.trim();
-      const cPass = document.querySelector("#nw-pass")?.value;
-
-      if (!names || !slug) {
-        alert("Por favor ingresa los nombres de los novios y el slug del link.");
-        return;
-      }
-
-      saveBtn.disabled = true;
-      saveBtn.textContent = "CREANDO BODA...";
-
-      const permissions = {
-        location: document.querySelector("#perm-loc")?.checked ?? true,
-        whatsapp: document.querySelector("#perm-ws")?.checked ?? true,
-        date: document.querySelector("#perm-date")?.checked ?? true,
-        drive: document.querySelector("#perm-drive")?.checked ?? true,
-        music: document.querySelector("#perm-music")?.checked ?? true,
-        guests: document.querySelector("#perm-guests")?.checked ?? true,
-        invites: document.querySelector("#perm-invites")?.checked ?? true,
-      };
-
-      try {
-        await api("/api/weddings", {
-          method: "POST",
-          body: JSON.stringify({
-            id: slug,
-            names,
-            date_iso: dateIso,
-            couple_username: cUser || null,
-            couple_password: cPass || null,
-            permissions
-          })
-        });
-
-        showToast(`¡Boda ${names} creada exitosamente! Link: /${slug}`);
-
-        // Agregar al selector y seleccionar
-        const opt = document.createElement("option");
-        opt.value = slug;
-        opt.textContent = `${names} (/${slug})`;
-        selector.appendChild(opt);
-        selector.value = slug;
-
-        currentWedding = slug;
-        if (homeBtn) homeBtn.href = `/${slug}`;
-        updateSelectedWeddingUI(slug);
-
-        // Reset y ocultar formulario
-        if (formBox) formBox.style.display = "none";
-        if (toggleBtn) toggleBtn.textContent = "+ NUEVA BODA";
-        document.querySelector("#nw-names").value = "";
-        document.querySelector("#nw-slug").value = "";
-        document.querySelector("#nw-date").value = "";
-        if (document.querySelector("#nw-user")) document.querySelector("#nw-user").value = "";
-        if (document.querySelector("#nw-pass")) document.querySelector("#nw-pass").value = "";
-
-        loadPanel();
-        applyPermissionsAndNav();
-      } catch (err) {
-        alert(`Error al crear boda: ${err.message}`);
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = "CREAR BODA Y ACTIVAR ENLACE";
-      }
-    };
-  }
+  try {
+    const {weddings=[]}=await api("/api/weddings");
+    selector.innerHTML='<option value="angela-robert">Angela Palmerston y Robert Wilson (Principal - /)</option>';
+    weddings.forEach(w=>{if(w.id==="angela-robert"||w.id==="erick-erika")return;const o=document.createElement("option");o.value=w.id;o.textContent=`${w.names} (/${w.id})`;selector.append(o);});
+    selector.value=currentWedding; update();
+  } catch {}
+  selector.onchange=()=>{currentWedding=selector.value;update();loadPanel();applyPermissionsAndNav();showToast(`Boda seleccionada: ${currentWedding}`);};
+  if(toggleBtn&&formBox) toggleBtn.onclick=()=>{const open=formBox.style.display==="none";formBox.style.display=open?"block":"none";toggleBtn.textContent=open?"✕ CERRAR":"+ NUEVA BODA";};
+  if(namesInput&&slugInput&&preview){namesInput.oninput=()=>{if(!slugInput.dataset.manual){slugInput.value=namesInput.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");preview.textContent=`${location.origin}/${slugInput.value}`;}};slugInput.oninput=()=>{slugInput.dataset.manual="1";preview.textContent=`${location.origin}/${slugInput.value.trim()}`;};}
+  if(saveBtn) saveBtn.onclick=async()=>{
+    const names=namesInput?.value.trim();const slug=slugInput?.value.trim().toLowerCase();
+    if(!names||!slug){alert("Por favor ingresa los nombres y el slug.");return;}
+    saveBtn.disabled=true;saveBtn.textContent="CREANDO COPIA…";
+    const permissions={location:document.querySelector("#perm-loc")?.checked??true,whatsapp:document.querySelector("#perm-ws")?.checked??true,date:document.querySelector("#perm-date")?.checked??true,drive:document.querySelector("#perm-drive")?.checked??true,music:document.querySelector("#perm-music")?.checked??true,guests:document.querySelector("#perm-guests")?.checked??true,invites:document.querySelector("#perm-invites")?.checked??true,edit:true,themes:true};
+    try {
+      await api("/api/weddings",{method:"POST",body:JSON.stringify({id:slug,names,date_iso:document.querySelector("#nw-date")?.value,couple_username:document.querySelector("#nw-user")?.value.trim()||null,couple_password:document.querySelector("#nw-pass")?.value||null,permissions})});
+      const opt=document.createElement("option");opt.value=slug;opt.textContent=`${names} (/${slug})`;selector.append(opt);selector.value=slug;currentWedding=slug;update();
+      loadPanel();applyPermissionsAndNav();showToast(`Copia de Angela y Robert creada: ${names}`);
+      if(formBox)formBox.style.display="none";if(toggleBtn)toggleBtn.textContent="+ NUEVA BODA";
+      if(namesInput)namesInput.value="";if(slugInput){slugInput.value="";delete slugInput.dataset.manual;}
+      const date=document.querySelector("#nw-date");if(date)date.value="";
+      ["#nw-user","#nw-pass"].forEach(sel=>{const el=document.querySelector(sel);if(el)el.value="";});
+    } catch(err){alert(`Error al crear boda: ${err.message}`);} finally{saveBtn.disabled=false;saveBtn.textContent="CREAR BODA Y ACTIVAR ENLACE";}
+  };
 }
 
 function renderSuperadminControls() {
@@ -1032,10 +856,13 @@ document.querySelector("#panel-save").addEventListener("click", async () => {
   }  
 });  
   
-document.querySelector("#panel-edit").addEventListener("click", () => {  
-  adminPanel.hidden = true;  
-  adminFloatBar.hidden = false;  
-  setEditingMode(true);  
+document.querySelector("#panel-edit").addEventListener("click", () => {
+  const active=getActiveWeddingSlug();
+  if(currentSession?.role==="superadmin" && currentWedding!==active){
+    window.location.assign(`${currentWedding==="angela-robert"?"/":`/${currentWedding}`}?edit=1`);
+    return;
+  }
+  adminPanel.hidden=true; adminFloatBar.hidden=false; setEditingMode(true);
 });  
   
 document.querySelector("#float-back").addEventListener("click", () => {  
@@ -1090,7 +917,8 @@ async function loadInvites() {
   const { guests = [] } = await api("/api/guests", { method: "GET" });  
   invitesData = guests.filter((g) => g.code);  
   invitesBody.innerHTML = invitesData.map((g) => {  
-    const link = `${location.origin}/?c=${g.code}`;  
+    const invitePath = currentWedding === "angela-robert" ? "/" : `/${currentWedding}`;
+    const link = `${location.origin}${invitePath}?c=${g.code}`;  
     const conf = g.attendance === "yes" ? "CONFIRMADO" : g.attendance === "no" ? "NO ASISTE" : "PENDIENTE";  
     const wa = g.phone  
       ? `<a href="https://wa.me/${g.phone}?text=${encodeURIComponent(`Hola, aquí está tu invitación a nuestra boda: ${link}`)}" target="_blank">Enviar</a>`  

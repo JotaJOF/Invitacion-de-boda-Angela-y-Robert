@@ -199,6 +199,14 @@ function getWeddingSlug(): string {
   return path.toLowerCase();
 }
 
+function displayGivenName(value: string | undefined, initial: string, fallback: string) {
+  const name = (value || fallback).trim();
+  const first = initial.trim();
+  return first && name.toLocaleUpperCase().startsWith(first.toLocaleUpperCase())
+    ? name.slice(first.length).trimStart()
+    : name;
+}
+
 function App() {  
   const [envelopeOpen, setEnvelopeOpen] = useState(false);  
   const [openFaq, setOpenFaq] = useState<number | null>(null);  
@@ -206,14 +214,9 @@ function App() {
   const [albumQueue, setAlbumQueue] = useState<{ id: string; f: File; status: 'pendiente' | 'subiendo' | 'listo' | 'error'; progress: number }[]>([]);  
   const [uploading, setUploading] = useState(false);  
   const albumInput = useRef<HTMLInputElement>(null);
-  const [cfg, setCfg] = useState<Record<string, string>>(() => {
-    if (typeof window === 'undefined') return {};
-    try {
-      const raw = localStorage.getItem('wedding_content_' + getWeddingSlug());
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    return {};
-  });
+  // Never paint stale cached names/styles before the server returns this wedding's content.
+  const [cfg, setCfg] = useState<Record<string, string>>({});
+  const [contentReady, setContentReady] = useState(false);
   const inviteCode = new URLSearchParams(window.location.search).get('c') || '';  
   const [invitee, setInvitee] = useState<{ name: string; max_passes: number } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);  
@@ -232,17 +235,24 @@ function App() {
   useEffect(() => {  
     const slug = getWeddingSlug();
     fetch(`/api/content?wedding=${encodeURIComponent(slug)}`)
-      .then((r) => r.json())
-      .then(({ content = {} }) => {  
-        const flat: Record<string, string> = {};  
-        for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;  
-        try { localStorage.setItem("wedding_content_" + slug, JSON.stringify(flat)); } catch {}  
-        setCfg(flat);  
-        // setLoading(false)
+      .then((r) => {
+        if (!r.ok) throw new Error("No se pudo cargar la invitación.");
+        return r.json();
+      })
+      .then(({ content = {} }) => {
+        const flat: Record<string, string> = {};
+        for (const [k, v] of Object.entries(content) as [string, { value: string }][]) flat[k] = v.value;
+        setCfg(flat);
+        try { localStorage.setItem("wedding_content_" + slug, JSON.stringify(flat)); } catch {}
       })
       .catch(() => {
-        // setLoading(false)
-      });  
+        // La caché solo se usa después de fallar la lectura, nunca antes de ella.
+        try {
+          const raw = localStorage.getItem("wedding_content_" + slug);
+          if (raw) setCfg(JSON.parse(raw));
+        } catch {}
+      })
+      .finally(() => setContentReady(true));  
 
     if (inviteCode) {  
       fetch(`/api/invite/${encodeURIComponent(inviteCode)}`).then((r) => r.json())  
@@ -387,21 +397,23 @@ const uploadToDrive = async () => {
   
   
 
+  if (!contentReady) return null;
+
   return (  
     <main className="invite-shell" data-testid="page-wedding-invitation">  
       <section className="cover" aria-label="Invitación personalizada" data-bg="cover">  
         <div className="cover-names">  
           <div className="cover-name" data-testid="text-bride-name">  
-            <span className="script" data-key="bride_initial">{isMain ? 'A' : (cfg['bride_initial'] || (slug.split('-')[1] ? slug.split('-')[1].charAt(0).toUpperCase() : 'A'))}</span>  
+            <span className="script" data-key="bride_initial">{cfg['bride_initial'] ?? (isMain ? 'A' : (slug.split('-')[1]?.charAt(0).toUpperCase() || ''))}</span>  
             <span className="cover-name-text">  
-              <span className="given-name" data-key="bride_first_name">{isMain ? 'NGELA' : (cfg['bride_first_name'] || (slug.split('-')[1] ? slug.split('-')[1].slice(1).toUpperCase() : 'NGELA'))}</span>  
+              <span className="given-name" data-key="bride_first_name">{displayGivenName(cfg['bride_first_name'], cfg['bride_initial'] ?? (isMain ? 'A' : (slug.split('-')[1]?.charAt(0).toUpperCase() || '')), isMain ? 'ANGELA' : '')}</span>  
               <span className="surname" data-key="bride_last_name">{cfg['bride_last_name'] ?? (isMain ? 'PALMERSTON' : '')}</span>  
             </span>  
           </div>  
           <div className="cover-name" data-testid="text-groom-name">  
-            <span className="script" data-key="groom_initial">{isMain ? 'R' : (cfg['groom_initial'] || (slug.split('-')[0] ? slug.split('-')[0].charAt(0).toUpperCase() : 'R'))}</span>  
+            <span className="script" data-key="groom_initial">{cfg['groom_initial'] ?? (isMain ? 'R' : (slug.split('-')[0]?.charAt(0).toUpperCase() || ''))}</span>  
             <span className="cover-name-text">  
-              <span className="given-name" data-key="groom_first_name">{isMain ? 'OBERT' : (cfg['groom_first_name'] || (slug.split('-')[0] ? slug.split('-')[0].slice(1).toUpperCase() : 'OBERT'))}</span>  
+              <span className="given-name" data-key="groom_first_name">{displayGivenName(cfg['groom_first_name'], cfg['groom_initial'] ?? (isMain ? 'R' : (slug.split('-')[0]?.charAt(0).toUpperCase() || '')), isMain ? 'ROBERT' : '')}</span>  
               <span className="surname" data-key="groom_last_name">{cfg['groom_last_name'] ?? (isMain ? 'WILSON' : '')}</span>  
             </span>  
           </div>  

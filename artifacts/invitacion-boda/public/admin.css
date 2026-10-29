@@ -882,3 +882,44 @@ body.themes-active [data-bg] { cursor: pointer; }
   border-radius: 8px;
   text-decoration: none;
 }
+
+/* Keep empty editable fields visible and selectable after clearing their text. */
+.editable-target {
+  min-width: 2.5rem;
+  min-height: 1.6em;
+  box-sizing: border-box;
+}
+.editable-target:empty,
+.editable-target[contenteditable="true"]:empty {
+  display: inline-block !important;
+  min-width: 3.5rem;
+  min-height: 2rem;
+  vertical-align: middle;
+  outline: 1px dashed rgba(80, 100, 67, .55);
+  outline-offset: 3px;
+}
+.wedding-selected-indicator {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  margin-top: .75rem;
+  padding: .7rem .85rem;
+  border: 1px solid rgba(80,100,67,.22);
+  border-radius: .8rem;
+  background: rgba(80,100,67,.07);
+  color: #34442d;
+  font-size: .9rem;
+}
+.wedding-selected-indicator .indicator-icon { font-weight: 700; }
+
+.new-wedding-form { display:grid; gap:.55rem; margin-top:1rem; padding:1rem; border:1px solid #e6ded5; border-radius:14px; background:#fffdfa; }
+.new-wedding-form h4 { margin:0 0 .2rem; color:#40532a; font-size:1rem; }
+.new-wedding-form label { font-size:.82rem; }
+.new-wedding-form input:not([type="checkbox"]) { width:100%; min-height:42px; padding:.6rem .7rem; border:1px solid #d9cec4; border-radius:9px; }
+.wedding-link-preview { margin:0; overflow-wrap:anywhere; color:#586d37; font-size:.8rem; }
+.wedding-permissions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.45rem; border:1px solid #e6ded5; border-radius:10px; padding:.7rem; }
+.wedding-permissions legend { padding:0 .25rem; font-size:.8rem; font-weight:600; }
+.wedding-permissions label { display:flex; align-items:center; gap:.35rem; }
+.editable-target { min-width:2.5rem; min-height:1.6em; box-sizing:border-box; }
+.editable-target:empty, .editable-target[contenteditable="true"]:empty { display:inline-block !important; min-width:3.5rem; min-height:2rem; vertical-align:middle; outline:1px dashed rgba(80,100,67,.55); outline-offset:3px; }
+.editable-target.envelope-flower { pointer-events:auto !important; }

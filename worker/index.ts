@@ -347,8 +347,8 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 
     if (path === "/api/weddings" && method === "POST") {
       const session = await getSession(request, env);
-      if (session && session.role === "couple") {
-        return json({ error: "Acceso denegado: solo el administrador general puede crear bodas." }, 403);
+      if (!session || session.role !== "superadmin") {
+        return json({ error: "Inicia sesión como administrador general para crear bodas." }, 401);
       }
       const body = (await request.json()) as Record<string, unknown>;
       const rawId = typeof body.id === "string" ? body.id.trim().toLowerCase() : "";
@@ -360,10 +360,40 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         return json({ error: "El slug y los nombres son obligatorios." }, 400);
       }
 
-      const { error: wErr } = await supabase(env)
-        .from("weddings")
-        .upsert({ id, names, date_iso }, { onConflict: "id" });
+      const db = supabase(env);
+      const { data: existing } = await db.from("weddings").select("id").eq("id", id).maybeSingle();
+      if (existing) return json({ error: "Ese enlace ya existe. Elige otra terminación." }, 409);
+
+      const { error: wErr } = await db.from("weddings").insert({ id, names, date_iso });
       if (wErr) return json({ error: "No se pudo guardar la boda." }, 502);
+
+      // Start every new invitation from the exact stored Angela & Robert template.
+      const { data: template, error: templateError } = await db
+        .from("wedding_content").select("key,type,value,updated_at")
+        .eq("wedding_id", "angela-robert");
+      if (templateError) {
+        await db.from("weddings").delete().eq("id", id);
+        return json({ error: "No se pudo leer la invitación original para copiarla." }, 502);
+      }
+      const copied = new Map((template || []).map((row: any) => [row.key, { ...row, wedding_id: id }]));
+      const nameParts = names.split(/\s+(?:y|&|e)\s+/i);
+      const bride = (nameParts[0] || names).trim();
+      const groom = (nameParts[1] || "").trim();
+      const splitName = (full: string) => { const [first, ...rest] = full.split(/\s+/); return { first: first || "", last: rest.join(" ") }; };
+      const brideParts = splitName(bride), groomParts = splitName(groom);
+      const put = (key: string, value: string) => copied.set(key, { wedding_id: id, key, type: "text", value, updated_at: new Date().toISOString() });
+      if (bride) { put("bride_initial", brideParts.first.slice(0,1).toUpperCase()); put("bride_first_name", brideParts.first.toUpperCase()); put("bride_last_name", brideParts.last.toUpperCase()); }
+      if (groom) { put("groom_initial", groomParts.first.slice(0,1).toUpperCase()); put("groom_first_name", groomParts.first.toUpperCase()); put("groom_last_name", groomParts.last.toUpperCase()); }
+      put("couple_heading", names); put("couple_names", `${brideParts.first}${groom ? ` y ${groomParts.first}` : ""}`); put("closing_names", `${brideParts.first}${groom ? ` y ${groomParts.first}` : ""}`);
+      if (date_iso) put("cfg_date", date_iso);
+      const cloneRows = [...copied.values()];
+      if (cloneRows.length) {
+        const { error: cloneError } = await db.from("wedding_content").insert(cloneRows);
+        if (cloneError) {
+          await db.from("weddings").delete().eq("id", id);
+          return json({ error: "No se pudo copiar el diseño de la boda original." }, 502);
+        }
+      }
 
       if (typeof body.couple_username === "string" && body.couple_username.trim()) {
         const cUser = body.couple_username.trim();
@@ -374,12 +404,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         };
 
         if (cPass) {
-          await supabase(env).rpc("create_or_update_couple_user", {
+          const { error: userError } = await supabase(env).rpc("create_or_update_couple_user", {
             p_username: cUser,
             p_password: cPass,
             p_wedding_id: id,
             p_permissions: cPerms
           });
+          if (userError) return json({ error: "La boda se creó, pero no se pudo crear el usuario de pareja." }, 502);
         }
       }
 
@@ -402,6 +433,8 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     // ==========================================
     if (path === "/api/content" && method === "GET") {  
       const weddingParam = url.searchParams.get("wedding") || "angela-robert";
+      const { data: requestedWedding } = await supabase(env).from("weddings").select("id").eq("id", weddingParam).maybeSingle();
+      if (!requestedWedding) return json({ error: "Boda no encontrada." }, 404);
 
       let contentMap: Record<string, { type: string; value: string }> = {};
 
@@ -418,7 +451,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
             { type, value },
           ]),
         );
-      } else {
+      } else if (weddingParam === "angela-robert") {
         const { data, error } = await supabase(env)  
           .from("site_content")  
           .select("key,type,value")  
