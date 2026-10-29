@@ -271,7 +271,20 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       return json({ content });  
     }  
   
-    // ===== Lista de invitados (solo admin) =====  
+    // ===== Datos de una boda por su slug (público) =====    
+    // /api/wedding/erick-erika → devuelve nombres y fecha de esa boda    
+    if (path.startsWith("/api/wedding/") && method === "GET") {    
+      const id = decodeURIComponent(path.slice("/api/wedding/".length)).toLowerCase();    
+      const { data } = await supabase(env)    
+        .from("weddings")    
+        .select("id,names,date_iso")    
+        .eq("id", id)    
+        .maybeSingle();    
+      if (!data) return json({ error: "Boda no encontrada." }, 404);    
+      return json({ wedding: data });    
+    }    
+    
+    // ===== Lista de invitados (solo admin) =====    
     if (path === "/api/guests" && method === "GET") {  
       const session = await getSession(request, env);  
       if (!session) return json({ error: "Inicia sesión." }, 401);  
