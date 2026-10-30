@@ -238,7 +238,7 @@ function App() {
           if (s.marginTop) rules.push(`margin-top: ${s.marginTop} !important;`);
           if (s.marginBottom) rules.push(`margin-bottom: ${s.marginBottom} !important;`);
           if (rules.length) {
-            css += `[data-key="${baseKey}"] { ${rules.join(" ")} }\n`;
+            css += `#root [data-key="${baseKey}"] { ${rules.join(" ")} }\n`;
           }
         } catch {}
       }

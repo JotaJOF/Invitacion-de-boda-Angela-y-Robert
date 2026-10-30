@@ -325,7 +325,7 @@ function updateDynamicCssRule(key, s) {
   if (s.marginBottom) rules.push(`margin-bottom: ${s.marginBottom} !important;`);
 
   const rulePattern = new RegExp(`\[data-key="${key}"\]\s*\{[^}]*\}`, "g");
-  const newRule = rules.length ? `[data-key="${key}"] { ${rules.join(" ")} }` : "";
+  const newRule = rules.length ? `#root [data-key="${key}"] { ${rules.join(" ")} }` : "";
   let currentCss = styleTag.textContent || "";
   if (rulePattern.test(currentCss)) {
     styleTag.textContent = currentCss.replace(rulePattern, newRule);
@@ -621,7 +621,7 @@ function showStyleBar(element) {
     up.textContent = "+";
     const bump = (d) => {
       const cur = parseFloat(getComputedStyle(element).fontSize) || 16;
-      const n = Math.max(8, Math.min(120, Math.round(cur + d)));
+      const n = Math.max(8, Math.min(120, Math.round(cur + d * 2)));
       element.style.setProperty("font-size", `${n}px`, "important");
       value.textContent = String(n);
       markStyleChange(element);
