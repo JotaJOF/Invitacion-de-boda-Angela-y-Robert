@@ -710,8 +710,12 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 }
 
 
-/* Prevenir saltos o animaciones no deseadas en textos editables */
-[data-key] {
-  transition: none !important;
-  animation: none !important;
-}
+/* Prevenir saltos o animaciones no deseadas en textos editables */  
+[data-key] {  
+  transition: none !important;  
+  animation: none !important;  
+}  
+  
+/* El recuadro "Reserva / esta fecha" nunca debe encimarse (vista = edición) */  
+.save-date-badge { gap: 10px !important; }  
+.save-date-badge > [data-key] { line-height: 1.35; min-height: 1.4em; }
