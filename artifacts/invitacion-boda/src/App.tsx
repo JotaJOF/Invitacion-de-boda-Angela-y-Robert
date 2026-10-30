@@ -434,9 +434,9 @@ const uploadToDrive = async () => {
       <section className="cover" aria-label="Invitación personalizada" data-bg="cover">  
         <div className="cover-names">  
           <div className="cover-name" data-testid="text-bride-name">  
-            <span className="script" data-key="bride_initial">{cfg['bride_initial'] ?? (isMain ? 'A' : (slug.split('-')[1]?.charAt(0).toUpperCase() || ''))}</span>  
+            <span className="script" data-key="bride_initial">{cfg['bride_initial'] ?? (isMain ? 'a' : (slug.split('-')[1]?.charAt(0).toUpperCase() || ''))}</span>  
             <span className="cover-name-text">  
-              <span className="given-name" data-key="bride_first_name">{displayGivenName(cfg['bride_first_name'], cfg['bride_initial'] ?? (isMain ? 'A' : (slug.split('-')[1]?.charAt(0).toUpperCase() || '')), isMain ? 'ANGELA' : '')}</span>  
+              <span className="given-name" data-key="bride_first_name">{displayGivenName(cfg['bride_first_name'], cfg['bride_initial'] ?? (isMain ? 'a' : (slug.split('-')[1]?.charAt(0).toUpperCase() || '')), isMain ? 'ANGELA' : '')}</span>  
               <span className="surname" data-key="bride_last_name">{cfg['bride_last_name'] ?? (isMain ? 'PALMERSTON' : '')}</span>  
             </span>  
           </div>  

@@ -421,14 +421,16 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 @media (min-width: 600px) { .invite-shell { margin: 32px auto; border-radius: 28px; border: 1px solid rgba(228,219,208,.7); box-shadow: 0 24px 70px rgba(67,56,47,.14); } }
 .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
 .script { font-family: 'Great Vibes', cursive; }
-.cover { position: relative; padding: 28px 16px 44px; background: #fbf7f4; text-align: center; }
+.cover { position: relative; padding: 28px 16px 44px; background: #fbf7f4; text-align: center; padding-inline: 12px; }
 .cover-names { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; max-width: 420px; margin: 0 auto; color: #8f6e4e; }
 .cover-name { position: relative; width: 48%; min-width: 48%; min-height: 96px; line-height: 1; }
-.cover-name .script { position: absolute; top: 0; left: 0; font-size: 70px; line-height: .78; color: #8f6e4e; text-shadow: 0 2px 8px rgba(143,110,78,.1); }
-.cover-name-text { position: absolute; top: 34px; left: 70px; display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap; }
-.cover-name .given-name { font-family: 'Cormorant Garamond',serif; font-size: 14.5px; letter-spacing: .22em; line-height: 1; font-weight: 500; }
-.cover-name .surname { font-family: 'Cormorant Garamond',serif; font-size: 11px; letter-spacing: .2em; margin-top: 3px; opacity: .85; }
-.cover-and { position: absolute; left: 50%; top: 98px; transform: translateX(-50%); color: #7d6349; font-size: 24px; }
+.cover-name .script { position: absolute; top: 0; left: 0; font-family: 'Great Vibes', cursive; font-size: 70px; line-height: .78; color: #8f6e4e; text-shadow: 0 2px 8px rgba(143,110,78,.1); }
+.cover-name[data-testid="text-bride-name"] .cover-name-text { left: 56px; }
+.cover-name[data-testid="text-groom-name"] .cover-name-text { left: 88px; }
+.cover-name-text { position: absolute; top: 34px; display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap; }
+.cover-name .given-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 14.5px; letter-spacing: .22em; line-height: 1; font-weight: 500; }
+.cover-name .surname { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 11px; letter-spacing: .2em; margin-top: 4px; opacity: .85; }
+.cover-and { position: absolute; left: 50%; top: 88px; transform: translateX(-50%); color: #7d6349; font-family: 'Great Vibes', cursive; font-size: 24px; }
 .ornament-rule { display: flex; align-items: center; justify-content: center; gap: 9px; color: #a3825f; }
 .ornament-rule::before,.ornament-rule::after { content: ''; height: 1px; width: 28%; background: linear-gradient(90deg,transparent,#bba58c,transparent); }
 .cover-date { margin-top: 6px; color: #554a40; font-size: 13.5px; letter-spacing: .08em; font-weight: 500; }

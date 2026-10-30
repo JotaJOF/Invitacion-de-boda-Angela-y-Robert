@@ -467,37 +467,27 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       }
 
       if (weddingParam === "angela-robert") {
-        contentMap["bride_first_name"] = contentMap["bride_first_name"] || { type: "text", value: "ANGELA" };
-        contentMap["bride_last_name"] = contentMap["bride_last_name"] || { type: "text", value: "PALMERSTON" };
-        contentMap["groom_first_name"] = contentMap["groom_first_name"] || { type: "text", value: "ROBERT" };
-        contentMap["groom_last_name"] = contentMap["groom_last_name"] || { type: "text", value: "WILSON" };
-        contentMap["couple_heading"] = contentMap["couple_heading"] || { type: "text", value: "Angela Palmerston y Robert Wilson" };
-        contentMap["couple_names"] = contentMap["couple_names"] || { type: "text", value: "Angela y Robert" };
-        contentMap["closing_names"] = contentMap["closing_names"] || { type: "text", value: "Angela y Robert" };
+        contentMap["bride_initial"] = { type: "text", value: "a" };
+        contentMap["bride_first_name"] = { type: "text", value: "NGELA" };
+        contentMap["bride_last_name"] = { type: "text", value: "PALMERSTON" };
+        contentMap["groom_initial"] = { type: "text", value: "R" };
+        contentMap["groom_first_name"] = { type: "text", value: "OBERT" };
+        contentMap["groom_last_name"] = { type: "text", value: "WILSON" };
+        contentMap["couple_heading"] = { type: "text", value: "Angela Palmerston y Robert Wilson" };
+        contentMap["couple_names"] = { type: "text", value: "Angela y Robert" };
+        contentMap["closing_names"] = { type: "text", value: "Angela y Robert" };
+        contentMap["cover_and"] = { type: "text", value: "and" };
 
-        for (const corruptKey of ["bride_first_name__style", "bride_last_name__style", "groom_first_name__style", "groom_last_name__style", "groom_initial__style", "cover_date_fmt__style"]) {
+        for (const corruptKey of ["bride_initial__style", "groom_initial__style", "bride_first_name__style", "bride_last_name__style", "groom_first_name__style", "groom_last_name__style", "cover_date_fmt__style", "cover_place__style"]) {
           if (contentMap[corruptKey]?.value) {
             try {
               const s = JSON.parse(contentMap[corruptKey].value);
               if (s.transform && (s.transform.includes("translate(-10px") || s.transform.includes("translate(10px") || (s.transform.match(/translate/g) || []).length > 1)) {
                 delete s.transform;
               }
-              if (s.marginLeft === "auto") {
-                delete s.marginLeft;
-              }
-              contentMap[corruptKey].value = JSON.stringify(s);
-            } catch {}
-          }
-        }
-        for (const corruptKey of ["__skip__"]) {
-          if (contentMap[corruptKey]?.value) {
-            try {
-              const s = JSON.parse(contentMap[corruptKey].value);
-              if (s.transform && (s.transform.match(/translate/g) || []).length > 1) {
-                delete s.transform;
-              }
-              if (s.marginLeft === "auto") {
-                delete s.marginLeft;
+              if (s.marginLeft === "auto") delete s.marginLeft;
+              if (corruptKey === "cover_date_fmt__style" && s.fontFamily && s.fontFamily.includes("Throhand Ink")) {
+                delete s.fontFamily;
               }
               contentMap[corruptKey].value = JSON.stringify(s);
             } catch {}

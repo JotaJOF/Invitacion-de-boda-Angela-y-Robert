@@ -1,3 +1,41 @@
+const KEY_LABELS = {
+  bride_initial: "Inicial de la Novia (a)",
+  bride_first_name: "Nombre de la Novia (NGELA)",
+  bride_last_name: "Apellido de la Novia (PALMERSTON)",
+  groom_initial: "Inicial del Novio (R)",
+  groom_first_name: "Nombre del Novio (OBERT)",
+  groom_last_name: "Apellido del Novio (WILSON)",
+  cover_and: "Conector de nombres (and)",
+  cover_place: "Lugar del evento en portada",
+  cover_date_fmt: "Fecha del evento en portada",
+  couple_names: "Nombres de la pareja",
+  couple_heading: "Título principal de la pareja",
+  closing_names: "Nombres de despedida",
+  closing_text: "Mensaje final",
+  venue_name: "Nombre del salón / lugar",
+  venue_address: "Dirección del evento",
+  venue_time: "Hora de recepción",
+  ceremony_location: "Lugar de la ceremonia",
+  ceremony_time: "Hora de la ceremonia",
+  dress_code: "Código de vestimenta",
+  wedding_date: "Fecha completa de boda",
+  rsvp_date: "Fecha límite de confirmación",
+  rsvp_note: "Nota de pases",
+  whatsapp_eyebrow: "Título de WhatsApp",
+  whatsapp_button_text: "Botón de WhatsApp",
+  whatsapp_note: "Nota de WhatsApp",
+  album_copy: "Texto del álbum de fotos",
+  album_button_text: "Botón del álbum",
+  gift_copy: "Texto de regalos",
+  welcome_text: "Texto de bienvenida",
+  countdown_heading: "Título cuenta regresiva",
+  save_date_label_1: "Texto reserva (Reserva)",
+  save_date_label_2: "Texto fecha (ESTA FECHA)",
+  save_date_day: "Día de la fecha",
+  save_date_month: "Mes de la fecha",
+  save_date_year: "Año de la fecha"
+};
+
 const pendingChanges = new Map();  
 let contentNodes = [];  
 const loginDialog = document.querySelector("#login-dialog");  
@@ -644,7 +682,7 @@ function beginTextEdit(element) {
   element.contentEditable = "true";  
   element.classList.add("is-editing");  
   element.focus();  
-  toolbarMessage.textContent = `Editando: ${element.dataset.key}`;  
+  toolbarMessage.textContent = `Editando: ${KEY_LABELS[element.dataset.key] || element.dataset.key}`;  
   showStyleBar(element);  
 }  
   
@@ -1394,13 +1432,4 @@ bgPicker.addEventListener("change", async () => {
 
 document.querySelector("#panel-close-btn")?.addEventListener("click", () => {
   adminPanel.hidden = true;
-});
-
-
-// Cierre al hacer clic en el fondo oscuro de los modales de invitados y links
-guestsModal?.addEventListener("click", (e) => {
-  if (e.target === guestsModal) guestsModal.hidden = true;
-});
-invitesModal?.addEventListener("click", (e) => {
-  if (e.target === invitesModal) invitesModal.hidden = true;
 });
