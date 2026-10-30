@@ -1395,3 +1395,12 @@ bgPicker.addEventListener("change", async () => {
 document.querySelector("#panel-close-btn")?.addEventListener("click", () => {
   adminPanel.hidden = true;
 });
+
+
+// Cierre al hacer clic en el fondo oscuro de los modales de invitados y links
+guestsModal?.addEventListener("click", (e) => {
+  if (e.target === guestsModal) guestsModal.hidden = true;
+});
+invitesModal?.addEventListener("click", (e) => {
+  if (e.target === invitesModal) invitesModal.hidden = true;
+});

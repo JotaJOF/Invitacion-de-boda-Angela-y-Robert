@@ -475,7 +475,21 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         contentMap["couple_names"] = contentMap["couple_names"] || { type: "text", value: "Angela y Robert" };
         contentMap["closing_names"] = contentMap["closing_names"] || { type: "text", value: "Angela y Robert" };
 
-        for (const corruptKey of ["groom_first_name__style", "groom_last_name__style", "groom_initial__style", "cover_date_fmt__style"]) {
+        for (const corruptKey of ["bride_first_name__style", "bride_last_name__style", "groom_first_name__style", "groom_last_name__style", "groom_initial__style", "cover_date_fmt__style"]) {
+          if (contentMap[corruptKey]?.value) {
+            try {
+              const s = JSON.parse(contentMap[corruptKey].value);
+              if (s.transform && (s.transform.includes("translate(-10px") || s.transform.includes("translate(10px") || (s.transform.match(/translate/g) || []).length > 1)) {
+                delete s.transform;
+              }
+              if (s.marginLeft === "auto") {
+                delete s.marginLeft;
+              }
+              contentMap[corruptKey].value = JSON.stringify(s);
+            } catch {}
+          }
+        }
+        for (const corruptKey of ["__skip__"]) {
           if (contentMap[corruptKey]?.value) {
             try {
               const s = JSON.parse(contentMap[corruptKey].value);
