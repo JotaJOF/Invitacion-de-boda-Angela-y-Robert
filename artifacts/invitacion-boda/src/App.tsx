@@ -10,6 +10,24 @@ import {
 } from 'lucide-react';  
   
 const asset = (filename: string) => `${import.meta.env.BASE_URL}assets/${filename}`;  
+
+// Old editor data stored layout dimensions in device pixels. Normalize those
+// legacy values against the invitation's 540px design canvas; new edits use cqw.
+const normalizeCanvasStyle = (raw: any) => {
+  const style = { ...raw };
+  for (const key of ['width', 'maxWidth', 'fontSize', 'marginLeft', 'marginRight', 'marginTop', 'marginBottom']) {
+    if (typeof style[key] === 'string' && /^-?(\d+(?:\.\d+)?)px$/.test(style[key])) {
+      style[key] = `${(parseFloat(style[key]) * 100 / 540).toFixed(4)}cqw`;
+    }
+  }
+  if (typeof style.transform === 'string') {
+    style.transform = style.transform.replace(
+      /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/g,
+      (_match: string, x: string, y: string) => `translate(${(Number(x) * 100 / 540).toFixed(4)}cqw, ${(Number(y) * 100 / 540).toFixed(4)}cqw)`,
+    );
+  }
+  return style;
+};
   
 // ===== FECHA DE LA BODA — cambia SOLO aquí y se actualiza todo =====  
 const WEDDING = { year: 2027, month: 3, day: 1, hour: 18 }; // month: 3 = Marzo, hour: 19 = 7 PM  
@@ -223,7 +241,7 @@ function App() {
     for (const [k, v] of Object.entries(cfg)) {
       if (k.endsWith("__style") && v) {
         try {
-          const s = JSON.parse(v);
+          const s = normalizeCanvasStyle(JSON.parse(v));
           const baseKey = k.replace(/__style$/, "");
           const rules: string[] = [];
           if (s.fontFamily) rules.push(`font-family: ${s.fontFamily} !important;`);

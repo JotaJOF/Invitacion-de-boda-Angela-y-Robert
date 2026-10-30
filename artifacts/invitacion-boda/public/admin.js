@@ -203,7 +203,7 @@ async function loadContent() {
       const styleSaved = key ? content[`${key}__style`] : null;  
       if (styleSaved) {  
         try {  
-          const style = JSON.parse(styleSaved.value);  
+          const style = normalizeCanvasStyle(JSON.parse(styleSaved.value));  
           if (style.fontFamily) element.style.fontFamily = style.fontFamily;  
           if (style.fontSize) element.style.fontSize = style.fontSize;  
           if (style.maxWidth) element.style.maxWidth = style.maxWidth;  
@@ -225,7 +225,7 @@ async function loadContent() {
     for (const [k, item] of Object.entries(content)) {
       if (k.endsWith("__style") && item && item.value) {
         try {
-          const s = JSON.parse(item.value);
+          const s = normalizeCanvasStyle(JSON.parse(item.value));
           const baseKey = k.replace(/__style$/, "");
           let rules = [];
           if (s.fontFamily) rules.push(`font-family: ${s.fontFamily} !important;`);
@@ -272,6 +272,42 @@ async function loadContent() {
   }  
 }  
   
+function normalizeCanvasStyle(raw) {
+  const style = { ...raw };
+  for (const key of ["width", "maxWidth", "fontSize", "marginLeft", "marginRight", "marginTop", "marginBottom"]) {
+    if (typeof style[key] === "string" && /^-?(\d+(?:\.\d+)?)px$/.test(style[key])) {
+      style[key] = `${(parseFloat(style[key]) * 100 / 540).toFixed(4)}cqw`;
+    }
+  }
+  if (typeof style.transform === "string") {
+    style.transform = style.transform.replace(
+      /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/g,
+      (_match, x, y) => `translate(${(Number(x) * 100 / 540).toFixed(4)}cqw, ${(Number(y) * 100 / 540).toFixed(4)}cqw)`,
+    );
+  }
+  return style;
+}
+
+function canvasWidth(element) {
+  return element.closest(".invite-shell")?.getBoundingClientRect().width || 540;
+}
+function canvasLength(px, element) {
+  return `${(px * 100 / canvasWidth(element)).toFixed(4)}cqw`;
+}
+function readCanvasShift(element) {
+  let x = Number(element.dataset.shiftX), y = Number(element.dataset.shiftY);
+  if (!Number.isFinite(x) || !Number.isFinite(y) || (!element.dataset.shiftX && !element.dataset.shiftY)) {
+    const existing = element.style.transform || "";
+    const re = /translate\(\s*(-?[\d.]+)(px|cqw)\s*,\s*(-?[\d.]+)(px|cqw)\s*\)/g;
+    let match; x = 0; y = 0;
+    while ((match = re.exec(existing)) !== null) {
+      x += Number(match[1]) * (match[2] === "px" ? 100 / canvasWidth(element) : 1);
+      y += Number(match[3]) * (match[4] === "px" ? 100 / canvasWidth(element) : 1);
+    }
+  }
+  return { x, y };
+}
+
 function pencilMarkup() {  
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>';  
 }  
@@ -361,16 +397,16 @@ function applyStyleToElement(el, s) {
 function markStyleChange(element) {  
   const styleObj = {  
     fontFamily: element.style.fontFamily || "",  
-    fontSize: element.style.fontSize || "",  
-    maxWidth: element.style.maxWidth || "",
-    width: element.style.width || "",  
+    fontSize: normalizeCanvasStyle({ fontSize: element.style.fontSize || "" }).fontSize,  
+    maxWidth: normalizeCanvasStyle({ maxWidth: element.style.maxWidth || "" }).maxWidth,
+    width: normalizeCanvasStyle({ width: element.style.width || "" }).width,  
     display: element.style.display || "inline-block",  
     whiteSpace: element.style.whiteSpace || "",
-    transform: element.style.transform || "",  
-    marginLeft: element.style.marginLeft || "",  
-    marginRight: element.style.marginRight || "",  
-    marginTop: element.style.marginTop || "",  
-    marginBottom: element.style.marginBottom || "",  
+    transform: normalizeCanvasStyle({ transform: element.style.transform || "" }).transform,  
+    marginLeft: normalizeCanvasStyle({ marginLeft: element.style.marginLeft || "" }).marginLeft,  
+    marginRight: normalizeCanvasStyle({ marginRight: element.style.marginRight || "" }).marginRight,  
+    marginTop: normalizeCanvasStyle({ marginTop: element.style.marginTop || "" }).marginTop,  
+    marginBottom: normalizeCanvasStyle({ marginBottom: element.style.marginBottom || "" }).marginBottom,  
   };
   pendingChanges.set(`${element.dataset.key}__style`, {  
     element,  
@@ -413,22 +449,7 @@ function addResizeHandles(element) {
       const rect = element.getBoundingClientRect();  
       const startW = rect.width;  
 
-      let curX = Number(element.dataset.shiftX);
-      let curY = Number(element.dataset.shiftY);
-      if (isNaN(curX) || isNaN(curY) || (!element.dataset.shiftX && !element.dataset.shiftY)) {
-        const existing = element.style.transform || "";
-        let sumX = 0, sumY = 0;
-        const re = /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/g;
-        let match;
-        while ((match = re.exec(existing)) !== null) {
-          sumX += parseFloat(match[1]) || 0;
-          sumY += parseFloat(match[2]) || 0;
-        }
-        curX = sumX;
-        curY = sumY;
-      }
-      const startShiftX = curX;
-      const startShiftY = curY;
+      const { x: startShiftX, y: startShiftY } = readCanvasShift(element);
 
       const onMove = (ev) => {  
         ev.preventDefault();
@@ -438,18 +459,18 @@ function addResizeHandles(element) {
         if (side === "right") {  
           // Ancla borde izquierdo, estira lado derecho
           const newW = Math.max(30, Math.round(startW + dx));  
-          element.style.setProperty("width", `${newW}px`, "important");  
-          element.style.setProperty("max-width", `${newW}px`, "important");  
+          element.style.setProperty("width", canvasLength(newW, element), "important");  
+          element.style.setProperty("max-width", canvasLength(newW, element), "important");  
         } else {  
           // Ancla borde derecho, estira lado izquierdo
           const newW = Math.max(30, Math.round(startW - dx));  
           const effectiveDx = startW - newW;
-          const newShiftX = Math.round(startShiftX + effectiveDx);
+          const newShiftX = startShiftX + effectiveDx * 100 / canvasWidth(element);
           element.dataset.shiftX = String(newShiftX);
           element.dataset.shiftY = String(startShiftY);
-          element.style.setProperty("transform", `translate(${newShiftX}px, ${startShiftY}px)`, "important");  
-          element.style.setProperty("width", `${newW}px`, "important");  
-          element.style.setProperty("max-width", `${newW}px`, "important");  
+          element.style.setProperty("transform", `translate(${newShiftX}cqw, ${startShiftY}cqw)`, "important");  
+          element.style.setProperty("width", canvasLength(newW, element), "important");  
+          element.style.setProperty("max-width", canvasLength(newW, element), "important");  
         }  
         markStyleChange(element);
         positionResizeHandles();  
@@ -491,26 +512,14 @@ function showStyleBar(element) {
   const move = document.createElement("div");
   move.className = "style-move";
   const moveBy = (dx, dy) => {
-    let curX = Number(element.dataset.shiftX);
-    let curY = Number(element.dataset.shiftY);
-    if (isNaN(curX) || isNaN(curY) || (!element.dataset.shiftX && !element.dataset.shiftY)) {
-      const existing = element.style.transform || "";
-      let sumX = 0, sumY = 0;
-      const re = /translate\(\s*(-?[\d.]+)px\s*,\s*(-?[\d.]+)px\s*\)/g;
-      let match;
-      while ((match = re.exec(existing)) !== null) {
-        sumX += parseFloat(match[1]) || 0;
-        sumY += parseFloat(match[2]) || 0;
-      }
-      curX = sumX;
-      curY = sumY;
-    }
-    const nextX = Math.round(curX + dx);
-    const nextY = Math.round(curY + dy);
+    const { x: curX, y: curY } = readCanvasShift(element);
+    const scale = 100 / canvasWidth(element);
+    const nextX = curX + dx * scale;
+    const nextY = curY + dy * scale;
     element.dataset.shiftX = String(nextX);
     element.dataset.shiftY = String(nextY);
     element.style.setProperty("display", "inline-block", "important");
-    element.style.setProperty("transform", `translate(${nextX}px, ${nextY}px)`, "important");
+    element.style.setProperty("transform", `translate(${nextX}cqw, ${nextY}cqw)`, "important");
     markStyleChange(element);
     positionStyleBar();
     positionResizeHandles();
@@ -551,8 +560,8 @@ function showStyleBar(element) {
       e.stopPropagation();
       const w = element.offsetWidth || 80;
       if (w > 24) {
-        element.style.setProperty("width", `${w - 8}px`, "important");
-        element.style.setProperty("max-width", `${w - 8}px`, "important");
+        element.style.setProperty("width", canvasLength(w - 8, element), "important");
+        element.style.setProperty("max-width", canvasLength(w - 8, element), "important");
         markStyleChange(element);
         positionStyleBar();
         positionResizeHandles();
@@ -567,8 +576,8 @@ function showStyleBar(element) {
       e.preventDefault();
       e.stopPropagation();
       const w = element.offsetWidth || 80;
-      element.style.setProperty("width", `${w + 8}px`, "important");
-      element.style.setProperty("max-width", `${w + 8}px`, "important");
+      element.style.setProperty("width", canvasLength(w + 8, element), "important");
+      element.style.setProperty("max-width", canvasLength(w + 8, element), "important");
       markStyleChange(element);
       positionStyleBar();
       positionResizeHandles();
