@@ -478,6 +478,17 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         contentMap["closing_names"] = { type: "text", value: "Angela y Robert" };
         contentMap["cover_and"] = { type: "text", value: "and" };
 
+        if (contentMap["save_date_label_1__style"]?.value) {
+          try {
+            const s = JSON.parse(contentMap["save_date_label_1__style"].value);
+            if (s.transform && (s.transform.includes("7.549854") || s.transform.includes("40.769") || (s.transform.match(/translate/g) || []).length > 1)) {
+              delete s.transform;
+              contentMap["save_date_label_1__style"].value = JSON.stringify(s);
+              await saveContent(supabase(env), { key: "save_date_label_1__style", type: "text", value: JSON.stringify(s) }, weddingParam);
+            }
+          } catch {}
+        }
+
         for (const corruptKey of ["bride_initial__style", "groom_initial__style", "bride_first_name__style", "bride_last_name__style", "groom_first_name__style", "groom_last_name__style", "cover_date_fmt__style", "cover_place__style"]) {
           if (contentMap[corruptKey]?.value) {
             try {

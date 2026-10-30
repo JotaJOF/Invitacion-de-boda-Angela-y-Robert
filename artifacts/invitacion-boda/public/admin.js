@@ -210,7 +210,18 @@ async function loadContent() {
           if (style.width) element.style.width = style.width;  
           if (style.display === "inline-block") element.style.display = "inline-block";  
           if (style.whiteSpace) element.style.whiteSpace = style.whiteSpace;  
-          if (style.transform) element.style.transform = style.transform;  
+          if (style.transform) {
+            element.style.transform = style.transform;
+            const re = /translate\(\s*(-?[\d.]+)(px|cqw)?(?:\s*,\s*(-?[\d.]+)(px|cqw)?)?\s*\)/;
+            const m = re.exec(style.transform);
+            if (m) {
+              const uX = m[2] || "cqw";
+              const uY = m[4] || uX;
+              const cW = canvasWidth(element);
+              element.dataset.shiftX = String(Number(m[1]) * (uX === "px" ? 100 / cW : 1));
+              element.dataset.shiftY = String((m[3] !== undefined ? Number(m[3]) : 0) * (uY === "px" ? 100 / cW : 1));
+            }
+          }  
           if (style.marginLeft) element.style.marginLeft = style.marginLeft;  
           if (style.marginRight) element.style.marginRight = style.marginRight;  
           if (style.marginTop) element.style.marginTop = style.marginTop;  
@@ -295,17 +306,51 @@ function canvasLength(px, element) {
   return `${(px * 100 / canvasWidth(element)).toFixed(4)}cqw`;
 }
 function readCanvasShift(element) {
-  let x = Number(element.dataset.shiftX), y = Number(element.dataset.shiftY);
-  if (!Number.isFinite(x) || !Number.isFinite(y) || (!element.dataset.shiftX && !element.dataset.shiftY)) {
-    const existing = element.style.transform || "";
-    const re = /translate\(\s*(-?[\d.]+)(px|cqw)\s*,\s*(-?[\d.]+)(px|cqw)\s*\)/g;
+  let x = Number(element.dataset.shiftX);
+  let y = Number(element.dataset.shiftY);
+  if (Number.isFinite(x) && Number.isFinite(y) && (element.dataset.shiftX || element.dataset.shiftY)) {
+    return { x, y };
+  }
+
+  const cWidth = canvasWidth(element);
+  const existing = element.style.transform || "";
+  if (existing) {
+    const re = /translate\(\s*(-?[\d.]+)(px|cqw)?(?:\s*,\s*(-?[\d.]+)(px|cqw)?)?\s*\)/g;
     let match; x = 0; y = 0;
+    let found = false;
     while ((match = re.exec(existing)) !== null) {
-      x += Number(match[1]) * (match[2] === "px" ? 100 / canvasWidth(element) : 1);
-      y += Number(match[3]) * (match[4] === "px" ? 100 / canvasWidth(element) : 1);
+      found = true;
+      const uX = match[2] || "cqw";
+      const uY = match[4] || uX;
+      x += Number(match[1]) * (uX === "px" ? 100 / cWidth : 1);
+      y += (match[3] !== undefined ? Number(match[3]) : 0) * (uY === "px" ? 100 / cWidth : 1);
+    }
+    if (found) {
+      element.dataset.shiftX = String(x);
+      element.dataset.shiftY = String(y);
+      return { x, y };
     }
   }
-  return { x, y };
+
+  const key = element.dataset.key;
+  if (key) {
+    const styleTag = document.getElementById("dynamic-content-styles") || document.getElementById("wedding-pre-styles");
+    if (styleTag && styleTag.textContent) {
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const matchRule = styleTag.textContent.match(new RegExp(`\[data-key="${escapedKey}"\][^}]*transform:\s*translate\(\s*(-?[\d.]+)(px|cqw)?(?:\s*,\s*(-?[\d.]+)(px|cqw)?)?\s*\)`, "i"));
+      if (matchRule) {
+        const uX = matchRule[2] || "cqw";
+        const uY = matchRule[4] || uX;
+        x = Number(matchRule[1]) * (uX === "px" ? 100 / cWidth : 1);
+        y = (matchRule[3] !== undefined ? Number(matchRule[3]) : 0) * (uY === "px" ? 100 / cWidth : 1);
+        element.dataset.shiftX = String(x);
+        element.dataset.shiftY = String(y);
+        return { x, y };
+      }
+    }
+  }
+
+  return { x: 0, y: 0 };
 }
 
 function pencilMarkup() {  
@@ -360,13 +405,14 @@ function updateDynamicCssRule(key, s) {
   if (s.marginTop) rules.push(`margin-top: ${s.marginTop} !important;`);
   if (s.marginBottom) rules.push(`margin-bottom: ${s.marginBottom} !important;`);
 
-  const rulePattern = new RegExp(`\[data-key="${key}"\]\s*\{[^}]*\}`, "g");
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const rulePattern = new RegExp(`(?:#root\\s+)?\\[data-key="${escapedKey}"\\]\\s*\\{[^}]*\\}`, "g");
   const newRule = rules.length ? `#root [data-key="${key}"] { ${rules.join(" ")} }` : "";
   let currentCss = styleTag.textContent || "";
   if (rulePattern.test(currentCss)) {
     styleTag.textContent = currentCss.replace(rulePattern, newRule);
   } else if (newRule) {
-    styleTag.textContent = currentCss + "\n" + newRule;
+    styleTag.textContent = (currentCss.trim() ? currentCss.trim() + "\n" : "") + newRule;
   }
 }
 
@@ -445,32 +491,45 @@ function addResizeHandles(element) {
       e.preventDefault();  
       e.stopPropagation();  
       try { h.setPointerCapture(e.pointerId); } catch {}
-      const startX = e.clientX;  
-      const rect = element.getBoundingClientRect();  
-      const startW = rect.width;  
+      const startPointerX = e.clientX;  
+      const startRect = element.getBoundingClientRect();  
+      const startLeft = startRect.left;
+      const startRight = startRect.right;
+      const startW = startRect.width;  
 
       const { x: startShiftX, y: startShiftY } = readCanvasShift(element);
+      const cWidth = canvasWidth(element);
 
       const onMove = (ev) => {  
         ev.preventDefault();
-        const dx = ev.clientX - startX;  
+        const deltaX = ev.clientX - startPointerX;  
         element.style.setProperty("display", "inline-block", "important");  
         element.style.setProperty("white-space", "normal", "important");  
+        
         if (side === "right") {  
-          // Ancla borde izquierdo, estira lado derecho
-          const newW = Math.max(30, Math.round(startW + dx));  
-          element.style.setProperty("width", canvasLength(newW, element), "important");  
-          element.style.setProperty("max-width", canvasLength(newW, element), "important");  
-        } else {  
-          // Ancla borde derecho, estira lado izquierdo
-          const newW = Math.max(30, Math.round(startW - dx));  
-          const effectiveDx = startW - newW;
-          const newShiftX = startShiftX + effectiveDx * 100 / canvasWidth(element);
+          // Borde izquierdo queda 100% inmóvil; estira el lado derecho con el cursor
+          const targetW = Math.max(24, Math.round(startW + deltaX));  
+          element.style.setProperty("width", canvasLength(targetW, element), "important");  
+          element.style.setProperty("max-width", canvasLength(targetW, element), "important");  
+          
+          const curLeft = element.getBoundingClientRect().left;
+          const leftDriftPx = curLeft - startLeft;
+          const newShiftX = startShiftX - (leftDriftPx * 100 / cWidth);
           element.dataset.shiftX = String(newShiftX);
           element.dataset.shiftY = String(startShiftY);
-          element.style.setProperty("transform", `translate(${newShiftX}cqw, ${startShiftY}cqw)`, "important");  
-          element.style.setProperty("width", canvasLength(newW, element), "important");  
-          element.style.setProperty("max-width", canvasLength(newW, element), "important");  
+          element.style.setProperty("transform", `translate(${newShiftX.toFixed(4)}cqw, ${startShiftY.toFixed(4)}cqw)`, "important");  
+        } else {  
+          // Borde derecho queda 100% inmóvil; estira el lado izquierdo con el cursor
+          const targetW = Math.max(24, Math.round(startW - deltaX));  
+          element.style.setProperty("width", canvasLength(targetW, element), "important");  
+          element.style.setProperty("max-width", canvasLength(targetW, element), "important");  
+          
+          const curRight = element.getBoundingClientRect().right;
+          const rightDriftPx = curRight - startRight;
+          const newShiftX = startShiftX - (rightDriftPx * 100 / cWidth);
+          element.dataset.shiftX = String(newShiftX);
+          element.dataset.shiftY = String(startShiftY);
+          element.style.setProperty("transform", `translate(${newShiftX.toFixed(4)}cqw, ${startShiftY.toFixed(4)}cqw)`, "important");  
         }  
         markStyleChange(element);
         positionResizeHandles();  
@@ -479,19 +538,23 @@ function addResizeHandles(element) {
 
       const onUp = (ev) => {  
         try { h.releasePointerCapture(ev.pointerId); } catch {}
+        window.removeEventListener("pointermove", onMove);  
+        window.removeEventListener("pointerup", onUp);  
+        window.removeEventListener("pointercancel", onUp);  
         h.removeEventListener("pointermove", onMove);  
         h.removeEventListener("pointerup", onUp);  
         h.removeEventListener("pointercancel", onUp);  
-        window.removeEventListener("pointermove", onMove);  
-        window.removeEventListener("pointerup", onUp);  
         markStyleChange(element);  
+        positionResizeHandles();
+        positionStyleBar();
       };  
 
+      window.addEventListener("pointermove", onMove);  
+      window.addEventListener("pointerup", onUp);  
+      window.addEventListener("pointercancel", onUp);  
       h.addEventListener("pointermove", onMove);  
       h.addEventListener("pointerup", onUp);  
       h.addEventListener("pointercancel", onUp);  
-      window.addEventListener("pointermove", onMove);  
-      window.addEventListener("pointerup", onUp);  
     });  
   });    
   const loop = () => {    
@@ -519,7 +582,7 @@ function showStyleBar(element) {
     element.dataset.shiftX = String(nextX);
     element.dataset.shiftY = String(nextY);
     element.style.setProperty("display", "inline-block", "important");
-    element.style.setProperty("transform", `translate(${nextX}cqw, ${nextY}cqw)`, "important");
+    element.style.setProperty("transform", `translate(${nextX.toFixed(4)}cqw, ${nextY.toFixed(4)}cqw)`, "important");
     markStyleChange(element);
     positionStyleBar();
     positionResizeHandles();
@@ -630,8 +693,8 @@ function showStyleBar(element) {
     up.textContent = "+";
     const bump = (d) => {
       const cur = parseFloat(getComputedStyle(element).fontSize) || 16;
-      const n = Math.max(8, Math.min(120, Math.round(cur + d * 2)));
-      element.style.setProperty("font-size", `${n}px`, "important");
+      const n = Math.max(8, Math.min(140, Math.round(cur + d * 2)));
+      element.style.setProperty("font-size", canvasLength(n, element), "important");
       value.textContent = String(n);
       markStyleChange(element);
       positionStyleBar();
@@ -799,6 +862,18 @@ imagePicker.addEventListener("change", async () => {
 });  
   
 document.querySelector("#save-content").addEventListener("click", async () => {  
+  const activeEl = document.querySelector("[data-key].is-editing");
+  if (activeEl) {
+    if (!isMediaElement(activeEl)) {
+      pendingChanges.set(activeEl.dataset.key, {
+        element: activeEl,
+        type: "text",
+        value: activeEl.innerText ?? "",
+      });
+    }
+    markStyleChange(activeEl);
+  }
+
   if (pendingChanges.size === 0) {  
     showToast("No hay cambios pendientes.");  
     return;  
