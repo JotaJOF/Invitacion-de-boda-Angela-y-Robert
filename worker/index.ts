@@ -467,7 +467,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       }
 
       if (weddingParam === "angela-robert") {
-        contentMap["bride_initial"] = { type: "text", value: "a" };
+        contentMap["bride_initial"] = { type: "text", value: "A" };
         contentMap["bride_first_name"] = { type: "text", value: "NGELA" };
         contentMap["bride_last_name"] = { type: "text", value: "PALMERSTON" };
         contentMap["groom_initial"] = { type: "text", value: "R" };
