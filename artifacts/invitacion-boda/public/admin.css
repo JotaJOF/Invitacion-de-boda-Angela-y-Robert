@@ -264,38 +264,47 @@ html.is-loading-content video[data-key] {
 .style-menu { position: absolute; top: 32px; left: 0; display: flex; flex-direction: column; min-width: 96px; background: #fffdfa; border: 1px solid #d9cec4; border-radius: 10px; box-shadow: 0 4px 12px #0003; }  
 .style-menu-item { padding: 6px 10px; border: 0; background: none; text-align: left; font-size: 12px; cursor: pointer; }  
 .style-menu-item:hover { background: #f0e9e2; }
-@media print {    
-  #root,    
-  .site-footer,    
-  .admin-panel,    
-  .admin-toolbar,    
-  .admin-float-bar,    
-  .login-dialog,    
-  .edit-pencil,    
-  .style-bar {    
-    display: none !important;    
-  }    
-    
-  html, body {    
-    height: auto !important;    
-    background: #fff;    
-  }    
-    
-  #guests-modal,    
-  #guests-modal * {    
-    visibility: visible;    
-  }    
-    
-  #guests-modal {    
-    position: static !important;    
-    display: block !important;    
-    inset: auto;    
-    padding: 0;    
-    background: #fff;    
-    overflow: visible;    
-    height: auto !important;    
-    max-height: none !important;    
-  }    
+/* Botón refrescar al lado de la X */  
+.guests-refresh {  
+  position: absolute; top: 14px; right: 52px;  
+  width: 30px; height: 30px; padding: 0;  
+  display: inline-flex; align-items: center; justify-content: center;  
+  border: none; border-radius: 8px;  
+  background: var(--olive); color: #fff;  
+  font-size: 16px; line-height: 1; cursor: pointer;  
+}  
+.guests-refresh:hover { background: var(--olive-dark); }  
+  
+@media print {  
+  @page { size: A4 landscape; margin: 12mm; }  
+  
+  html, body {  
+    height: auto !important; min-height: 0 !important;  
+    overflow: visible !important; background: #fff !important;  
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;  
+  }  
+  
+  /* Solo se imprime la lista */  
+  body.printing-guests > *:not(#guests-modal) { display: none !important; }  
+  
+  #guests-modal {  
+    position: static !important; display: block !important;  
+    inset: auto; padding: 0 !important; margin: 0 !important;  
+    background: #fff !important; overflow: visible !important;  
+    height: auto !important; max-height: none !important;  
+  }  
+  #guests-modal .guests-card {  
+    max-width: none; width: 100%; margin: 0;  
+    border: none; box-shadow: none; padding: 0; border-radius: 0;  
+  }  
+  /* Ocultar botones en el papel */  
+  #guests-close, #guests-refresh, #guests-print { display: none !important; }  
+  
+  .guests-table-wrap { overflow: visible !important; }  
+  .guests-table { font-size: 11px; }  
+  .guests-table thead { display: table-header-group; } /* repite encabezado si hay 2+ páginas */  
+  .guests-table tr { page-break-inside: avoid; break-inside: avoid; }  
+  .guests-totals { break-inside: avoid; }  
 }  
   
 /* ===== Modal de links: botones ===== */  
