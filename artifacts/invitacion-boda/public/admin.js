@@ -1342,12 +1342,38 @@ const musicStatus = document.querySelector("#music-status");
 let musicUrl = "";  
 let musicPreview = null;  
   
-async function refreshMusicStatus() {  
-  try {  
-    const { content = {} } = await api("/api/content", { method: "GET" });  
-    musicUrl = content.cfg_music_url ? content.cfg_music_url.value : "";    
-  } catch { /* sin datos */ }  
-}  
+async function refreshMusicStatus() {    
+  try {    
+    const { content = {} } = await api("/api/content", { method: "GET" });    
+    musicUrl = content.cfg_music_url ? content.cfg_music_url.value : "";      
+  } catch { /* sin datos */ }    
+  if (musicStatus) {  
+    musicStatus.textContent = musicUrl  
+      ? decodeURIComponent(musicUrl.split("/").pop().split("?")[0])  
+      : "Sin canción";  
+  }  
+}    
+  
+const musicDeleteBtn = document.querySelector("#music-delete");  
+if (musicDeleteBtn) {  
+  musicDeleteBtn.addEventListener("click", async () => {  
+    if (!musicUrl) return showToast("No hay canción para borrar.");  
+    if (!confirm("¿Borrar la canción de fondo?")) return;  
+    try {  
+      await api("/api/content/cfg_music_url", {  
+        method: "PUT",  
+        body: JSON.stringify({ type: "text", value: "" }),  
+      });  
+      if (musicPreview) { musicPreview.pause(); musicPreview = null; }  
+      musicUrl = "";  
+      musicStatus.textContent = "Sin canción";  
+      musicTestBtn.hidden = true;  
+      showToast("Canción borrada.");  
+    } catch (error) {  
+      showToast(error.message);  
+    }  
+  });  
+} 
   
 if (musicUploadBtn && musicFileInput) {  
   musicUploadBtn.addEventListener("click", () => musicFileInput.click());  
