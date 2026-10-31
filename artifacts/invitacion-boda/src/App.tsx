@@ -315,13 +315,13 @@ function App() {
   const eDay = eventDate.getDate();  
   const eMes = MESES[eventDate.getMonth()];  
   const eYear = eventDate.getFullYear();  
-  const eFechaPunteada = `${dos(eDay)}.${dos(eventDate.getMonth() + 1)}.${eYear}`;    
-  const eHora = eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });    
+  const eFechaPunteada = `${dos(eDay)}.${dos(eventDate.getMonth() + 1)}.${eYear}`;  
   const eHora = (() => {  
     const h = eventDate.getHours();  
     const m = eventDate.getMinutes();  
+    const ampm = h >= 12 ? 'PM' : 'AM';  
     const h12 = h % 12 === 0 ? 12 : h % 12;  
-    return `${h12}:${dos(m)} ${h >= 12 ? 'PM' : 'AM'}`;  
+    return `${h12}:${dos(m)} ${ampm}`;  
   })(); 
   
   const targetDate = eventDate.getTime();  
