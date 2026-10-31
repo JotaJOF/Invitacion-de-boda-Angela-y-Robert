@@ -548,7 +548,8 @@ const uploadToDrive = async () => {
           style={{        
             position: 'relative',        
             width: 'min(100%, 350px)',      
-            margin: '22px auto 14px',      
+            margin: '22px auto 14px',
+            containerType: 'inline-size',
           }}      
         >
           <img
