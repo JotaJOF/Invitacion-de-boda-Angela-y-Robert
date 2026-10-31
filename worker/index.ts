@@ -585,10 +585,10 @@ if (weddingParam !== "angela-robert") {
       }  
   
       if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
-      const newCode = (await generateUniqueCode(supabase(env))).toUpperCase();  
-      const { error } = await supabase(env).from("guests").insert({  
-        name,  
-        phone: phone || null,  
+      const newCode = (await generateUniqueCode(supabase(env))).toUpperCase();    
+      const { error } = await supabase(env).from("guests").insert({    
+        name,    
+        phone: phone || "",    
         code: newCode,  
         attendance,  
         confirmed_passes,  
