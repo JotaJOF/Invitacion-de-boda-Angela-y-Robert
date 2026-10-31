@@ -379,7 +379,7 @@ useEffect(() => {
       method: 'POST',  
       headers: { 'content-type': 'application/json' },  
       body: JSON.stringify({    
-        name: invitee?.name || 'Invitado',    
+        name: invitee?.name || 'María y Pablo',    
         code: inviteCode,    
         wedding: slug,  
         attendance: String(form.get('attendance') || 'yes'),    
@@ -491,9 +491,9 @@ const uploadToDrive = async () => {
         <div className="ornament-rule" aria-hidden="true" style={{ marginTop: 8 }}>  
           <span>✤</span>  
         </div>  
-        <p className="guest-name script" data-key="guest_names" data-testid="text-invitee-names">{invitee?.name ?? 'María y Pablo'}</p>  
+        <p className="guest-name script" data-testid="text-invitee-names">{invitee?.name ?? 'María y Pablo'}</p>  
         <p className="guest-reserved" data-key="guest_reserved">HEMOS RESERVADO</p>  
-        <p className="guest-count" data-key="guest_count">{invitee?.max_passes || 2}</p>  
+        <p className="guest-count">{invitee?.max_passes || 2}</p>  
         <p className="guest-caption" data-key="guest_caption">LUGARES A TU NOMBRE</p>  
       </section>
       {envelopeOpen && (<>
