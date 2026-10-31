@@ -764,21 +764,14 @@ if (weddingParam !== "angela-robert") {
         }  
   
         const storagePath = `media/${targetWedding}/${crypto.randomUUID()}.${extension}`;  
-        const { error } = await client.storage.from("media").upload(  
-          storagePath,  
-          new Blob([await file.arrayBuffer()], { type: file.type }),  
-          {  
-            cacheControl: "31536000",  
-            contentType: file.type,  
-            upsert: false,  
-          },  
-        );  
-        if (error) {  
-          return json({ error: "No se pudo subir el archivo." }, 502);  
-        }  
+await env.MEDIA.put(storagePath, await file.arrayBuffer(), {  
+  httpMetadata: {  
+    contentType: file.type,  
+    cacheControl: "public, max-age=31536000, immutable",  
+  },  
+});  
   
-        const { data } = client.storage.from("media").getPublicUrl(storagePath);  
-        return json({ url: data.publicUrl }, 201);  
+return json({ url: `${env.R2_PUBLIC_URL}/${storagePath}` }, 201);  
       }  
   
       let row: ContentRow | null = null;  
