@@ -378,16 +378,20 @@ useEffect(() => {
     const res = await fetch('/api/guests', {  
       method: 'POST',  
       headers: { 'content-type': 'application/json' },  
-      body: JSON.stringify({  
-        name: invitee?.name || 'Invitado',  
-        code: inviteCode,  
-        attendance: String(form.get('attendance') || 'yes'),  
-        passes: Number(form.get('people')) || 0,  
-        message: String(form.get('message') || '').trim(),  
-        source: 'form',  
-      }),  
-    });  
-    if (!res.ok) throw new Error('No se pudo enviar.');  
+      body: JSON.stringify({    
+        name: invitee?.name || 'Invitado',    
+        code: inviteCode,    
+        wedding: slug,  
+        attendance: String(form.get('attendance') || 'yes'),    
+        passes: Number(form.get('people')) || 0,    
+        message: String(form.get('message') || '').trim(),    
+        source: 'form',    
+      }),    
+    });    
+    if (!res.ok) {  
+      const data = await res.json().catch(() => ({}));  
+      throw new Error(data.error || `Error ${res.status}`);  
+    }  
   };  
   
   const doConfirm = async () => {  
@@ -398,9 +402,9 @@ useEffect(() => {
       setConfirmOpen(false);  
       setThanks(attendance === 'yes' ? 'yes' : 'no');  
       setRsvpDone(true);  
-    } catch {  
-      setConfirmOpen(false);  
-      setPreview('No se pudo enviar. Intenta de nuevo.');  
+    } catch (err: any) {    
+      setConfirmOpen(false);    
+      setPreview('No se pudo enviar: ' + (err?.message || 'Intenta de nuevo.'));    
     }  
   };  
 const uploadToDrive = async () => {  
