@@ -544,8 +544,8 @@ if (weddingParam !== "angela-robert") {
 
       const { data, error } = await supabase(env)  
         .from("guests")  
-        .select("id,code,name,phone,max_passes,confirmed_passes,attendance,attendance_notes,created_at,wedding")  
-        .eq("wedding", targetWedding)
+        .select("id,code,name,phone,max_passes,confirmed_passes,attendance,attendance_notes,created_at,wedding,modified,modified_at,source")    
+        .eq("wedding", targetWedding)  
         .order("created_at", { ascending: false });  
       if (error) return json({ error: "No se pudo cargar la lista." }, 502);  
       return json({ guests: data ?? [], wedding: targetWedding });  
