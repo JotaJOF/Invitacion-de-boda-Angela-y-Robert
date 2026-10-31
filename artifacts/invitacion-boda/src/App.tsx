@@ -315,7 +315,13 @@ function App() {
   const eDay = eventDate.getDate();  
   const eMes = MESES[eventDate.getMonth()];  
   const eYear = eventDate.getFullYear();  
-  const eFechaPunteada = `${dos(eDay)}.${dos(eventDate.getMonth() + 1)}.${eYear}`;  
+  const eFechaPunteada = `${dos(eDay)}.${dos(eventDate.getMonth() + 1)}.${eYear}`;    
+  const eHora = (() => {  
+    const h = eventDate.getHours();  
+    const m = eventDate.getMinutes();  
+    const h12 = h % 12 === 0 ? 12 : h % 12;  
+    return `${h12}:${dos(m)} ${h >= 12 ? 'PM' : 'AM'}`;  
+  })(); 
   
   const targetDate = eventDate.getTime();  
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));  
@@ -739,7 +745,7 @@ const uploadToDrive = async () => {
         <h2 className="script-title" data-key="venue_title">Ceremonia <span className="serif">&</span> Recepción</h2>  
         <img className="venue-image" data-key="venue_image" src={asset('pdfimg-011.jpg')} alt="Jardines y arquitectura de la Quinta El Edén" />  
         <h3 className="venue-name" data-key="venue_name">QUINTA EL EDÉN</h3>  
-        <p className="venue-time" data-key="venue_time">7:00 PM</p>  
+        <p className="venue-time" data-key="venue_time" data-style-only="1">{eHora}</p>  
         <p className="venue-address" data-key="venue_address">  
           P.º de las Gardenias 602, Nueva Castilla,<br />  
           66052 Cd. Gral. Escobedo, N.L.  
