@@ -618,26 +618,30 @@ if (weddingParam !== "angela-robert") {
       }
 
       const body = (await request.json()) as Record<string, unknown>;  
-      const name = typeof body.name === "string" ? body.name.trim() : "";  
-      const phone = typeof body.phone === "string" ? body.phone.trim() : "";  
-      const max_passes =  
-        typeof body.max_passes === "number" && body.max_passes > 0  
-          ? Math.floor(body.max_passes)  
-          : 1;  
-      if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
-  
+      // Acepta tanto un invitado {name,...} como una lista {guests:[{name,...}]}  
+      const list = Array.isArray(body.guests) ? (body.guests as Record<string, unknown>[]) : [body];  
       const client = supabase(env);  
-      const code = (await generateUniqueCode(client)).toUpperCase();  
-      const { error } = await client.from("guests").insert({  
-        name,  
-        phone: phone || null,  
-        max_passes,  
-        code,  
-        wedding: targetWedding,
-      });  
+      const rows = [];  
+      for (const g of list) {  
+        const name = typeof g.name === "string" ? g.name.trim() : "";  
+        const phone = typeof g.phone === "string" ? g.phone.trim() : "";  
+        const max_passes =  
+          typeof g.max_passes === "number" && g.max_passes > 0  
+            ? Math.floor(g.max_passes)  
+            : 1;  
+        if (!name) continue; // salta líneas vacías en vez de fallar todo  
+        rows.push({  
+          name,  
+          phone: phone || null,  
+          max_passes,  
+          code: (await generateUniqueCode(client)).toUpperCase(),  
+          wedding: targetWedding,  
+        });  
+      }  
+      if (rows.length === 0) return json({ error: "No hay invitados válidos en la lista." }, 400);  
+      const { error } = await client.from("guests").insert(rows);  
       if (error) return json({ error: "No se pudo generar el enlace." }, 502);  
-      return json({ code, wedding: targetWedding });  
-    }  
+      return json({ count: rows.length, wedding: targetWedding });  
   
     if (path.startsWith("/api/invite/") && method === "GET") {  
       const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20).toUpperCase();  
