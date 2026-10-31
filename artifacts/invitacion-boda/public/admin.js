@@ -299,8 +299,8 @@ function normalizeCanvasStyle(raw) {
   return style;
 }
 
-function canvasWidth(element) {
-  return element.closest(".invite-shell")?.getBoundingClientRect().width || 540;
+function canvasWidth(element) {  
+  return element.closest(".save-date-wrapper, .invite-shell")?.getBoundingClientRect().width || 540;  
 }
 function canvasLength(px, element) {
   return `${(px * 100 / canvasWidth(element)).toFixed(4)}cqw`;
