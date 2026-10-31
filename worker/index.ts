@@ -641,7 +641,8 @@ if (weddingParam !== "angela-robert") {
       if (rows.length === 0) return json({ error: "No hay invitados válidos en la lista." }, 400);  
       const { error } = await client.from("guests").insert(rows);  
       if (error) return json({ error: "No se pudo generar el enlace." }, 502);  
-      return json({ count: rows.length, wedding: targetWedding });  
+      return json({ count: rows.length, wedding: targetWedding });
+      }
   
     if (path.startsWith("/api/invite/") && method === "GET") {  
       const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20).toUpperCase();  
