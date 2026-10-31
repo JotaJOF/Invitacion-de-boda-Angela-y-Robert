@@ -128,7 +128,13 @@
         <label for="music-upload">Canción de fondo (suena al abrir el sobre)</label>  
         <input id="music-file" type="file" accept="audio/mpeg,audio/mp4,audio/ogg" hidden />  
         <div class="admin-panel-actions">  
-          <button class="button button-secondary" id="music-upload" type="button">Subir canción</button>  
+          <div class="music-split">  
+            <button class="button button-secondary" id="music-upload" type="button">  
+              <span>Subir canción</span>  
+              <small id="music-status" class="music-name"></small>  
+            </button>  
+            <button class="music-delete" id="music-delete" type="button" aria-label="Borrar canción" title="Borrar canción">🗑</button>  
+          </div>  
           <button class="button button-secondary" id="music-test" type="button" hidden>▶ Probar canción</button>  
           <button class="button button-secondary" id="guests-list" type="button">Lista de invitados</button>  
           <button class="button button-secondary" id="invites-open" type="button">Generar links</button>  
