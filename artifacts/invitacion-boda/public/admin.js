@@ -1207,8 +1207,7 @@ const guestsModal = document.querySelector("#guests-modal");
 const guestsBody = document.querySelector("#guests-body");  
 const guestsTotals = document.querySelector("#guests-totals");  
   
-document.querySelector("#guests-list").addEventListener("click", async () => {  
-  guestsModal.hidden = false;  
+async function loadGuestsList() {    
   guestsBody.innerHTML = "<tr><td colspan='8'>Cargando…</td></tr>";  
   try {  
     const { guests = [] } = await api("/api/guests", { method: "GET" });  
@@ -1223,11 +1222,20 @@ guestsBody.innerHTML = guests.map((r, i) => {
   return `<tr><td>${i + 1}</td><td>${r.name}</td><td>${conf}</td><td>${r.confirmed_passes ?? r.passes ?? "—"}</td><td>${r.attendance_notes ?? r.message ?? ""}</td><td>${fecha}</td><td>${mod}</td><td>${via}</td></tr>`;  
 }).join("") || "<tr><td colspan='8'>Sin confirmaciones todavía.</td></tr>";  
     guestsTotals.innerHTML = `<div><strong>${yes}</strong> CONFIRMADOS</div><div><strong>${no}</strong> NO PODRÁN ASISTIR</div><div><strong>${pases}</strong> PASES CONFIRMADOS</div>`;  
-  } catch (e) { guestsBody.innerHTML = `<tr><td colspan='8'>${e.message}</td></tr>`; }  
-});  
-  
-document.querySelector("#guests-close").addEventListener("click", () => { guestsModal.hidden = true; });  
-document.querySelector("#guests-print").addEventListener("click", () => window.print());
+  } catch (e) { guestsBody.innerHTML = `<tr><td colspan='8'>${e.message}</td></tr>`; }    
+}    
+    
+document.querySelector("#guests-list").addEventListener("click", () => {    
+  guestsModal.hidden = false;    
+  loadGuestsList();    
+});    
+document.querySelector("#guests-refresh").addEventListener("click", () => loadGuestsList());    
+document.querySelector("#guests-close").addEventListener("click", () => { guestsModal.hidden = true; });    
+document.querySelector("#guests-print").addEventListener("click", () => {    
+  document.body.classList.add("printing-guests");    
+  window.print();    
+  setTimeout(() => document.body.classList.remove("printing-guests"), 500);    
+});
 // ===== Generar links personalizados =====  
 const invitesModal = document.querySelector("#invites-modal");  
 const invitesBody = document.querySelector("#invites-body");  
