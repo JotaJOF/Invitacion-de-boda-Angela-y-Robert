@@ -316,6 +316,7 @@ function App() {
   const eMes = MESES[eventDate.getMonth()];  
   const eYear = eventDate.getFullYear();  
   const eFechaPunteada = `${dos(eDay)}.${dos(eventDate.getMonth() + 1)}.${eYear}`;    
+  const eHora = eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });    
   const eHora = (() => {  
     const h = eventDate.getHours();  
     const m = eventDate.getMinutes();  
