@@ -179,7 +179,7 @@ function PhotoCarousel({ slides }: { slides: Slide[] }) {
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
-            gap: '6px',
+            gap: '1.7cqw',
             padding: '4px 8px',
             borderRadius: '9999px',
             background: 'rgba(0, 0, 0, 0.28)',
@@ -543,13 +543,14 @@ const uploadToDrive = async () => {
         <p className="section-copy" data-key="invite_intro">  
           QUEREMOS COMPARTIR CONTIGO LA ALEGRÍA DE CELEBRAR NUESTRA BODA  
         </p>  
-        <div    
-          className="save-date-wrapper"    
-          style={{    
-            position: 'relative',    
-            width: 'min(100%, 350px)',  
-            margin: '22px auto 14px',  
-          }}  
+        <div      
+          className="save-date-wrapper"      
+          style={{      
+            position: 'relative',      
+            width: 'min(100%, 350px)',    
+            margin: '22px auto 14px',    
+            containerType: 'inline-size',  
+          }}    
         >
           <img
             src={asset('sobre.png')}
@@ -578,7 +579,7 @@ const uploadToDrive = async () => {
               justifyContent: 'center',  
               textAlign: 'center',  
               color: '#526339',  
-              gap: '6px',  
+              gap: '1.7cqw',  
               lineHeight: 1.15,  
               pointerEvents: 'auto',  
               zIndex: 5,  
@@ -589,7 +590,7 @@ const uploadToDrive = async () => {
               style={{
                 width: '100%',
                 fontFamily: "'Cormorant Garamond', serif",
-                fontSize: 'clamp(11px, 2.7vw, 13px)',
+                fontSize: '3.7cqw',
                 letterSpacing: '.06em',
                 fontStyle: 'italic',
                 opacity: 0.9,
@@ -602,7 +603,7 @@ const uploadToDrive = async () => {
               style={{  
                 width: '100%',  
                 fontFamily: "'Montserrat', sans-serif",  
-                fontSize: 'clamp(8px, 2.1vw, 9.5px)',  
+                fontSize: '2.7cqw',  
                 letterSpacing: '.14em',  
                 fontWeight: 600,  
                 opacity: 0.85,  
@@ -616,8 +617,8 @@ const uploadToDrive = async () => {
               data-style-only="1"    
               style={{    
                 width: '100%',    
-                padding: '4px 0',  
-                fontSize: 'clamp(28px, 7.8vw, 36px)',    
+                padding: '1.1cqw 0',    
+                fontSize: '10.3cqw',   
                 fontWeight: 600,    
                 lineHeight: 1,    
                 color: '#3d4b27',    
@@ -631,9 +632,9 @@ const uploadToDrive = async () => {
               data-style-only="1"    
               style={{    
                 width: '100%',    
-                padding: '4px 0',  
-                fontFamily: "'Cormorant Garamond', serif",    
-                fontSize: 'clamp(13px, 3.4vw, 15px)',    
+                padding: '1.1cqw 0',    
+                fontFamily: "'Cormorant Garamond', serif",      
+                fontSize: '4.3cqw',    
                 letterSpacing: '.08em',    
                 textTransform: 'uppercase',    
                 fontWeight: 500,    
@@ -646,8 +647,8 @@ const uploadToDrive = async () => {
               data-style-only="1"    
               style={{    
                 width: '100%',    
-                padding: '4px 0',  
-                fontSize: 'clamp(10px, 2.5vw, 11.5px)',    
+                padding: '1.1cqw 0',    
+                fontSize: '3.3cqw',    
                 letterSpacing: '.12em',    
                 opacity: 0.85,    
               }}    
