@@ -61,11 +61,23 @@ function supabase(env: Env): SupabaseClient {
       autoRefreshToken: false,  
       detectSessionInUrl: false,  
       persistSession: false,  
-    },  
-  });  
-}  
+    },    
+  });    
+}    
   
-function encodeBase64Url(bytes: Uint8Array): string {  
+async function generateUniqueCode(client: SupabaseClient): Promise<string> {  
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";  
+  for (let i = 0; i < 10; i++) {  
+    let code = "";  
+    const bytes = crypto.getRandomValues(new Uint8Array(6));  
+    for (const b of bytes) code += chars[b % chars.length];  
+    const { data } = await client.from("guests").select("id").eq("code", code).maybeSingle();  
+    if (!data) return code;  
+  }  
+  return crypto.randomUUID().slice(0, 8).toUpperCase();  
+}  
+    
+function encodeBase64Url(bytes: Uint8Array): string { 
   let binary = "";  
   for (const byte of bytes) binary += String.fromCharCode(byte);  
   return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/u, "");  
@@ -549,12 +561,14 @@ if (weddingParam !== "angela-robert") {
         body.attendance === "yes" || body.attendance === "no"  
           ? body.attendance  
           : null;  
-      const confirmed_passes =  
-        typeof body.confirmed_passes === "number" && body.confirmed_passes >= 0  
-          ? Math.floor(body.confirmed_passes)  
-          : 0;  
-      const attendance_notes =  
-        typeof body.attendance_notes === "string" ? body.attendance_notes.trim() : "";  
+      const rawPasses = typeof body.confirmed_passes === "number" ? body.confirmed_passes : body.passes;  
+      const confirmed_passes =    
+        typeof rawPasses === "number" && rawPasses >= 0    
+          ? Math.floor(rawPasses)    
+          : 0;    
+      const rawNotes = typeof body.attendance_notes === "string" ? body.attendance_notes : body.message;  
+      const attendance_notes =    
+        typeof rawNotes === "string" ? rawNotes.trim() : "";  
   
       if (code) {  
         const { error } = await supabase(env)  
