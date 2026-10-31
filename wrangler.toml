@@ -11,3 +11,10 @@ run_worker_first = ["/api/*"]
   
 [observability]  
 enabled = true
+
+[[r2_buckets]]  
+binding = "MEDIA"  
+bucket_name = "invitacion-media"  
+  
+[vars]  
+R2_PUBLIC_URL = "https://pub-afc411e8bfc7409ca401c9bc07015cac.r2.dev"
