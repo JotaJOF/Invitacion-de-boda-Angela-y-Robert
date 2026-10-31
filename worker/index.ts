@@ -4,6 +4,8 @@ interface Env {
   SUPABASE_URL: string;  
   SUPABASE_SERVICE_ROLE_KEY: string;  
   ASSETS: { fetch(request: Request): Promise<Response> };  
+  MEDIA: R2Bucket;  
+  R2_PUBLIC_URL: string;  
 }  
   
 interface ContentRow {  
