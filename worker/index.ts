@@ -646,7 +646,7 @@ if (weddingParam !== "angela-robert") {
         if (!name) continue; // salta líneas vacías en vez de fallar todo  
         rows.push({  
           name,  
-          phone: phone || null,  
+          phone: phone || "",  
           max_passes,  
           code: (await generateUniqueCode(client)).toUpperCase(),  
           wedding: targetWedding,  
@@ -654,7 +654,7 @@ if (weddingParam !== "angela-robert") {
       }  
       if (rows.length === 0) return json({ error: "No hay invitados válidos en la lista." }, 400);  
       const { error } = await client.from("guests").insert(rows);  
-      if (error) return json({ error: "No se pudo generar el enlace." }, 502);  
+      if (error) return json({ error: "No se pudo generar el enlace: " + error.message }, 502);  
       return json({ count: rows.length, wedding: targetWedding });
       }
   
