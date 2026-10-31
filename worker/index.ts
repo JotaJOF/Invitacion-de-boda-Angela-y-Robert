@@ -571,29 +571,60 @@ if (weddingParam !== "angela-robert") {
         typeof rawNotes === "string" ? rawNotes.trim() : "";  
   
       if (code) {  
+        const { data: existing } = await supabase(env)  
+          .from("guests")  
+          .select("attendance")  
+          .eq("code", code)  
+          .eq("wedding", wedding)  
+          .maybeSingle();  
+        const alreadyConfirmed = existing && (existing.attendance === "yes" || existing.attendance === "no");  
         const { error } = await supabase(env)  
           .from("guests")  
           .update({  
             attendance,  
             confirmed_passes,  
             attendance_notes,  
+            modified: alreadyConfirmed ? true : false,  
+            modified_at: alreadyConfirmed ? new Date().toISOString() : null,  
           })  
-          .eq("code", code)
+          .eq("code", code)  
           .eq("wedding", wedding);  
-        if (error) return json({ error: "No se pudo actualizar el invitado." }, 502);  
-        return json({ ok: true });  
+        if (error) return json({ error: "No se pudo actualizar el invitado: " + error.message }, 502);  
+        return json({ ok: true, modified: alreadyConfirmed });  
       }  
   
       if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
-      const newCode = (await generateUniqueCode(supabase(env))).toUpperCase();    
-      const { error } = await supabase(env).from("guests").insert({    
-        name,    
-        phone: phone || "",    
+      const { data: existingGuest } = await supabase(env)  
+        .from("guests")  
+        .select("id,attendance")  
+        .eq("wedding", wedding)  
+        .ilike("name", name)  
+        .limit(1)  
+        .maybeSingle();  
+      if (existingGuest) {  
+        const { error: updErr } = await supabase(env)  
+          .from("guests")  
+          .update({  
+            attendance,  
+            confirmed_passes,  
+            attendance_notes,  
+            modified: true,  
+            modified_at: new Date().toISOString(),  
+          })  
+          .eq("id", existingGuest.id)  
+          .eq("wedding", wedding);  
+        if (updErr) return json({ error: "No se pudo actualizar el invitado: " + updErr.message }, 502);  
+        return json({ ok: true, modified: true });  
+      }  
+      const newCode = (await generateUniqueCode(supabase(env))).toUpperCase();  
+      const { error } = await supabase(env).from("guests").insert({  
+        name,  
+        phone: phone || "",  
         code: newCode,  
         attendance,  
         confirmed_passes,  
         attendance_notes,  
-        wedding,
+        wedding,  
       });  
       if (error) return json({ error: "No se pudo registrar el invitado: " + error.message }, 502);  
       return json({ ok: true, code: newCode });  
