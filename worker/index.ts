@@ -595,7 +595,7 @@ if (weddingParam !== "angela-robert") {
         attendance_notes,  
         wedding,
       });  
-      if (error) return json({ error: "No se pudo registrar el invitado." }, 502);  
+      if (error) return json({ error: "No se pudo registrar el invitado: " + error.message }, 502);  
       return json({ ok: true, code: newCode });  
     }  
   
