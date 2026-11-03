@@ -352,10 +352,16 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     // 2. GESTIÓN DE BODAS (SUPERADMIN & PÚBLICO)
     // ==========================================
     if (path === "/api/weddings" && method === "GET") {
+      // Listar todas las bodas es información interna del panel.
+      const session = await getSession(request, env);
+      if (!session || session.role !== "superadmin") {
+        return json({ error: "Inicia sesión como administrador general." }, 401);
+      }
       const { data, error } = await supabase(env)
         .from("weddings")
         .select("id,names,date_iso,created_at")
         .order("created_at", { ascending: false });
+      if (error) return json({ error: "No se pudieron cargar las bodas." }, 502);
       return json({ weddings: data || [] }, 200);
     }
 
@@ -481,31 +487,22 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       }
 
       if (weddingParam === "angela-robert") {
-        contentMap["bride_initial"] = { type: "text", value: "A" };
-        contentMap["bride_first_name"] = { type: "text", value: "NGELA" };
-        contentMap["bride_last_name"] = { type: "text", value: "PALMERSTON" };
-        contentMap["groom_initial"] = { type: "text", value: "R" };
-        contentMap["groom_first_name"] = { type: "text", value: "OBERT" };
-        contentMap["groom_last_name"] = { type: "text", value: "WILSON" };
-        contentMap["couple_heading"] = { type: "text", value: "Angela Palmerston y Robert Wilson" };
-        contentMap["couple_names"] = { type: "text", value: "Angela y Robert" };
-        contentMap["closing_names"] = { type: "text", value: "Angela y Robert" };
-        contentMap["cover_and"] = { type: "text", value: "and" };
-
-        for (const corruptKey of ["bride_initial__style", "groom_initial__style", "bride_first_name__style", "bride_last_name__style", "groom_first_name__style", "groom_last_name__style", "cover_date_fmt__style", "cover_place__style"]) {
-          if (contentMap[corruptKey]?.value) {
-            try {
-              const s = JSON.parse(contentMap[corruptKey].value);
-              if (s.transform && (s.transform.includes("translate(-10px") || s.transform.includes("translate(10px") || (s.transform.match(/translate/g) || []).length > 1)) {
-                delete s.transform;
-              }
-              if (s.marginLeft === "auto") delete s.marginLeft;
-              if (corruptKey === "cover_date_fmt__style" && s.fontFamily && s.fontFamily.includes("Throhand Ink")) {
-                delete s.fontFamily;
-              }
-              contentMap[corruptKey].value = JSON.stringify(s);
-            } catch {}
-          }
+        // Solo se rellenan los textos que falten: antes se sobrescribía en cada
+        // carga lo que el panel había guardado para la boda principal.
+        const mainWeddingDefaults: Record<string, string> = {
+          bride_initial: "A",
+          bride_first_name: "NGELA",
+          bride_last_name: "PALMERSTON",
+          groom_initial: "R",
+          groom_first_name: "OBERT",
+          groom_last_name: "WILSON",
+          couple_heading: "Angela Palmerston y Robert Wilson",
+          couple_names: "Angela y Robert",
+          closing_names: "Angela y Robert",
+          cover_and: "and",
+        };
+        for (const [key, value] of Object.entries(mainWeddingDefaults)) {
+          if (!contentMap[key]?.value) contentMap[key] = { type: "text", value };
         }
       }
 if (weddingParam !== "angela-robert") {
@@ -559,84 +556,121 @@ if (weddingParam !== "angela-robert") {
       const name = typeof body.name === "string" ? body.name.trim() : "";  
       const phone = typeof body.phone === "string" ? body.phone.trim() : "";  
       const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";  
-      const attendance =  
-        body.attendance === "yes" || body.attendance === "no"  
-          ? body.attendance  
-          : null;  
-      const rawPasses = typeof body.confirmed_passes === "number" ? body.confirmed_passes : body.passes;  
-      const confirmed_passes =    
-        typeof rawPasses === "number" && rawPasses >= 0    
-          ? Math.floor(rawPasses)    
-          : 0;    
-      const rawNotes = typeof body.attendance_notes === "string" ? body.attendance_notes : body.message;  
-      const attendance_notes =    
-        typeof rawNotes === "string" ? rawNotes.trim() : "";  
+      // attendance es NOT NULL con valores '', 'yes' o 'no': null hacía fallar el RSVP.
+      const attendance: "" | "yes" | "no" =
+        body.attendance === "yes" || body.attendance === "no" ? body.attendance : "";
+      const source: "form" | "whatsapp" = body.source === "whatsapp" ? "whatsapp" : "form";
+      const rawPasses = typeof body.confirmed_passes === "number" ? body.confirmed_passes : body.passes;
+      const requestedPasses =
+        typeof rawPasses === "number" && Number.isFinite(rawPasses) && rawPasses > 0
+          ? Math.floor(rawPasses)
+          : 0;
+      const rawNotes = typeof body.attendance_notes === "string" ? body.attendance_notes : body.message;
+      const attendance_notes =
+        typeof rawNotes === "string" ? rawNotes.trim().slice(0, 2000) : "";
+      // Quien no asiste no consume pases y nadie puede apartar más de los asignados.
+      const confirmedPassesFor = (maxPasses: number | null | undefined) => {
+        if (attendance !== "yes") return 0;
+        const limit = typeof maxPasses === "number" && maxPasses > 0 ? maxPasses : requestedPasses;
+        return Math.min(requestedPasses, limit);
+      };
   
-      if (code) {  
-        const { data: existing } = await supabase(env)  
-          .from("guests")  
-          .select("attendance")  
-          .eq("code", code)  
-          .eq("wedding", wedding)  
-          .maybeSingle();  
-        const alreadyConfirmed = existing && (existing.attendance === "yes" || existing.attendance === "no");  
-        const { error } = await supabase(env)  
-          .from("guests")  
-          .update({  
-            attendance,  
-            confirmed_passes,  
-            attendance_notes,  
-            modified: alreadyConfirmed ? true : false,  
-            modified_at: alreadyConfirmed ? new Date().toISOString() : null,  
-          })  
-          .eq("code", code)  
-          .eq("wedding", wedding);  
-        if (error) return json({ error: "No se pudo actualizar el invitado: " + error.message }, 502);  
-        return json({ ok: true, modified: alreadyConfirmed });  
-      }  
+      const db = supabase(env);
+      // Sin esta comprobación se podían crear invitados en bodas inexistentes.
+      const { data: weddingRow } = await db.from("weddings").select("id").eq("id", wedding).maybeSingle();
+      if (!weddingRow) return json({ error: "Boda no encontrada." }, 404);
+
+      if (code) {
+        const { data: existing } = await db
+          .from("guests")
+          .select("id,attendance,max_passes")
+          .eq("code", code)
+          .eq("wedding", wedding)
+          .maybeSingle();
+        // Antes respondía ok:true aunque el código no existiera y no guardaba nada.
+        if (!existing) return json({ error: "Invitación no encontrada." }, 404);
+        const alreadyConfirmed = existing.attendance === "yes" || existing.attendance === "no";
+        const updates: Record<string, unknown> = { source };
+        if (phone) updates.phone = phone;
+        // Sin respuesta solo se registra el contacto (p. ej. el atajo de WhatsApp),
+        // sin borrar una confirmación anterior.
+        if (attendance) {
+          updates.attendance = attendance;
+          updates.confirmed_passes = confirmedPassesFor(existing.max_passes);
+          updates.attendance_notes = attendance_notes;
+          updates.modified = alreadyConfirmed;
+          updates.modified_at = alreadyConfirmed ? new Date().toISOString() : null;
+        }
+        const { error } = await db
+          .from("guests")
+          .update(updates)
+          .eq("id", existing.id)
+          .eq("wedding", wedding);
+        if (error) return json({ error: "No se pudo actualizar el invitado: " + error.message }, 502);
+        return json({ ok: true, modified: alreadyConfirmed });
+      }
   
-      if (!name) return json({ error: "El nombre es obligatorio." }, 400);  
-      const { data: existingGuest } = await supabase(env)  
-        .from("guests")  
-        .select("id,attendance")  
-        .eq("wedding", wedding)  
-        .ilike("name", name)  
-        .limit(1)  
-        .maybeSingle();  
-      if (existingGuest) {  
-        const { error: updErr } = await supabase(env)  
-          .from("guests")  
-          .update({  
-            attendance,  
-            confirmed_passes,  
-            attendance_notes,  
-            modified: true,  
-            modified_at: new Date().toISOString(),  
-          })  
-          .eq("id", existingGuest.id)  
-          .eq("wedding", wedding);  
-        if (updErr) return json({ error: "No se pudo actualizar el invitado: " + updErr.message }, 502);  
-        return json({ ok: true, modified: true });  
-      }  
-      const newCode = (await generateUniqueCode(supabase(env))).toUpperCase();  
-      const { error } = await supabase(env).from("guests").insert({  
-        name,  
-        phone: phone || "",  
-        code: newCode,  
-        attendance,  
-        confirmed_passes,  
-        attendance_notes,  
-        wedding,  
-      });  
-      if (error) return json({ error: "No se pudo registrar el invitado: " + error.message }, 502);  
-      return json({ ok: true, code: newCode });  
-    }  
-  
-    if (path.startsWith("/api/guests/check/") && method === "GET") {  
-      const phone = decodeURIComponent(  
-        path.slice("/api/guests/check/".length),  
-      ).replace(/\D/g, "");  
-      const wedding = url.searchParams.get("wedding") || "angela-robert";
+      if (!name) return json({ error: "El nombre es obligatorio." }, 400);
+      // Sin código, solo se puede reenviar el propio formulario; los comodines de
+      // ILIKE se escapan y nunca se toca una invitación con link personalizado.
+      const escapedName = name.replace(/[\\%_]/g, (match) => "\\" + match);
+      const { data: existingGuest } = await db
+        .from("guests")
+        .select("id,attendance,max_passes,code")
+        .eq("wedding", wedding)
+        .ilike("name", escapedName)
+        .limit(1)
+        .maybeSingle();
+      if (existingGuest?.code) {
+        return json({ error: "Esta invitación se confirma con su enlace personalizado." }, 409);
+      }
+      if (existingGuest) {
+        const { error: updErr } = await db
+          .from("guests")
+          .update({
+            attendance,
+            confirmed_passes: confirmedPassesFor(existingGuest.max_passes),
+            attendance_notes,
+            source,
+            modified: true,
+            modified_at: new Date().toISOString(),
+          })
+          .eq("id", existingGuest.id)
+          .eq("wedding", wedding);
+        if (updErr) return json({ error: "No se pudo actualizar el invitado: " + updErr.message }, 502);
+        return json({ ok: true, modified: true });
+      }
+      const newCode = (await generateUniqueCode(db)).toUpperCase();
+      const { error } = await db.from("guests").insert({
+        name,
+        phone: phone || "",
+        code: newCode,
+        attendance,
+        confirmed_passes: attendance === "yes" ? requestedPasses : 0,
+        attendance_notes,
+        wedding,
+        source,
+      });
+      if (error) return json({ error: "No se pudo registrar el invitado: " + error.message }, 502);
+      return json({ ok: true, code: newCode });
+    }
+
+    if (path.startsWith("/api/guests/check/") && method === "GET") {
+      // Esta búsqueda devolvía nombre, pases y código de cualquier invitado a
+      // quien conociera un teléfono; ahora es una herramienta del panel.
+      const session = await getSession(request, env);
+      if (!session) {
+        return json({ error: "Inicia sesión para buscar invitados." }, 401);
+      }
+      if (session.role === "couple" && session.permissions?.guests === false) {
+        return json({ error: "No tienes permiso para ver la lista de invitados." }, 403);
+      }
+      const phone = decodeURIComponent(
+        path.slice("/api/guests/check/".length),
+      ).replace(/\D/g, "");
+      const wedding = session.role === "couple"
+        ? session.wedding_id || "angela-robert"
+        : url.searchParams.get("wedding") || "angela-robert";
       if (!phone) return json({ guest: null }, 200);  
       const { data } = await supabase(env)  
         .from("guests")  
@@ -691,29 +725,61 @@ if (weddingParam !== "angela-robert") {
       return json({ count: rows.length, wedding: targetWedding });
       }
   
-    if (path.startsWith("/api/invite/") && method === "GET") {  
-      const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20).toUpperCase();  
-      const { data } = await supabase(env)  
-        .from("guests")  
-        .select("name,max_passes,confirmed_passes,attendance,attendance_notes,wedding")  
-        .eq("code", code)  
-        .maybeSingle();  
-      return json({ guest: data ?? null });  
-    }  
+    if (path.startsWith("/api/invite/") && method === "GET") {
+      const code = decodeURIComponent(path.slice("/api/invite/".length)).slice(0, 20).toUpperCase();
+      const client = supabase(env);
+      const { data } = await client
+        .from("guests")
+        .select("id,name,max_passes,confirmed_passes,attendance,attendance_notes,wedding,opened_at")
+        .eq("code", code)
+        .maybeSingle();
+      if (data && !data.opened_at) {
+        // La columna "Abrió" del panel nunca se llenaba: se marca la primera apertura.
+        await client
+          .from("guests")
+          .update({ opened_at: new Date().toISOString() })
+          .eq("id", data.id)
+          .is("opened_at", null);
+      }
+      const guest = data
+        ? {
+            name: data.name,
+            max_passes: data.max_passes,
+            confirmed_passes: data.confirmed_passes,
+            attendance: data.attendance,
+            attendance_notes: data.attendance_notes,
+            wedding: data.wedding,
+          }
+        : null;
+      return json({ guest });
+    }
   
-    if (path.startsWith("/api/guests/") && method === "DELETE") {  
-      const session = await getSession(request, env);  
-      if (!session) {  
-        return json({ error: "Inicia sesión para eliminar invitados." }, 401);  
-      }  
+    if (path.startsWith("/api/guests/") && method === "DELETE") {
+      const session = await getSession(request, env);
+      if (!session) {
+        return json({ error: "Inicia sesión para eliminar invitados." }, 401);
+      }
       if (session.role === "couple" && session.permissions?.guests === false) {
         return json({ error: "No tienes permiso para modificar invitados." }, 403);
       }
-      const id = path.slice("/api/guests/".length);  
-      const { error } = await supabase(env).from("guests").delete().eq("id", id);  
-      if (error) return json({ error: "No se pudo eliminar el invitado." }, 502);  
-      return json({ ok: true });  
-    }  
+      const id = path.slice("/api/guests/".length);
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(id)) {
+        return json({ error: "Invitado no encontrado." }, 404);
+      }
+      // Falta el filtro por boda: una pareja podía borrar invitados de otra boda.
+      const targetWedding = session.role === "couple"
+        ? session.wedding_id || "angela-robert"
+        : url.searchParams.get("wedding") || "angela-robert";
+      const { data: deleted, error } = await supabase(env)
+        .from("guests")
+        .delete()
+        .eq("id", id)
+        .eq("wedding", targetWedding)
+        .select("id");
+      if (error) return json({ error: "No se pudo eliminar el invitado." }, 502);
+      if (!deleted || deleted.length === 0) return json({ error: "Invitado no encontrado." }, 404);
+      return json({ ok: true });
+    }
   
     // ==========================================
     // 5. EDICIÓN DE CONTENIDO Y SUBIDA DE ARCHIVOS
@@ -785,13 +851,26 @@ return json({ url: `${env.R2_PUBLIC_URL}/${storagePath}` }, 201);
         });  
       }  
   
-      if (!row) {  
-        return json({ error: "Clave, tipo o valor no válidos." }, 400);  
-      }  
+      if (!row) {
+        return json({ error: "Clave, tipo o valor no válidos." }, 400);
+      }
+      if (row.type === "image" && row.value && !validImageUrl(row.value, request)) {
+        return json({ error: "La URL de la imagen no es válida." }, 400);
+      }
 
       if (session.role === "couple") {
-        const rawKey = row.key.replace(/^cfg_/, "");
-        if (session.permissions && rawKey in session.permissions && !session.permissions[rawKey]) {
+        // Los permisos del panel se llaman distinto que las llaves guardadas
+        // (cfg_location_url → location), así que antes no se aplicaban.
+        const permissionFor: Record<string, string> = {
+          cfg_location_url: "location",
+          cfg_whatsapp: "whatsapp",
+          cfg_date: "date",
+          cfg_drive_url: "drive",
+          cfg_music_url: "music",
+        };
+        const permission = permissionFor[row.key]
+          || (row.key.startsWith("bg_") ? "themes" : undefined);
+        if (session.permissions && permission && session.permissions[permission] === false) {
           return json({ error: "No tienes permiso para modificar esta sección." }, 403);
         }
       }
@@ -819,7 +898,7 @@ return json({ url: `${env.R2_PUBLIC_URL}/${storagePath}` }, 201);
       if (!wedding) {  
         return new Response("Invitación no encontrada", { status: 404 });  
       }  
-      return env.ASSETS.fetch(new URL("/index.html", url).toString(), { headers: request.headers });  
+      return env.ASSETS.fetch(new Request(new URL("/index.html", url).toString(), { headers: request.headers }));
     }  
   
     return env.ASSETS.fetch(request);  
