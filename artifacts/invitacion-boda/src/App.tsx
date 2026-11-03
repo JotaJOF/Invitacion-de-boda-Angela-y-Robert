@@ -29,8 +29,9 @@ const normalizeCanvasStyle = (raw: any) => {
   return style;
 };
   
-// ===== FECHA DE LA BODA — cambia SOLO aquí y se actualiza todo =====  
-const WEDDING = { year: 2027, month: 3, day: 1, hour: 18 }; // month: 3 = Marzo, hour: 19 = 7 PM  
+// ===== FECHA DE RESPALDO — solo se usa si la boda no tiene cfg_date =====
+// Debe coincidir con la fecha sembrada en Supabase (2027-03-13T19:00:00).
+const WEDDING = { year: 2027, month: 3, day: 13, hour: 19 }; // month: 3 = Marzo, hour: 19 = 7 PM
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];  
 const dos = (n: number) => String(n).padStart(2, '0');  
 const WEDDING_DATE = new Date(WEDDING.year, WEDDING.month - 1, WEDDING.day, WEDDING.hour);  
@@ -40,36 +41,40 @@ const fechaPunteada = `${dos(WEDDING.day)}.${dos(WEDDING.month)}.${WEDDING.year}
 const mapUrl =  
   'https://www.google.com/maps/search/?api=1&query=Quinta+El+Ed%C3%A9n%2C+Paseo+de+las+Gardenias+602%2C+Nueva+Castilla%2C+Escobedo%2C+Nuevo+Le%C3%B3n';  
   
-function downloadCalendar() {  
-  const pad = (n: number) => String(n).padStart(2, '0');  
-  const fechaICS = `${WEDDING.year}${pad(WEDDING.month)}${pad(WEDDING.day)}`;  
-  const inicio = `${fechaICS}T${pad(WEDDING.hour)}0000`;  
-  const fin = `${fechaICS}T${pad(WEDDING.hour + 4)}0000`;  
-  const calendar = [  
-    'BEGIN:VCALENDAR',  
-    'VERSION:2.0',  
-    'PRODID:-//Angela y Robert//Invitacion de boda//ES',  
-    'CALSCALE:GREGORIAN',  
-    'BEGIN:VEVENT',  
-    `UID:angela-robert-${fechaICS}@invitacion.local`,  
-    `DTSTAMP:${fechaICS}T120000Z`,  
-    `DTSTART;TZID=America/Monterrey:${inicio}`,  
-    `DTEND;TZID=America/Monterrey:${fin}`,  
-    'SUMMARY:Boda de Angela Palmerston y Robert Wilson',  
-    'LOCATION:Quinta El Edén\\, P.º de las Gardenias 602\\, Nueva Castilla\\, Cd. Gral. Escobedo\\, N.L.',  
-    'DESCRIPTION:Ceremonia y recepción. Invitación para María y Pablo.',  
-    'END:VEVENT',  
-    'END:VCALENDAR',  
-  ].join('\r\n');  
-  const blob = new Blob([calendar], { type: 'text/calendar;charset=utf-8' });  
-  const url = URL.createObjectURL(blob);  
-  const link = document.createElement('a');  
-  link.href = url;  
-  link.download = `angela-y-robert-${WEDDING.day}-${mesNombre.toLowerCase()}-${WEDDING.year}.ics`;  
-  document.body.appendChild(link);  
-  link.click();  
-  link.remove();  
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);  
+function downloadCalendar(start: Date, names: string, slug: string, location: string) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const localStamp = (d: Date) =>
+    `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  // El fin se calcula con Date para no generar horas imposibles (25:00) al cambiar de día.
+  const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  const icsEscape = (value: string) =>
+    value.replace(/[\r\n]+/g, ' ').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,');
+  const startStamp = localStamp(start);
+  const calendar = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Invitacion de boda//ES',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:${slug}-${startStamp}@invitacion`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`,
+    `DTSTART;TZID=America/Monterrey:${startStamp}`,
+    `DTEND;TZID=America/Monterrey:${localStamp(end)}`,
+    `SUMMARY:Boda de ${icsEscape(names)}`,
+    `LOCATION:${icsEscape(location)}`,
+    `DESCRIPTION:${icsEscape('Ceremonia y recepción de ' + names)}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+  const blob = new Blob([calendar], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${slug}-${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
   
 const faqs = [  
@@ -121,8 +126,10 @@ function PhotoCarousel({ slides }: { slides: Slide[] }) {
     return () => window.clearInterval(timer);
   }, [slides.length]);
 
+  const pauseAuto = () => { pauseUntil.current = Date.now() + 4000; };
+
   const handleScroll = () => {
-    pauseUntil.current = Date.now() + 4000;
+    // El avance automático también dispara "scroll": pausar aquí lo frenaba.
     const el = track.current;
     if (el && el.clientWidth) {
       const idx = Math.round(el.scrollLeft / el.clientWidth);
@@ -136,7 +143,9 @@ function PhotoCarousel({ slides }: { slides: Slide[] }) {
     <section style={{ width: '100%', position: 'relative' }}>
       <div
         ref={track}
-        onTouchStart={() => { pauseUntil.current = Date.now() + 4000; }}
+        onTouchStart={pauseAuto}
+        onPointerDown={pauseAuto}
+        onWheel={pauseAuto}
         onScroll={handleScroll}
         style={{
           display: 'flex',
@@ -311,8 +320,10 @@ function App() {
     }  
   }, []);  
   
-  const eventDate = cfg.cfg_date ? new Date(cfg.cfg_date) : WEDDING_DATE;  
-  const eDay = eventDate.getDate();  
+  const parsedEventDate = cfg.cfg_date ? new Date(cfg.cfg_date) : WEDDING_DATE;
+  // Una fecha guardada con formato inválido rompía la cuenta regresiva (NaN).
+  const eventDate = Number.isNaN(parsedEventDate.getTime()) ? WEDDING_DATE : parsedEventDate;
+  const eDay = eventDate.getDate();
   const eMes = MESES[eventDate.getMonth()];  
   const eYear = eventDate.getFullYear();  
   const eFechaPunteada = `${dos(eDay)}.${dos(eventDate.getMonth() + 1)}.${eYear}`;  
@@ -324,8 +335,12 @@ function App() {
     return `${h12}:${dos(m)} ${ampm}`;  
   })(); 
   
-  const targetDate = eventDate.getTime();  
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));  
+  // Nombre completo para el archivo .ics, no el título corto de la portada.
+  const coupleFullNames = (cfg['couple_heading']
+    || (isMain ? 'Angela Palmerston y Robert Wilson' : slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' y ')))
+    .replace(/\s+/g, ' ').trim();
+  const targetDate = eventDate.getTime();
+  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(targetDate));
   
   useEffect(() => {  
     const timer = window.setInterval(() => {  
@@ -379,21 +394,28 @@ useEffect(() => {
     if (a && a.paused) {  
       a.play().then(() => setMusicPlaying(true)).catch(() => {});  
     }  
-  }, [envelopeOpen]);  
-  
- const sendRsvp = async (form: FormData) => {  
-    const res = await fetch('/api/guests', {  
-      method: 'POST',  
-      headers: { 'content-type': 'application/json' },  
-      body: JSON.stringify({    
-        name: invitee?.name || 'María y Pablo',    
-        code: inviteCode,    
-        wedding: slug,  
-        attendance: String(form.get('attendance') || 'yes'),    
-        passes: Number(form.get('people')) || 0,    
-        message: String(form.get('message') || '').trim(),    
-        source: 'form',    
-      }),    
+  }, [envelopeOpen]);
+
+  const sendRsvp = async (form: FormData) => {
+    // Solo se confirma con el enlace personalizado: antes se enviaba
+    // "María y Pablo" como nombre por defecto y se guardaba un invitado falso.
+    if (!invitee || !inviteCode) {
+      throw new Error('Abre tu enlace personalizado para confirmar tu asistencia.');
+    }
+    const attendance = String(form.get('attendance') || 'yes');
+    const res = await fetch('/api/guests', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: invitee.name,
+        code: inviteCode,
+        wedding: slug,
+        attendance,
+        // Quien no asiste no confirma pases.
+        passes: attendance === 'yes' ? Number(form.get('people')) || 0 : 0,
+        message: String(form.get('message') || '').trim(),
+        source: 'form',
+      }),
     });    
     if (!res.ok) {  
       const data = await res.json().catch(() => ({}));  
@@ -425,7 +447,7 @@ const uploadToDrive = async () => {
       r.onerror = reject;  
       r.readAsDataURL(file);  
     });  
-    const patch = (id: string, p: Partial<{ progress: number; status: string }>) =>  
+    const patch = (id: string, p: Partial<{ progress: number; status: 'pendiente' | 'subiendo' | 'listo' | 'error' }>) =>  
       setAlbumQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...p } : it)));  
     for (const item of albumQueue) {  
       if (item.status === 'listo') continue;  
@@ -446,9 +468,13 @@ const uploadToDrive = async () => {
     setUploading(false);  
     };  
     
-  const previewRsvp = (event: FormEvent<HTMLFormElement>) => {  
-    event.preventDefault();  
-    if (rsvpDone) { setModifyOpen(true); return; }  
+  const previewRsvp = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!invitee) {
+      setPreview('Abre tu enlace personalizado para confirmar tu asistencia.');
+      return;
+    }
+    if (rsvpDone) { setModifyOpen(true); return; }
     pendingForm.current = new FormData(event.currentTarget);  
     setConfirmOpen(true);  
   };  
@@ -673,7 +699,7 @@ const uploadToDrive = async () => {
           <button
             className="outline-button"
             type="button"
-            onClick={downloadCalendar}
+            onClick={() => downloadCalendar(eventDate, coupleFullNames, slug, cfg['venue_address'] || 'Quinta El Edén, P.º de las Gardenias 602, Nueva Castilla, Cd. Gral. Escobedo, N.L.')}
             data-testid="button-add-calendar"
             style={{
               padding: '11px 24px',
@@ -918,7 +944,7 @@ const uploadToDrive = async () => {
           <form className="rsvp-form" onSubmit={previewRsvp}>  
             <div className="rsvp-field">  
               <label htmlFor="guest-name" data-key="rsvp_label_name">NOMBRE DEL INVITADO</label>  
-              <input id="guest-name" name="guestName" value={invitee?.name ?? 'María y Pablo'} readOnly data-testid="input-rsvp-name" />  
+              <input id="guest-name" name="guestName" value={invitee?.name ?? ''} placeholder="Abre tu enlace personalizado" readOnly data-testid="input-rsvp-name" />
             </div>  
             <p className="rsvp-note" data-key="rsvp_note">ESTA INVITACIÓN CUENTA CON {invitee?.max_passes || 2} PASES.<br />UNA SOLA PERSONA DEBE CONFIRMAR LA ASISTENCIA.</p>  
             <div className="rsvp-field">  
@@ -955,17 +981,20 @@ const uploadToDrive = async () => {
         <button  
           className="olive-button"  
           type="button"  
-          onClick={async () => {  
-            const num = window.prompt('Escribe tu número de WhatsApp (con código de país):');  
-            if (!num) return;  
-            const name = (document.getElementById('guest-name') as HTMLInputElement)?.value || 'Invitado';  
-            try {  
-              await fetch('/api/guests', {  
-                method: 'POST',  
-                headers: { 'content-type': 'application/json' },  
-                body: JSON.stringify({ name: `${name} (${num})`, phone: num, source: 'whatsapp', attendance: '', passes: 0, message: '' }),  
-              });  
-            } catch { /* seguir a WhatsApp igual */ }  
+          onClick={async () => {
+            if (!invitee) { setPreview('Abre tu enlace personalizado para confirmar tu asistencia.'); return; }
+            const num = window.prompt('Escribe tu número de WhatsApp (con código de país):');
+            if (!num) return;
+            const name = invitee.name;
+            try {
+              // Se guarda el teléfono en su misma invitación; no se borra una
+              // confirmación previa porque no se envía attendance.
+              await fetch('/api/guests', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ name, code: inviteCode, phone: num, wedding: slug, source: 'whatsapp' }),
+              });
+            } catch { /* seguir a WhatsApp igual */ }
             const dest = (cfg.cfg_whatsapp || '').replace(/\D/g, '');  
             window.open(`https://wa.me/${dest}?text=${encodeURIComponent(`Hola, soy ${name}. Confirmo mi asistencia.`)}`, '_blank');  
           }}  
