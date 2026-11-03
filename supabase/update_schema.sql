@@ -133,3 +133,29 @@ BEGIN
         permissions = EXCLUDED.permissions;
 END;
 $$;
+
+-- ============================================================
+-- 7. Columnas que el Worker usa y faltaban en el esquema
+-- ============================================================
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS confirmed_passes int NOT NULL DEFAULT 0;
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS attendance_notes text DEFAULT '';
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS opened_at timestamptz;
+
+-- ============================================================
+-- 8. RLS en las tablas nuevas (el Worker usa service_role, que lo omite)
+-- Sin esto, la clave anónima podía leer password_hash de app_users.
+-- ============================================================
+ALTER TABLE public.weddings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wedding_content ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_users ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- 9. Las funciones SECURITY DEFINER solo debe ejecutarlas el Worker
+-- (service_role). Sin el REVOKE, la clave anónima podía llamar a
+-- create_or_update_couple_user y cambiar la contraseña de cualquier usuario.
+-- ============================================================
+REVOKE ALL ON FUNCTION public.authenticate_user(text, text) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.authenticate_user(text, text) TO service_role;
+
+REVOKE ALL ON FUNCTION public.create_or_update_couple_user(text, text, text, jsonb) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.create_or_update_couple_user(text, text, text, jsonb) TO service_role;
