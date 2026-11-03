@@ -232,42 +232,17 @@ async function loadContent() {
     await Promise.all(imageLoads);  
     applySavedBackgrounds(content);
 
-    let dynamicCss = "";
+    // Mismas reglas que la página publicada. Antes aquí se generaba una segunda
+    // hoja con el selector [data-key], mientras la app usaba #root [data-key]:
+    // la vista de edición y la invitación publicada no aplicaban lo mismo.
     for (const [k, item] of Object.entries(content)) {
       if (k.endsWith("__style") && item && item.value) {
         try {
-          const s = normalizeCanvasStyle(JSON.parse(item.value));
-          const baseKey = k.replace(/__style$/, "");
-          let rules = [];
-          if (s.fontFamily) rules.push(`font-family: ${s.fontFamily} !important;`);
-          if (s.fontSize) rules.push(`font-size: ${s.fontSize} !important;`);
-          if (s.maxWidth) rules.push(`max-width: ${s.maxWidth} !important;`);
-          if (s.width) rules.push(`width: ${s.width} !important;`);
-          if (s.display) rules.push(`display: ${s.display} !important;`);
-          if (s.whiteSpace) rules.push(`white-space: ${s.whiteSpace} !important;`);
-          if (s.transform) rules.push(`transform: ${s.transform} !important;`);
-          if (s.marginLeft) rules.push(`margin-left: ${s.marginLeft} !important;`);
-          if (s.marginRight) rules.push(`margin-right: ${s.marginRight} !important;`);
-          if (s.marginTop) rules.push(`margin-top: ${s.marginTop} !important;`);
-          if (s.marginBottom) rules.push(`margin-bottom: ${s.marginBottom} !important;`);
-          if (rules.length) {
-            dynamicCss += `[data-key="${baseKey}"] { ${rules.join(" ")} }\n`;
-          }
+          updateDynamicCssRule(k.replace(/__style$/, ""), normalizeCanvasStyle(JSON.parse(item.value)));
         } catch {}
       }
     }
-    if (dynamicCss) {
-      try {
-        localStorage.setItem("wedding_styles_" + currentWedding, dynamicCss);
-      } catch {}
-      let styleTag = document.getElementById("wedding-pre-styles");
-      if (!styleTag) {
-        styleTag = document.createElement("style");
-        styleTag.id = "wedding-pre-styles";
-        document.head.appendChild(styleTag);
-      }
-      styleTag.textContent = dynamicCss;
-    }  
+
     for (const element of contentNodes) recordBaseline(element);  
     if (failedImages) {  
       showToast("No se pudo cargar una imagen; se ocultó para no mostrar una versión anterior.");  
@@ -334,7 +309,7 @@ function readCanvasShift(element) {
 
   const key = element.dataset.key;
   if (key) {
-    const styleTag = document.getElementById("dynamic-content-styles") || document.getElementById("wedding-pre-styles");
+    const styleTag = document.getElementById("dynamic-content-styles");
     if (styleTag && styleTag.textContent) {
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const matchRule = styleTag.textContent.match(new RegExp(`\[data-key="${escapedKey}"\][^}]*transform:\s*translate\(\s*(-?[\d.]+)(px|cqw)?(?:\s*,\s*(-?[\d.]+)(px|cqw)?)?\s*\)`, "i"));
@@ -409,7 +384,9 @@ function updateDynamicCssRule(key, s) {
   const rulePattern = new RegExp(`(?:#root\\s+)?\\[data-key="${escapedKey}"\\]\\s*\\{[^}]*\\}`, "g");
   const newRule = rules.length ? `#root [data-key="${key}"] { ${rules.join(" ")} }` : "";
   let currentCss = styleTag.textContent || "";
-  if (rulePattern.test(currentCss)) {
+  // Un RegExp con /g conserva lastIndex entre llamadas: .test() fallaba y se
+  // añadían reglas duplicadas en vez de reemplazar la anterior.
+  if (new RegExp(rulePattern.source).test(currentCss)) {
     styleTag.textContent = currentCss.replace(rulePattern, newRule);
   } else if (newRule) {
     styleTag.textContent = (currentCss.trim() ? currentCss.trim() + "\n" : "") + newRule;
@@ -446,7 +423,9 @@ function markStyleChange(element) {
     fontSize: normalizeCanvasStyle({ fontSize: element.style.fontSize || "" }).fontSize,  
     maxWidth: normalizeCanvasStyle({ maxWidth: element.style.maxWidth || "" }).maxWidth,
     width: normalizeCanvasStyle({ width: element.style.width || "" }).width,  
-    display: element.style.display || "inline-block",  
+    // Antes se guardaba "inline-block" por defecto en CADA guardado (incluso al
+    // editar solo el texto), y eso movía el elemento en la página publicada.
+    display: element.style.display || "",  
     whiteSpace: element.style.whiteSpace || "",
     transform: normalizeCanvasStyle({ transform: element.style.transform || "" }).transform,  
     marginLeft: normalizeCanvasStyle({ marginLeft: element.style.marginLeft || "" }).marginLeft,  
@@ -1219,7 +1198,7 @@ guestsBody.innerHTML = guests.map((r, i) => {
   const mod = r.modified ? `Sí · ${new Date(r.modified_at).toLocaleString("es-MX")}` : "No";  
   const conf = r.attendance === 'yes' ? "CONFIRMADO" : r.attendance === 'no' ? "NO ASISTE" : "PENDIENTE";  
   const via = r.source === "whatsapp" ? `WhatsApp ${r.phone || ""}` : "Formulario";  
-  return `<tr><td>${i + 1}</td><td>${r.name}</td><td>${conf}</td><td>${r.confirmed_passes ?? r.passes ?? "—"}</td><td>${r.attendance_notes ?? r.message ?? ""}</td><td>${fecha}</td><td>${mod}</td><td>${via}</td></tr>`;  
+  return `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${conf}</td><td>${r.confirmed_passes ?? r.passes ?? "—"}</td><td>${esc(r.attendance_notes ?? r.message ?? "")}</td><td>${fecha}</td><td>${mod}</td><td>${esc(via)}</td></tr>`;
 }).join("") || "<tr><td colspan='8'>Sin confirmaciones todavía.</td></tr>";  
     guestsTotals.innerHTML = `<div><strong>${yes}</strong> CONFIRMADOS</div><div><strong>${no}</strong> NO PODRÁN ASISTIR</div><div><strong>${pases}</strong> PASES CONFIRMADOS</div>`;  
   } catch (e) { guestsBody.innerHTML = `<tr><td colspan='8'>${e.message}</td></tr>`; }    
@@ -1321,7 +1300,7 @@ document.querySelector("#invites-export").addEventListener("click", () => {
   for (const g of invitesData) {  
     rows.push([  
       g.name, g.max_passes ?? 0, g.phone || "",  
-      `${location.origin}/?c=${g.code}`,  
+      `${location.origin}${currentWedding === "angela-robert" ? "/" : `/${currentWedding}`}?c=${g.code}`,
       g.opened_at ? "Sí" : "No",  
       g.attendance || "pendiente",  
     ]);  
