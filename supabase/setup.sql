@@ -62,6 +62,8 @@ alter table public.guests enable row level security;
 alter table public.guests  
   add column if not exists code text,          -- código corto del link (?c=A7F3K2)  
   add column if not exists max_passes int not null default 0, -- pases que TÚ asignas  
+  add column if not exists confirmed_passes int not null default 0, -- pases que el invitado confirmó  
+  add column if not exists attendance_notes text default '', -- mensaje del invitado  
   add column if not exists opened_at timestamptz; -- cuándo abrió su link  
   
 create unique index if not exists guests_code_key  
