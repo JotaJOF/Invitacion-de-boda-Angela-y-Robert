@@ -61,6 +61,7 @@ const FONTS = [
   { label: "Farmstead", value: "'Farmstead', serif" },  
   { label: "Yapari", value: "'Yapari', serif" },  
   { label: "Throhand Ink", value: "'Throhand Ink', serif" },  
+  { label: "Gelasio", value: "'Gelasio', Georgia, serif" },    
 ];  
 let styleBar = null;  
 let styleBarFor = null;  
