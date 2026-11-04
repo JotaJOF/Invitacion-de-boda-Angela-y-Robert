@@ -733,11 +733,18 @@ function positionResizeHandles() {
 function beginTextEdit(element) {  
   document.querySelectorAll('[data-key].is-editing').forEach(stopInlineEditing);  
   element.contentEditable = "true";  
+  element.style.whiteSpace = "pre-wrap";
+  element.onkeydown = (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    document.execCommand("insertText", false, "\n");
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+  };
   element.classList.add("is-editing");  
   element.focus();  
   toolbarMessage.textContent = `Editando: ${KEY_LABELS[element.dataset.key] || element.dataset.key}`;  
   showStyleBar(element);  
-}  
+}   
   
 function addPencils() {  
   document.querySelectorAll(".edit-pencil").forEach((button) => button.remove());  
