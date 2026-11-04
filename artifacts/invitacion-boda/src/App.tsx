@@ -491,14 +491,14 @@ const uploadToDrive = async () => {
           <div className="cover-name" data-testid="text-bride-name">  
             <span className="script" data-key="bride_initial">{cfg['bride_initial'] ?? (isMain ? 'a' : (slug.split('-')[1]?.charAt(0).toUpperCase() || ''))}</span>  
             <span className="cover-name-text">  
-              <span className="given-name" data-key="bride_first_name">{displayGivenName(cfg['bride_first_name'], cfg['bride_initial'] ?? (isMain ? 'a' : (slug.split('-')[1]?.charAt(0).toUpperCase() || '')), isMain ? 'ANGELA' : '')}</span>  
+              <span className="given-name" data-key="bride_first_name" data-computed="1">{displayGivenName(cfg['bride_first_name'], cfg['bride_initial'] ?? (isMain ? 'a' : (slug.split('-')[1]?.charAt(0).toUpperCase() || '')), isMain ? 'ANGELA' : '')}</span>  
               <span className="surname" data-key="bride_last_name">{cfg['bride_last_name'] ?? (isMain ? 'PALMERSTON' : '')}</span>  
             </span>  
           </div>  
           <div className="cover-name" data-testid="text-groom-name">  
             <span className="script" data-key="groom_initial">{cfg['groom_initial'] ?? (isMain ? 'R' : (slug.split('-')[0]?.charAt(0).toUpperCase() || ''))}</span>  
             <span className="cover-name-text">  
-              <span className="given-name" data-key="groom_first_name">{displayGivenName(cfg['groom_first_name'], cfg['groom_initial'] ?? (isMain ? 'R' : (slug.split('-')[0]?.charAt(0).toUpperCase() || '')), isMain ? 'ROBERT' : '')}</span>  
+              <span className="given-name" data-key="groom_first_name" data-computed="1">{displayGivenName(cfg['groom_first_name'], cfg['groom_initial'] ?? (isMain ? 'R' : (slug.split('-')[0]?.charAt(0).toUpperCase() || '')), isMain ? 'ROBERT' : '')}</span>  
               <span className="surname" data-key="groom_last_name">{cfg['groom_last_name'] ?? (isMain ? 'WILSON' : '')}</span>  
             </span>  
           </div>  
