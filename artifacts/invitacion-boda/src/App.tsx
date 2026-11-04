@@ -474,8 +474,8 @@ const uploadToDrive = async () => {
       setPreview('Abre tu enlace personalizado para confirmar tu asistencia.');
       return;
     }
-    if (rsvpDone) { setModifyOpen(true); return; }
-    pendingForm.current = new FormData(event.currentTarget);  
+    pendingForm.current = new FormData(event.currentTarget);
+    if (rsvpDone) { setModifyOpen(true); return; } 
     setConfirmOpen(true);  
   };  
   
@@ -1033,7 +1033,7 @@ const uploadToDrive = async () => {
             <p className="script" style={{ fontSize: 40, margin: 0 }}>☺</p>  
             <p className="script-title">¿Desea modificar su respuesta?</p>  
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>  
-              <button className="olive-button" type="button" onClick={() => { setRsvpDone(false); setModifyOpen(false); }}>SÍ</button>    
+              <button className="olive-button" type="button" onClick={() => { setModifyOpen(false); setRsvpDone(false); void doConfirm(); }}>SÍ</button>    
               <button className="outline-button" type="button" onClick={() => setModifyOpen(false)}>NO</button>  
             </div>  
           </div>  
