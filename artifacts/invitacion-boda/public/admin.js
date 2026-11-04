@@ -197,11 +197,11 @@ async function loadContent() {
             element.style.removeProperty("visibility");  
           }),  
         );  
-        } else if (saved && (saved.type === "text" || saved.type === "image")) {  
-        if (!(saved.type === "text" && element.dataset.styleOnly)) {
+              } else if (saved && (saved.type === "text" || saved.type === "image")) {  
+        if (!(saved.type === "text" && (element.dataset.styleOnly || element.dataset.computed))) {
           setElementValue(element, saved.type, saved.value, () => loadVersion === contentLoadVersion);  
         }
-      }    
+      }      
       const styleSaved = key ? content[`${key}__style`] : null;  
       if (styleSaved) {  
         try {  
