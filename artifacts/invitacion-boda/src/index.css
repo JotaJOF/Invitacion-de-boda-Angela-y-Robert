@@ -435,6 +435,7 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 .cover-name .given-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.685cqw; letter-spacing: .22em; line-height: 1; font-weight: 500; }
 .cover-name .surname { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.037cqw; letter-spacing: .2em; margin-top: 0.741cqw; opacity: .85; }
 .cover-and { position: absolute; left: 50%; top: 16.296cqw; transform: translateX(-50%); color: #7d6349; font-family: 'Great Vibes', cursive; font-size: 4.444cqw; }
+#root .cover-and.script { transform: translateX(-50%) !important; }
 .ornament-rule { display: flex; align-items: center; justify-content: center; gap: 9px; color: #a3825f; }
 .ornament-rule::before,.ornament-rule::after { content: ''; height: 1px; width: 28%; background: linear-gradient(90deg,transparent,#bba58c,transparent); }
 .cover-date { margin-top: 1.111cqw; color: #554a40; font-size: 2.5cqw; letter-spacing: .08em; font-weight: 500; }
