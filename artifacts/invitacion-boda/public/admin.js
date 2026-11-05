@@ -62,6 +62,7 @@ const FONTS = [
   { label: "Yapari", value: "'Yapari', serif" },  
   { label: "Throhand Ink", value: "'Throhand Ink', serif" },  
   { label: "Gelasio", value: "'Gelasio', Georgia, serif" },    
+  { label: "Snell Roundhand", value: '"Snell Roundhand", cursive' },
 ];  
 let styleBar = null;  
 let styleBarFor = null;  
