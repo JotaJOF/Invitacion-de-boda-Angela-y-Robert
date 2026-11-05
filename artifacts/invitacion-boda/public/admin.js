@@ -63,6 +63,7 @@ const FONTS = [
   { label: "Throhand Ink", value: "'Throhand Ink', serif" },  
   { label: "Gelasio", value: "'Gelasio', Georgia, serif" },    
   { label: "Snell Roundhand", value: '"Snell Roundhand", cursive' },
+  { label: "Formale Script", value: '"Formale Script", cursive' },
 ];  
 let styleBar = null;  
 let styleBarFor = null;  
