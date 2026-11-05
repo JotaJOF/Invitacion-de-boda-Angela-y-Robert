@@ -21,6 +21,12 @@
   font-weight: 400;  
   font-display: swap;  
 }
+@font-face {  
+  font-family: 'Snell Roundhand';  
+  src: url('/snell-roundhand.ttf') format('truetype');  
+  font-weight: 400;  
+  font-display: swap;  
+}
 
 @custom-variant dark (&:is(.dark *));
 
