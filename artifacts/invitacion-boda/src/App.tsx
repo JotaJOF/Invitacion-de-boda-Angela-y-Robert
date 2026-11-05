@@ -509,8 +509,23 @@ const uploadToDrive = async () => {
         </div>  
         <p className="cover-date serif"><span data-key="cover_place">{cfg['cover_place'] || 'Casa Jardín Eventos'}</span> | <span data-key="cover_date_fmt" data-style-only="1">{eFechaPunteada}</span></p>  
   
+                {/* Precarga silenciosa del video de apertura: antes el video solo existia
+            despues de abrir el sobre, asi que la descarga empezaba justo en ese
+            instante y tardaba 1-2 segundos en arrancar. Aqui empieza a bajar
+            mientras el invitado todavia ve la portada. */}
+        {!envelopeOpen && /\.(mp4|webm|mov)$/i.test(String(cfg['video_still_img'] || 'pdfimg-000.png')) && (
+          <video
+            src={asset(String(cfg['video_still_img'] || 'pdfimg-000.png'))}
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            tabIndex={-1}
+            style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+          />
+        )}
         <button  
-          className={`envelope-button${envelopeOpen ? ' is-open' : ''}`}  
+          className={`envelope-button${envelopeOpen ? ' is-open' : ''}`}    
           type="button"  
           onClick={openInvitation}  
           aria-label="Abrir invitación"  
