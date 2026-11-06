@@ -9,7 +9,10 @@ import {
   Upload,    
 } from 'lucide-react';  
   
-const asset = (filename: string) => `${import.meta.env.BASE_URL}assets/${filename}`;  
+const asset = (filename: string) =>
+  /^(https?:)?\/\//i.test(filename) || filename.startsWith("data:")
+    ? filename
+    : `${import.meta.env.BASE_URL}assets/${filename}`;
 
 // Old editor data stored layout dimensions in device pixels. Normalize those
 // legacy values against the invitation's 540px design canvas; new edits use cqw.
