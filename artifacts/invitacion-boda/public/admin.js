@@ -839,13 +839,22 @@ imagePicker.addEventListener("change", async () => {
     form.set("file", file);  
     form.set("key", activeImage.dataset.key);  
     const { url } = await api("/api/upload", { method: "POST", body: form });  
-    await setElementValue(activeImage, "image", url);  
     pendingChanges.set(activeImage.dataset.key, {  
       element: activeImage,  
       type: "image",  
       value: url,  
     });  
     toolbarMessage.textContent = `${pendingChanges.size} cambio${pendingChanges.size === 1 ? "" : "s"} sin guardar`;  
+    const esVideo = /\.(mp4|webm|mov)(\?|$)/i.test(url);  
+    try {  
+      if (esVideo && !(activeImage instanceof HTMLVideoElement)) {  
+        showToast("Video subido. Pulsa GUARDAR y recarga para verlo.");  
+      } else {  
+        await setElementValue(activeImage, "image", url);  
+      }  
+    } catch {  
+      showToast("Archivo subido, pero la vista previa no se pudo mostrar. Pulsa GUARDAR.");  
+    }  
   } catch (error) {  
     showToast(error.message);  
     toolbarMessage.textContent = "No se pudo subir el archivo.";  
