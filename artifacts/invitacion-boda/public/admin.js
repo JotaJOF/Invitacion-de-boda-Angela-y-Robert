@@ -138,7 +138,34 @@ async function preloadVideo(value) {
   return value;  
 }  
   
+// Un mismo archivo puede estar guardado como ruta relativa ("video.mp4") y
+// usado como URL absoluta (R2), así que se comparan resueltas contra la página.
+function isAbsoluteMediaUrl(value) {
+  return /^(https?:)?\/\//i.test(value) || value.startsWith("data:");
+}
+
+function sameMediaSrc(element, value) {
+  const current = element.getAttribute("src") || "";
+  if (!current || !value) return false;
+  if (current === value) return true;
+  const resolve = (raw) => {
+    try { return new URL(raw, document.baseURI).href; } catch { return raw; }
+  };
+  const clean = (raw) => resolve(raw).split(/[?#]/)[0];
+  if (isAbsoluteMediaUrl(current) && isAbsoluteMediaUrl(value)) {
+    return clean(current) === clean(value);
+  }
+  return clean(current).split("/").pop() === clean(value).split("/").pop();
+}
+
 async function setElementValue(element, type, value, isCurrent = () => true) {  
+  // Si el elemento ya está mostrando ese mismo archivo no se toca: ocultarlo y
+  // volver a asignar el src reiniciaba el video (en el móvil desaparecía y
+  // reaparecía justo después de abrir el sobre).
+  if (type === "image" && isMediaElement(element) && sameMediaSrc(element, value)) {
+    element.style.removeProperty("visibility");
+    return;
+  }
   if (type === "image" && element instanceof HTMLImageElement) {  
     element.style.visibility = "hidden";  
     try {  
