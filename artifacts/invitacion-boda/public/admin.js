@@ -990,34 +990,35 @@ loginDialog.addEventListener("click", (event) => {
   if (event.target === loginDialog) loginDialog.close();  
 });  
   
-loginForm.addEventListener("submit", async (event) => {  
-  event.preventDefault();  
-  loginMessage.textContent = "";  
-  const submit = loginForm.querySelector('[type="submit"]');  
-  submit.disabled = true;  
-  const form = new FormData(loginForm);  
-  try {  
-    const loginRes = await api("/api/login", {  
-      method: "POST",  
-      body: JSON.stringify({  
-        username: form.get("username"),  
-        password: form.get("password"),  
-      }),  
-    });  
-    authenticated = true;  
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginMessage.textContent = "";
+  const submit = loginForm.querySelector('[type="submit"]');
+  submit.disabled = true;
+  const form = new FormData(loginForm);
+  try {
+    const loginRes = await api("/api/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        username: form.get("username"),
+        password: form.get("password"),
+      }),
+    });
+    authenticated = true;
     currentSession = loginRes;
     if (loginRes.wedding_id) {
       currentWedding = loginRes.wedding_id;
     }
-    loginDialog.close();  
-    loginForm.reset();  
-    showAdminPanel();  
-    showToast("Sesión iniciada.");  
-  } catch (error) {  
-    loginMessage.textContent = error.message;  
-  } finally {  
-    submit.disabled = false;  
-  }  
+    loginDialog.close();
+    loginForm.reset();
+    showAdminPanel();
+    showToast("Sesión iniciada.");
+  } catch (error) {
+    loginMessage.textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
 });  
   
 // Las manijas de resize siguen al elemento al hacer scroll o resize.  
