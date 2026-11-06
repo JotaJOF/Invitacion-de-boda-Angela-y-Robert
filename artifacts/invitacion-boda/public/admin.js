@@ -1468,29 +1468,35 @@ function applyBg(el, value) {
     return;  
   }  
   el.style.backgroundColor = "";    
-  if (isVideoUrl(value)) {  
-    el.style.position = "relative";  
-    el.style.overflow = "hidden";  
-    el.style.backgroundImage = "none";  
-    const v = document.createElement("video");  
-    v.className = "bg-video";  
-    v.src = value;  
-    v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;  
-    v.setAttribute("muted", ""); v.setAttribute("playsinline", "");  
-    v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;";  
-    el.prepend(v);  
-    el.querySelectorAll(":scope > :not(video.bg-video)").forEach((child) => {  
-      child.style.position = child.style.position || "relative";  
-      child.style.zIndex = "1";  
-    });  
-  } else {  
-        el.style.backgroundImage = `url(${value})`;  
-    el.style.backgroundSize = "cover";  
-    el.style.backgroundPosition = "center";  
-    el.style.backgroundRepeat = "no-repeat";  
-    el.dataset.bgValue = value;  
-  }  
-}  
+  if (isVideoUrl(value)) {
+  el.style.position = "relative";
+  el.style.overflow = "hidden";
+  el.style.backgroundImage = "none";
+  const v = el.querySelector("video.bg-video");
+  if (!v) {
+    const newV = document.createElement("video");
+    newV.className = "bg-video";
+    newV.src = value;
+    newV.autoplay = true;
+    newV.muted = true;
+    newV.loop = true;
+    newV.playsInline = true;
+    newV.setAttribute("muted", "");
+    newV.setAttribute("playsinline", "");
+    newV.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;";
+    el.prepend(newV);
+  }
+  el.querySelectorAll(":scope > :not(video.bg-video)").forEach((child) => {
+    child.style.position = child.style.position || "relative";
+    child.style.zIndex = "1";
+  });
+} else {
+  el.style.backgroundImage = `url(${value})`;
+  el.style.backgroundSize = "cover";
+  el.style.backgroundPosition = "center";
+  el.style.backgroundRepeat = "no-repeat";
+  el.dataset.bgValue = value;
+} 
   
 function applySavedBackgrounds(content) {  
   document.querySelectorAll("[data-bg]").forEach((el) => {  
