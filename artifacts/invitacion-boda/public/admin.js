@@ -1458,13 +1458,16 @@ function isVideoUrl(url) {
 }  
   
 function applyBg(el, value) {  
+  const cur = el.dataset.bgValue;  
+  if (cur && cur === value) return;  
   el.querySelectorAll("video.bg-video").forEach((v) => v.remove());  
   if (value.startsWith("color:")) {  
     el.style.backgroundImage = "none";  
     el.style.backgroundColor = value.slice(6);  
+    el.dataset.bgValue = value;  
     return;  
   }  
-  el.style.backgroundColor = "";  
+  el.style.backgroundColor = "";    
   if (isVideoUrl(value)) {  
     el.style.position = "relative";  
     el.style.overflow = "hidden";  
@@ -1481,17 +1484,23 @@ function applyBg(el, value) {
       child.style.zIndex = "1";  
     });  
   } else {  
-    el.style.backgroundImage = `url(${value})`;  
+        el.style.backgroundImage = `url(${value})`;  
     el.style.backgroundSize = "cover";  
     el.style.backgroundPosition = "center";  
     el.style.backgroundRepeat = "no-repeat";  
+    el.dataset.bgValue = value;  
   }  
 }  
   
 function applySavedBackgrounds(content) {  
   document.querySelectorAll("[data-bg]").forEach((el) => {  
     const saved = content[`bg_${el.dataset.bg}`];  
-    if (saved && saved.value) applyBg(el, saved.value);  
+    if (saved && saved.value) {  
+      const cur = el.dataset.bgValue;  
+      if (cur && cur === saved.value) return;  
+      el.dataset.bgValue = saved.value;  
+      applyBg(el, saved.value);  
+    }  
   });  
 }  
   
