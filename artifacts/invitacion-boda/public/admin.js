@@ -1496,6 +1496,7 @@ function applyBg(el, value) {
   el.style.backgroundRepeat = "no-repeat";
   el.dataset.bgValue = value;
 } 
+  } 
   
 function applySavedBackgrounds(content) {  
   document.querySelectorAll("[data-bg]").forEach((el) => {  
