@@ -270,9 +270,17 @@ function App() {
           if (rules.length) {
             css += `#root [data-key="${baseKey}"] { ${rules.join(" ")} }\n`;
           }
-        } catch {}
-      }
-    }
+        } catch {}  
+    }  
+    if (k.startsWith("bg_") && v) {  
+      const bgName = k.slice(3);  
+      if (/\.(mp4|webm|mov)(\?|$)/i.test(v)) {  
+        // Los fondos de video no se pueden poner con CSS; se omiten aquí.  
+      } else {  
+        css += `#root [data-bg="${bgName}"] { background-image: url("${v}") !important; background-size: cover !important; background-position: center !important; }\n`;  
+      }  
+    }  
+  }
     return css;
   }, [cfg]);
   const [contentReady, setContentReady] = useState(false);
