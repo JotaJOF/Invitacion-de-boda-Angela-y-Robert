@@ -75,7 +75,7 @@ function showToast(message) {
   toastTimeout = window.setTimeout(() => toast.classList.remove("is-visible"), 3000);  
 }  
   
-async function api(path, options = {}) {  
+async function api(path, options = {}) {
   let url = path;
   if (
     currentWedding &&
@@ -88,21 +88,19 @@ async function api(path, options = {}) {
     url += (url.includes("?") ? "&" : "?") + `wedding=${encodeURIComponent(currentWedding)}`;
   }
 
-  const response = await fetch(url, {  
-    credentials: "same-origin",  
-    ...options,  
-    headers: {  
-      ...(options.body instanceof FormData  
-        ? {}  
-        : { "content-type": "application/json" }),  
-      ...options.headers,  
-    },  
-  });  
-  const result = await response.json().catch(() => ({}));  
-  if (!response.ok) throw new Error(result.error || "No se pudo completar la solicitud.");  
-  return result;  
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.body instanceof FormData
+        ? {}
+        : { "content-type": "application/json" }),
+      ...options.headers,
+    },
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "No se pudo completar la solicitud.");
+  return result;
 }  
-  
 function isMediaElement(element) {  
   return element instanceof HTMLImageElement || element instanceof HTMLVideoElement;  
 }  
