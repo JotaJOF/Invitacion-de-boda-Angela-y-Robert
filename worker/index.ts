@@ -236,28 +236,28 @@ async function saveContent(
   return !error;
 }
 
-async function handleApi(request: Request, env: Env): Promise<Response> {  
-  const url = new URL(request.url);  
-  const path = url.pathname;  
-  const method = request.method.toUpperCase();  
-  
-  if ((method === "POST" || method === "PUT") && !originIsAllowed(request)) {  
-    return json({ error: "Origen no permitido." }, 403);  
-  }  
-  
-  try {  
+async function handleApi(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const method = request.method.toUpperCase();
+
+  if ((method === "POST" || method === "PUT") && !originIsAllowed(request)) {
+    return json({ error: "Origen no permitido." }, 403);
+  }
+
+  try {
     // ==========================================
     // 1. AUTENTICACIÓN (SUPERADMIN & PAREJAS)
     // ==========================================
-    if (path === "/api/login" && method === "POST") {  
-      const body = (await request.json()) as Record<string, unknown>;  
-      const username =  
-        typeof body.username === "string" ? body.username.trim() : "";  
-      const password = typeof body.password === "string" ? body.password : "";  
-      if (!username || !password || username.length > 120 || password.length > 256) {  
-        return json({ error: "Usuario o contraseña incorrectos." }, 401);  
-      }  
-  
+    if (path === "/api/login" && method === "POST") {
+      const body = (await request.json()) as Record<string, unknown>;
+      const username =
+        typeof body.username === "string" ? body.username.trim() : "";
+      const password = typeof body.password === "string" ? body.password : "";
+      if (!username || !password || username.length > 120 || password.length > 256) {
+        return json({ error: "Usuario o contraseña incorrectos." }, 401);
+      }
+
       let authUser: {
         username: string;
         role: "superadmin" | "couple";
@@ -279,9 +279,28 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
           permissions: (typeof u.permissions === "object" && u.permissions) ? u.permissions : {
             location: true, whatsapp: true, date: true, drive: true,
             music: true, guests: true, invites: true, edit: true, themes: true
-          }
-        };
-      } else {
+          }};
+      } else if (!authError && Array.isArray(authData) && authData.length > 0 && authData[0].valid !== true) {
+        const { data: passwordMatches, error: legacyError } = await supabase(env).rpc(
+          "verify_admin_login",
+          { p_username: username, p_password: password },
+        );
+        if (!legacyError && passwordMatches === true) {
+          authUser = {
+            username,
+            role: "superadmin",
+            wedding_id: null,
+            permissions: {
+              location: true, whatsapp: true, date: true, drive: true,
+              music: true, guests: true, invites: true, edit: true, themes: true
+            }
+          };
+        }
+      }
+
+      if (!authUser) {
+        return json({ error: "Usuario o contraseña incorrectos." }, 401);
+      }
         const { data: passwordMatches, error: legacyError } = await supabase(env).rpc(
           "verify_admin_login",
           { p_username: username, p_password: password },
