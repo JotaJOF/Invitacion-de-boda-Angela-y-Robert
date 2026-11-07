@@ -301,27 +301,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       if (!authUser) {
         return json({ error: "Usuario o contraseña incorrectos." }, 401);
       }
-        const { data: passwordMatches, error: legacyError } = await supabase(env).rpc(
-          "verify_admin_login",
-          { p_username: username, p_password: password },
-        );
-        if (!legacyError && passwordMatches === true) {
-          authUser = {
-            username,
-            role: "superadmin",
-            wedding_id: null,
-            permissions: {
-              location: true, whatsapp: true, date: true, drive: true,
-              music: true, guests: true, invites: true, edit: true, themes: true
-            }
-          };
-        }
-      }
-
-      if (!authUser) {
-        return json({ error: "Usuario o contraseña incorrectos." }, 401);
-      }
-
+        
       const token = await createSession(
         authUser.username,
         env,
