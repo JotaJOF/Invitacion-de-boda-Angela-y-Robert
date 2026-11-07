@@ -100,6 +100,7 @@ BEGIN
     WHERE app_users.username = p_username;
 
     IF NOT FOUND THEN
+        -- Si no existe en app_users, intentar con admin_users (migración pendiente)
         RETURN QUERY SELECT FALSE, NULL::TEXT, NULL::TEXT, NULL::TEXT, NULL::JSONB;
         RETURN;
     END IF;
