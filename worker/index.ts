@@ -280,7 +280,7 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
             location: true, whatsapp: true, date: true, drive: true,
             music: true, guests: true, invites: true, edit: true, themes: true
           }};
-      } else if (!authError && Array.isArray(authData) && authData.length > 0 && authData[0].valid !== true) {
+      } else {
         const { data: passwordMatches, error: legacyError } = await supabase(env).rpc(
           "verify_admin_login",
           { p_username: username, p_password: password },
