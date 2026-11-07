@@ -512,16 +512,16 @@ button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
 .inspiration-grid img { width: 100%; height: 164px; object-fit: cover; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.14); transition: transform .3s ease; }
 .inspiration-grid img:hover { transform: scale(1.02); }
 .inspiration-grid span { display: block; padding: 8px 4px; font-size: 9.5px; letter-spacing: .1em; opacity: .9; }
-.itinerary { padding: 44px 28px 46px; background: #fbf7f4; text-align: center; }
-.itinerary-list { margin: 28px auto 0; max-width: 330px; text-align: left; }
-.itinerary-row { position: relative; display: grid; grid-template-columns: 62px 82px auto; gap: 16px; min-height: 62px; align-items: center; margin-bottom: 8px; }
-.itinerary-row:nth-child(1) { margin-left: 0; }
-.itinerary-row:nth-child(2) { margin-left: 28px; }
-.itinerary-row:nth-child(3) { margin-left: 56px; }
-.itinerary-img { width: 62px; height: auto; object-fit: contain; border-radius: 0; box-shadow: none; }
-.itinerary-row::before,.itinerary-row:last-child::before { display: none; }
-.itinerary-time { color: #55663b; font-family: 'Cormorant Garamond',serif; font-size: 20px; font-weight: 600; }
-.itinerary-event { position: relative; color: #5b5249; font-size: 10.5px; letter-spacing: .14em; padding-top: 2px; }
+.itinerary { padding: 8.148cqw 5.185cqw 8.519cqw; background: #fbf7f4; text-align: center; }  
+.itinerary-list { margin: 5.185cqw auto 0; max-width: 61.111cqw; text-align: left; }  
+.itinerary-row { position: relative; display: grid; grid-template-columns: 11.481cqw 15.185cqw auto; gap: 2.963cqw; min-height: 11.481cqw; align-items: center; margin-bottom: 1.481cqw; }  
+.itinerary-row:nth-child(1) { margin-left: 0; }  
+.itinerary-row:nth-child(2) { margin-left: 5.185cqw; }  
+.itinerary-row:nth-child(3) { margin-left: 10.370cqw; }  
+.itinerary-img { width: 11.481cqw; height: auto; object-fit: contain; border-radius: 0; box-shadow: none; }  
+.itinerary-row::before,.itinerary-row:last-child::before { display: none; }  
+.itinerary-time { color: #55663b; font-family: 'Cormorant Garamond',serif; font-size: 3.704cqw; font-weight: 600; }  
+.itinerary-event { position: relative; color: #5b5249; font-size: 1.944cqw; letter-spacing: .14em; padding-top: 0.370cqw; }
 .gift-section { padding: 44px 28px 46px; background: #506443; color: #fffaf4; text-align: center; }
 .gift-copy { max-width: 400px; margin: 18px auto 22px; font-family: 'Cormorant Garamond',serif; font-size: 16.5px; line-height: 1.5; letter-spacing: .04em; opacity: .95; }
 .gift-highlight { margin: 0; color: #e5cdb5; font-family: 'Cormorant Garamond',serif; font-size: 15px; letter-spacing: .1em; font-weight: 600; }
